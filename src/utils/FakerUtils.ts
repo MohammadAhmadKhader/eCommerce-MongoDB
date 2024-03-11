@@ -1,6 +1,9 @@
+import { ObjectId } from 'mongodb';
 import Category from '../models/category';
 import { userRegistrationSchema } from './../middlewares/validationsSchemas';
 import { faker } from '@faker-js/faker';
+import User from '../models/user';
+import Product from '../models/product';
 
 function createRandomUser(){
     return {
@@ -74,11 +77,55 @@ function createRandomCart(){
     return {cartItems}
 }
 
+async function createReviews(){
+    for(let i=0 ; i < 500 ; i++ ){
+        const randomIndexForProducts = faker.number.int({min:0,max:allProducts.length - 1})
+        const randomIndexForUsers =  faker.number.int({min:0,max:allUsers.length - 1})
+        const rating = faker.number.int({min:1,max:5});
+        const comment = faker.word.words(8)
+        const randomUser = allUsers[randomIndexForUsers]._id
+        const newReview = {
+            rating,
+            comment,
+            userId:randomUser
+        }
+        const review = await Product.findOneAndUpdate(
+            {_id:allProducts[randomIndexForProducts]},
+            {$push : { reviews : newReview}}
+        )
+        console.log(`review # ${i + 1} was created successfully!`)
+    }
+}
+
+
+async function createUsers(){
+    for(let i=0 ; i < 100 ; i++ ){
+        const password = faker.internet.password();
+        const firstName = faker.person.firstName();
+        const lastName = faker.person.lastName();
+        const email = faker.internet.email();
+        const userImg=faker.image.urlPicsumPhotos()
+
+        const newUser = await User.create({
+            firstName,
+            lastName,
+            email,
+            password,
+            userImg,
+        })
+        console.log(`User # ${i + 1} was created successfully!`)
+    }
+}
+
 const fakerUtils = {
     createRandomUser,
     createRandomProduct,
-    createRandomCart
-
+    createRandomCart,
+    createReviews,
+    createUsers
 }
 export default fakerUtils;
 
+// They were removed to hide data
+const allProducts =[{}]
+const allUsers = [{_id:1}]

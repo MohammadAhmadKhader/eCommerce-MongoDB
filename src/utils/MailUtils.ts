@@ -7,38 +7,28 @@ dotenv.config()
 const Email = process.env.Email 
 const Secret = process.env.Secret
 
-
-const config = {
-    host: 'smtp-mail.outlook.com',
-    service: "hotmail",
-    secure: false,
-    auth: {
-      user: Email,
-      pass: Secret,
-    },
-    tls: {
-        ciphers: 'SSLv3',
-    },
-};
-
 async function SendToResetPassword(userEmail : string,userId : string){
     const code = crypto.randomUUID().substring(0,8);
     await ResetPassCode.create({
         userId,
         code:code
     })
-    // fake sender
     const transporter = nodeMailer.createTransport({
-        host: 'smtp.ethereal.email',
+        host: 'smtp.gmail.com',
+        service:"gmail",
         port: 587,
+        secure:false,
         auth: {
-            user: 'delta.kris19@ethereal.email',
-            pass: 'K9BTBrgdgvx4RbKCXm'
+            user: Email,
+            pass: Secret
         }
     });
     const message = {
-        from:Email,
-        to:userEmail,
+        from:{
+            name:"Geekout",
+            address:Email as string
+        },
+        to:userEmail as string,
         subject:"Reset Password",
         html:`<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
         <div style="max-width: 600px; margin: 20px auto; padding: 20px; background-color: #fff; border-radius: 5px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
