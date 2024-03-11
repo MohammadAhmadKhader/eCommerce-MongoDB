@@ -79,15 +79,15 @@ export const getAllProducts = async (req : Request, res: Response) =>{
    try{
         const { limit , skip , page } = req.pagination;
         const searchText = req.query.search as string;
-        const minPrice = req.query.pricegte as string;
-        const maxPrice = req.query.pricelte as string;
+        const minPrice = req.query.price_gte as string;
+        const maxPrice = req.query.price_lte as string;
         const brand = req.query.brand as string;
         const category = req.query.category as string;
         const available = req.query.available as string;
         const sort = req.query.sort as string;
-        let fieldToSort = "quantity";
-        let sortDirection = 1;
-
+        let fieldToSort = "createdAt";
+        let sortDirection = -1;
+        
         const matchStage : any = {}
         const orArray = []
         if(minPrice || maxPrice){
@@ -108,7 +108,11 @@ export const getAllProducts = async (req : Request, res: Response) =>{
         
         if(brand){
             matchStage.brand = {};
-            matchStage.brand = { $regex : `.*${brand}.*` , $options : "i" };
+            const brandArray = JSON.parse(brand)
+            matchStage.brand = 
+            { $regex :brandArray.map((item : string)=>`.*${item}.*`).join("|")  
+             , $options : "i" };
+             console.log(brand)
         }
         if(category){
             const categoryId = new mongoose.Types.ObjectId(category)
@@ -117,9 +121,11 @@ export const getAllProducts = async (req : Request, res: Response) =>{
 
         if(sort){
             const sortQueries = sort.split("_")
-            if(sortQueries[0] == "price" || sortQueries[0] == "ratings" || sortQueries[0] == "ratingsNumber"){
+            if(sortQueries[0] == "price" || sortQueries[0] == "ratings" || sortQueries[0] == "ratingsNumber" ||  sortQueries[0] == "newArrivals"){
                 if(sortQueries[0] == "price"){
                     fieldToSort = "finalPrice";
+                }else if(sortQueries[0] == "newArrivals"){
+                    fieldToSort = "createdAt";
                 }else{
                     fieldToSort = sortQueries[0];
                 }
@@ -143,9 +149,9 @@ export const getAllProducts = async (req : Request, res: Response) =>{
 
         const products = await Product.aggregate([
             { $match : matchStage },
-            { $skip : skip},
-            { $limit : limit},
             { $sort : sortStage}, 
+            { $skip : skip},
+            { $limit : limit},  
             { 
                 $addFields: {
                     avgRating: {
@@ -154,7 +160,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
                     ratingNumbers:{ $size: "$reviews"},
                 },
             },
-            { $project : { __v:0 , reviews:0 } },
+            { $project : { __v:0 , reviews:0,description:0 } },
         ])
         const count = await Product.countDocuments( matchStage )
         

@@ -14,8 +14,8 @@ dotenv.config();
 import "./config/database";
 import "./config/cloudinary";
 import Product from "./models/product";
-import { ObjectId } from "mongodb";
-import { faker } from "@faker-js/faker";
+import fakerUtils from "./utils/FakerUtils";
+import User from "./models/user";
 export const app = express();
 
 //app.use(express.urlencoded({extended:false}))
@@ -42,8 +42,11 @@ app.use("/api/brands",brandsRoute);
 // }
 
 
-(function run(){
-    const randomWords = faker.commerce.productDescription()
-    console.log(randomWords)
-})
+(async function run(){
+    const products = await Product.updateMany({},{$set:{reviews:[]}})
+    
+});
 
+(async function run(){
+    fakerUtils.createReviews()
+})
