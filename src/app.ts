@@ -13,16 +13,11 @@ import dotenv from "dotenv";
 dotenv.config();
 import "./config/database";
 import "./config/cloudinary";
-import Product from "./models/product";
-import fakerUtils from "./utils/FakerUtils";
-import User from "./models/user";
 export const app = express();
 
-//app.use(express.urlencoded({extended:false}))
 app.use(express.json());
 app.use(cors());
 app.use(morgan('dev'));
-
 
 app.use("/api/products",productsRoute);
 app.use("/api/users",usersRoute)
@@ -32,21 +27,3 @@ app.use("/api/orders",ordersRoute)
 app.use("/api/reviews",reviewsRoute);
 app.use("/api/addresses",addressesRoute);
 app.use("/api/brands",brandsRoute);
-
-// for (let index = 0; index < 200; index++) {
-//     (async function run(){
-//         const prod = FakerUtils.createRandomProduct()
-//         const product = await Product.create(prod)
-//         console.log(`${index + 1} Product`)
-//     })
-// }
-
-
-(async function run(){
-    const products = await Product.updateMany({},{$set:{reviews:[]}})
-    
-});
-
-(async function run(){
-    fakerUtils.createReviews()
-})
