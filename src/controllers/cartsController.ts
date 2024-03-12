@@ -5,7 +5,7 @@ import { ObjectId } from "mongodb";
 
 export const getAllCartItems = async (req:Request,res:Response)=>{
     try{
-        const userId = req.body.userId;
+        const userId = req.params.userId;
         const arrayOfProductsIds : any = []
         const user = await User.findById(userId,{cart:1})
         if(!user){
@@ -19,6 +19,7 @@ export const getAllCartItems = async (req:Request,res:Response)=>{
             arrayOfProductsIds.push(cartItem.productId);
         })
         
+        console.log(arrayOfProductsIds)
         const cartItems = await Product.find(
             {_id: {$in : arrayOfProductsIds }},
             {reviews:0,__v:0,description:0,categoryId:0,brand:0})

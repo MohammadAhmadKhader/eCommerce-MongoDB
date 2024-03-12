@@ -33,7 +33,7 @@ export const createOrder = async(req :Request,res:Response)=>{
         user!.cart.forEach((cartItem)=>{
             arrayOfProductsIds.push(cartItem.productId);
         })
-        console.log(arrayOfProductsIds)
+        
         const cartItems = await Product.find(
             {_id: {$in : arrayOfProductsIds }},
             {reviews:0,__v:0,description:0,categoryId:0,brand:0})
