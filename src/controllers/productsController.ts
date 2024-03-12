@@ -5,6 +5,7 @@ import Product from "../models/product"
 import CloudinaryUtils from "../utils/CloudinaryUtils";
 import imageThumbnail from "image-thumbnail"
 import { ImageThumbnailOptions } from '../utils/ThumbnailUtils';
+import { isJSON } from '../utils/HelperFunctions';
 
 
 
@@ -14,39 +15,40 @@ export const getProductById = async(req : Request,res : Response)=>{
         const productId = req.params.productId;
         
         const aggregateToGetAvg = await Product.aggregate([
-             { $match : { _id : new mongoose.Types.ObjectId(productId) } },
-             { $unwind : "$reviews"},
-             { $group:{
-                _id:null,
-                originalProduct: { $first: '$$ROOT' },
-                reviews: {$push : "$reviews"}
-            } },
-            {
-                $lookup:{
-                    from:"users",
-                    localField:"reviews.userId",
-                    foreignField:"_id",
-                    as:"userReviews"
-                }
-            },
-            {
-                $addFields: {
-                    "reviews.user": "$userReviews"
-                }
-            },
-            {
-                $project: {
-                    originalProduct:1,
-                    reviews:{
-                       $slice:['$reviews',skip,limit],
-                    },
-                    avgRating: { $avg : "$reviews.rating"},
-                    reviewsCount : { $size : "$reviews"},
+            { $match : { _id : new mongoose.Types.ObjectId(productId) } },
+            { $unwind : "$reviews"},
+            { $group:{
+               _id:null,
+               originalProduct: { $first: '$$ROOT' },
+               reviews: {$push : "$reviews"}
+           } },
+           {
+               $lookup:{
+                   from:"users",
+                   localField:"reviews.userId",
+                   foreignField:"_id",
+                   as:"userReviews"
+               }
+           },
+           {
+               $addFields: {
+                   "reviews.user": "$userReviews"
+               },
+               
+           },
+           {
+               $project: {
+                   originalProduct:1,
+                   reviews:{
+                      $slice:['$reviews',skip,limit],
+                   },
+                   avgRating: { $avg : "$reviews.rating"},
+                   reviewsCount : { $size : "$reviews"},
 
-                }
-            },
-        ])
-        
+               }
+           },
+       ])
+       
         if(aggregateToGetAvg.length == 0){
             return res.status(400).json({error:"Product was not found"});
         }
@@ -71,6 +73,7 @@ export const getProductById = async(req : Request,res : Response)=>{
     
         return res.status(200).json({product:originalProduct})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -85,6 +88,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
         const category = req.query.category as string;
         const available = req.query.available as string;
         const sort = req.query.sort as string;
+        const offer = req.query.offer as string;
         let fieldToSort = "createdAt";
         let sortDirection = -1;
         
@@ -106,19 +110,17 @@ export const getAllProducts = async (req : Request, res: Response) =>{
             matchStage.$or = orArray;
         }
         
-        if(brand){
+        if(brand && isJSON(brand)){
             matchStage.brand = {};
             const brandArray = JSON.parse(brand)
             matchStage.brand = 
             { $regex :brandArray.map((item : string)=>`.*${item}.*`).join("|")  
              , $options : "i" };
-             console.log(brand)
         }
         if(category){
             const categoryId = new mongoose.Types.ObjectId(category)
             matchStage.categoryId = categoryId;
         }
-
         if(sort){
             const sortQueries = sort.split("_")
             if(sortQueries[0] == "price" || sortQueries[0] == "ratings" || sortQueries[0] == "ratingsNumber" ||  sortQueries[0] == "newArrivals"){
@@ -126,11 +128,13 @@ export const getAllProducts = async (req : Request, res: Response) =>{
                     fieldToSort = "finalPrice";
                 }else if(sortQueries[0] == "newArrivals"){
                     fieldToSort = "createdAt";
-                }else{
+                }else if(sortQueries[0] == "ratings")
+                    fieldToSort = "avgRating";
+                else{
                     fieldToSort = sortQueries[0];
                 }
-                
-                if(sortQueries[1] == "desc"){
+                console.log(fieldToSort,"s")
+                if(sortQueries[1] && sortQueries[1] == "desc"){
                     sortDirection = -1
                 }else{
                     sortDirection = 1
@@ -142,24 +146,28 @@ export const getAllProducts = async (req : Request, res: Response) =>{
         }
 
         const andArray = []
-        if(available == "true"){
+        if(available && available == "true"){
             andArray.push({quantity : {$gte : 1}})
             matchStage.$and = andArray;
         }
+        if(offer && offer=="true"){
+            andArray.push({ offer : { $gte : 0}})
+            matchStage.$nad = andArray;
+        }
 
         const products = await Product.aggregate([
-            { $match : matchStage },
-            { $sort : sortStage}, 
-            { $skip : skip},
-            { $limit : limit},  
             { 
                 $addFields: {
                     avgRating: {
                         $ifNull: [ { $avg: "$reviews.rating" }, 0 ],
                     },
-                    ratingNumbers:{ $size: "$reviews"},
+                    ratingsNumber:{ $size: "$reviews"},
                 },
             },
+            { $match : matchStage },
+            { $sort : sortStage}, 
+            { $skip : skip},
+            { $limit : limit},
             { $project : { __v:0 , reviews:0,description:0 } },
         ])
         const count = await Product.countDocuments( matchStage )
@@ -167,6 +175,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
 
         return res.status(200).json({page,limit,count,products})
    }catch(error){
+        console.log(error)
         return res.status(500).json({error})
    }
   
@@ -181,7 +190,7 @@ export const postNewProduct = async (req : Request , res : Response)=>{
             console.log(ImageUrl)
             return res.status(400).json({error:"Failed To Upload Image"})
         }
-        console.log("first")
+        
         const thumbnailAsBase64 = await imageThumbnail({uri:ImageUrl},ImageThumbnailOptions)
         const thumbnailUrl = await CloudinaryUtils.UploadOneFromBase64(thumbnailAsBase64 as unknown as string,process.env.ThumbnailsImagesFolder as string)
         
@@ -226,7 +235,7 @@ export const appendImagesToProduct = async (req: Request, res: Response) =>{
         }
         return res.status(200).json({message:"success"})
     }catch(error){
-
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -257,7 +266,7 @@ export const deleteProduct = async (req: Request, res: Response) =>{
 
         return res.status(200).json({message:"success",ArrOfImagesThumbnailToDelete,ArrOfImagesMainToDelete})
     }catch(error){
-
+        console.log(error)
         return res.status(500).json({error})
     }
 }
