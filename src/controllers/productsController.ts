@@ -5,6 +5,7 @@ import Product from "../models/product"
 import CloudinaryUtils from "../utils/CloudinaryUtils";
 import imageThumbnail from "image-thumbnail"
 import { ImageThumbnailOptions } from '../utils/ThumbnailUtils';
+import { isJSON } from '../utils/HelperFunctions';
 
 
 
@@ -71,6 +72,7 @@ export const getProductById = async(req : Request,res : Response)=>{
     
         return res.status(200).json({product:originalProduct})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -85,6 +87,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
         const category = req.query.category as string;
         const available = req.query.available as string;
         const sort = req.query.sort as string;
+        const offer = req.query.offer as string;
         let fieldToSort = "createdAt";
         let sortDirection = -1;
         
@@ -106,7 +109,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
             matchStage.$or = orArray;
         }
         
-        if(brand){
+        if(brand && isJSON(brand)){
             matchStage.brand = {};
             const brandArray = JSON.parse(brand)
             matchStage.brand = 
@@ -121,16 +124,18 @@ export const getAllProducts = async (req : Request, res: Response) =>{
 
         if(sort){
             const sortQueries = sort.split("_")
-            if(sortQueries[0] == "price" || sortQueries[0] == "ratings" || sortQueries[0] == "ratingsNumber" ||  sortQueries[0] == "newArrivals"){
+            if(sortQueries[0] == "price" || sortQueries[0] == "ratings" || sortQueries[0] == "ratingNumbers" ||  sortQueries[0] == "newArrivals"){
                 if(sortQueries[0] == "price"){
                     fieldToSort = "finalPrice";
                 }else if(sortQueries[0] == "newArrivals"){
                     fieldToSort = "createdAt";
+                }else if( sortQueries[0] == "ratings"){
+                    fieldToSort = "avgRating";
                 }else{
                     fieldToSort = sortQueries[0];
                 }
                 
-                if(sortQueries[1] == "desc"){
+                if(sortQueries[1] && sortQueries[1] == "desc"){
                     sortDirection = -1
                 }else{
                     sortDirection = 1
@@ -146,12 +151,13 @@ export const getAllProducts = async (req : Request, res: Response) =>{
             andArray.push({quantity : {$gte : 1}})
             matchStage.$and = andArray;
         }
+        if(offer && offer == "true"){
+            andArray.push({offer: {$gt:0}})
+            matchStage.$and = andArray;
+        }
 
         const products = await Product.aggregate([
             { $match : matchStage },
-            { $sort : sortStage}, 
-            { $skip : skip},
-            { $limit : limit},  
             { 
                 $addFields: {
                     avgRating: {
@@ -160,6 +166,9 @@ export const getAllProducts = async (req : Request, res: Response) =>{
                     ratingNumbers:{ $size: "$reviews"},
                 },
             },
+            { $sort : sortStage}, 
+            { $skip : skip},
+            { $limit : limit},
             { $project : { __v:0 , reviews:0,description:0 } },
         ])
         const count = await Product.countDocuments( matchStage )
@@ -167,6 +176,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
 
         return res.status(200).json({page,limit,count,products})
    }catch(error){
+        console.log(error)
         return res.status(500).json({error})
    }
   
@@ -226,7 +236,7 @@ export const appendImagesToProduct = async (req: Request, res: Response) =>{
         }
         return res.status(200).json({message:"success"})
     }catch(error){
-
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -257,7 +267,7 @@ export const deleteProduct = async (req: Request, res: Response) =>{
 
         return res.status(200).json({message:"success",ArrOfImagesThumbnailToDelete,ArrOfImagesMainToDelete})
     }catch(error){
-
+        console.log(error)
         return res.status(500).json({error})
     }
 }
