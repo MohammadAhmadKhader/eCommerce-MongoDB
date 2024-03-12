@@ -3,7 +3,7 @@ import * as cartsRouter from "../controllers/cartsController";
 import express from "express";
 const router = express.Router();
 
-router.get("/",authenticateUser,cartsRouter.getAllCartItems)
+router.get("/:userId",authenticateUser,cartsRouter.getAllCartItems)
 router.post("/",authenticateUser,cartsRouter.addToCart);
 router.put("/changeQtyByOne",authenticateUser,cartsRouter.changeCartItemQuantityByOne)
 router.delete("/clearCart",authenticateUser,cartsRouter.clearCart)
