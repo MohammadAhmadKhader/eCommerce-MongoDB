@@ -71,8 +71,9 @@ export const getUserByToken = async(req:Request,res:Response)=>{
         }
         
         const user = await User.findOne({
-            _id:sessionToken
+            _id:sessionToken.userId
         })
+        
         if(!user){
             return res.sendStatus(401)
         }
