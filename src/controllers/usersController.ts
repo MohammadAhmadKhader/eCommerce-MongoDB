@@ -97,6 +97,7 @@ export const logout = async (req:Request,res:Response)=>{
         }
         return res.sendStatus(204)
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -124,6 +125,7 @@ export const changePassword = async (req:Request,res:Response)=>{
         
         return res.status(200).json({message:"success"})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -150,6 +152,7 @@ export const changeUserInformation = async(req:Request,res:Response)=>{
         
         return res.status(200).json({message:"success",user})       
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -165,6 +168,7 @@ export const verifyCode = async (req:Request,res:Response)=>{
         await MailUtils.SendToResetPassword(email,userId)
         return res.status(200).json({message:"success"})       
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -188,6 +192,7 @@ export const resetPasswordViaCode = async (req:Request,res:Response)=>{
 
         return res.status(200).json({message:"success"})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }

@@ -59,7 +59,7 @@ export const addReviewToProduct = async (req:Request,res:Response)=>{
 
         return res.status(201).json({message:"success"})
     }catch(error){
-
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -84,8 +84,8 @@ export const editReview = async (req:Request,res:Response)=>{
         }
         
         return res.status(201).json({message:"success"})
-    }catch(error : any){
-        
+    }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -111,6 +111,7 @@ export const deleteReview = async(req:Request,res:Response)=>{
        
        return res.sendStatus(204);
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }

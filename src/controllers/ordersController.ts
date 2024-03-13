@@ -17,6 +17,7 @@ export const getAllOrders = async(req:Request,res:Response)=>{
 
         return res.status(200).json({count,page,limit,orders})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -75,6 +76,7 @@ export const createOrder = async(req :Request,res:Response)=>{
 
         return res.status(201).json({user:userAfterCartAndOrderChanged,order})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -93,6 +95,7 @@ export const deleteOrder = async (req:Request,res:Response) => {
         
         return res.sendStatus(204)
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
