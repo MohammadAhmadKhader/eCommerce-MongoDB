@@ -54,8 +54,32 @@ export const singIn = async (req:Request,res:Response)=>{
         })
         user.$set("password",undefined)
 
-        return res.status(200).json({user,token:sessionToken.token})
+        return res.status(200).json({message:"success",user,token:sessionToken.token})
     }catch(error){
+        return res.status(500).json({error})
+    }
+}
+
+export const getUserByToken = async(req:Request,res:Response)=>{
+    try{
+        const token = req.headers.authorization;
+        const sessionToken = await SessionToken.findOne({
+            token:token
+        })
+        if(!sessionToken){
+            return res.sendStatus(401)
+        }
+        
+        const user = await User.findOne({
+            _id:sessionToken
+        })
+        if(!user){
+            return res.sendStatus(401)
+        }
+
+        return res.status(200).json({user})
+    }catch(error){
+        console.log(error);
         return res.status(500).json({error})
     }
 }

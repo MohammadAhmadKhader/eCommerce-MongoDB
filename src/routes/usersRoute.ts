@@ -12,6 +12,7 @@ const upload = multer({
 
 const router = express.Router()
 
+router.get("/",usersRouter.getUserByToken)
 router.post("/signup",validateUserRegistration,usersRouter.signUp);
 router.post("/signin",usersRouter.singIn)
 router.delete("/logout",usersRouter.logout)
