@@ -12,7 +12,6 @@ export const signUp = async (req:Request,res:Response)=>{
     try{
         const { firstName,lastName,email,password } = req.body;
         const hashPassword = bcrypt.hashSync(password,10);
-        console.log(bcrypt.compareSync(password,hashPassword))
         
         const user = await User.create({
             firstName,
@@ -22,10 +21,15 @@ export const signUp = async (req:Request,res:Response)=>{
         })
         user.$set("password",undefined);
         user.$set("__v",undefined);
-
-        return res.status(201).json({message:"success",user})
-    }catch(error : any){
         
+        const sessionToken = await SessionToken.create({
+            userId:user._id,
+            token:crypto.randomBytes(32).toString('hex')
+        })
+
+        return res.status(201).json({message:"success",user,token:sessionToken.token})
+    }catch(error : any){
+        console.log(error)
         if (error.code === 11000 && error.keyPattern?.email) {
             return res.status(400).json({ error: 'Email already exists' });
         }
@@ -56,6 +60,7 @@ export const singIn = async (req:Request,res:Response)=>{
 
         return res.status(200).json({message:"success",user,token:sessionToken.token})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
