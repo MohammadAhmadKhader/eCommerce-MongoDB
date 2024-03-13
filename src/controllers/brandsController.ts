@@ -9,6 +9,7 @@ export const getAllBrands = async (req:Request,res:Response) =>{
 
         return res.status(200).json({brands})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -29,6 +30,7 @@ export const createNewBrand = async (req:Request,res:Response)=>{
 
         return res.status(200).json({message:"success",brand})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }

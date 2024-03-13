@@ -124,6 +124,7 @@ export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
         
         return res.status(200).json({message:"success",user:userAfterCartItemQtyWasChanged})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -138,6 +139,7 @@ export const clearCart = async (req:Request,res:Response)=>{
         return res.status(201).json({message:"success",user:userAfterCartCleared})
 
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }

@@ -22,6 +22,7 @@ export const getWishList = async (req:Request,res:Response)=>{
 
         return res.status(201).json({wishlist:products})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -49,6 +50,7 @@ export const addToWishList = async (req:Request, res:Response)=>{
         
         return res.status(201).json({message:"success",user:userAfterChanges})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
@@ -64,6 +66,7 @@ export const removeFromWishList = async (req:Request,res:Response)=>{
 
         return res.status(202).json({message:"success",user:userAfterChanges})
     }catch(error){
+        console.log(error)
         return res.status(500).json({error})
     }
 }
