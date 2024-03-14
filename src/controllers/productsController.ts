@@ -10,7 +10,7 @@ import { ObjectId } from 'mongodb';
 
 export const getProductById = async(req : Request,res : Response)=>{
     try{
-        const { limit,skip} = req.pagination;
+        const {page, limit,skip} = req.pagination;
         const productId = req.params.productId;
         
         const product = await Product.findOne({
@@ -26,11 +26,12 @@ export const getProductById = async(req : Request,res : Response)=>{
         }
 
         product.reviews.sort((a,b) => b.rating - a.rating )
+        const count = product.reviews.length;
         const paginatedReviews = product.reviews.slice(skip,skip + limit)
         product.$set("reviews",paginatedReviews)
         
 
-        return res.status(200).json({product})
+        return res.status(200).json({count,page,limit,product})
     }catch(error : any){
         console.error(error)
         return res.status(500).json({error:error?.message})
