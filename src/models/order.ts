@@ -31,11 +31,11 @@ const orderSchema = new Schema({
     },
     date:{
         type:Date,
-        default:new Date().toUTCString()
+        default:Date.now()
     },
     updatedDate:{
         type:Date,
-        default:new Date().toUTCString()
+        default:Date.now()
     },
     orderItems:[{
         name:String,

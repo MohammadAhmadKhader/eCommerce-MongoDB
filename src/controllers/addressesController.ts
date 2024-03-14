@@ -20,10 +20,10 @@ export const createNewAddress = async (req:Request,res:Response,next:NextFunctio
         )
 
         return res.status(201).json({message:"success",user:userAfterChanges})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const editAddress = async (req:Request,res:Response)=>{
@@ -51,10 +51,10 @@ export const editAddress = async (req:Request,res:Response)=>{
         )
 
         return res.status(200).json({message:"success",address:userAddress})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const deleteAddress = async (req:Request,res:Response)=>{
@@ -68,8 +68,8 @@ export const deleteAddress = async (req:Request,res:Response)=>{
         )
        
         return res.status(202).json({message:"success",user:userAfterDeletion})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }

@@ -1,30 +1,20 @@
 import { Request,Response } from "express";
 import User from "../models/user";
-import Product from "../models/product";
 import { ObjectId } from "mongodb";
 
 export const getWishList = async (req:Request,res:Response)=>{
     try{
-        const id = req.params.id;
-        const user = await User.findOne({_id:id})
-        if(!user){
+        const userId = req.params.userId;
+        const wishList = await User.findOne({_id:userId}).populate({path:"wishList.productId",select:"name images offer price finalPrice brand"})
+        if(!wishList){
             return res.status(400).json({error:"user was not found"})
         }
-        const wishlist = user.wishList;
-        if(wishlist.length == 6){
-            return res.status(400).json({error:"You have reached maximum allowed wish list items"})
-        }
-        const productsIds : any = []
-        wishlist.forEach((item)=>{
-            productsIds.push(item.productId)
-        })
-        const products = await Product.find({_id : { $in : productsIds}}).select("-reviews -description -categoryId -__v")
 
-        return res.status(201).json({wishlist:products})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+        return res.status(201).json({wishList:wishList.wishList})
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const addToWishList = async (req:Request, res:Response)=>{
@@ -49,10 +39,10 @@ export const addToWishList = async (req:Request, res:Response)=>{
         },{new:true,select:"-password -__v"})
         
         return res.status(201).json({message:"success",user:userAfterChanges})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const removeFromWishList = async (req:Request,res:Response)=>{
@@ -65,8 +55,8 @@ export const removeFromWishList = async (req:Request,res:Response)=>{
         },{new:true,select:"-password -__v"})
 
         return res.status(202).json({message:"success",user:userAfterChanges})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }

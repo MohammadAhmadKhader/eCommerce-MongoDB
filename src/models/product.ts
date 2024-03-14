@@ -55,6 +55,14 @@ const productSchema: Schema<IProduct>= new Schema({
             type:Number,
             required:true
         },
+        createdAt:{
+            type:Date,
+            default:Date.now()
+        },
+        updatedAt:{
+            type:Date,
+            default:Date.now()
+        }
     }],
     images:[{
         imageUrl:String,
@@ -62,14 +70,12 @@ const productSchema: Schema<IProduct>= new Schema({
     }],
     brand:{
         type:String,
-        required:true
+        required:true,
+        ref:"Brand"
     },
 },{
     timestamps:true
 })
-
-
-//productSchema.index({_id:1,'reviews.userId':1},{unique:true})
 
 
 const Product = mongoose.model("Product",productSchema);

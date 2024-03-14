@@ -29,12 +29,9 @@ export const signUp = async (req:Request,res:Response)=>{
 
         return res.status(201).json({message:"success",user,token:sessionToken.token})
     }catch(error : any){
-        console.log(error)
-        if (error.code === 11000 && error.keyPattern?.email) {
-            return res.status(400).json({ error: 'Email already exists' });
-        }
-        return res.status(500).json({error})
-    }
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const singIn = async (req:Request,res:Response)=>{
@@ -59,10 +56,10 @@ export const singIn = async (req:Request,res:Response)=>{
         user.$set("password",undefined)
 
         return res.status(200).json({message:"success",user,token:sessionToken.token})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const getUserByToken = async(req:Request,res:Response)=>{
@@ -84,10 +81,10 @@ export const getUserByToken = async(req:Request,res:Response)=>{
         }
 
         return res.status(200).json({user})
-    }catch(error){
-        console.log(error);
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const logout = async (req:Request,res:Response)=>{
@@ -101,10 +98,10 @@ export const logout = async (req:Request,res:Response)=>{
             return res.status(400).json({error:"Something went wrong during token deletion, token was not deleted"});
         }
         return res.sendStatus(204)
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const changePassword = async (req:Request,res:Response)=>{
@@ -129,10 +126,10 @@ export const changePassword = async (req:Request,res:Response)=>{
         }
         
         return res.status(200).json({message:"success"})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const changeUserInformation = async(req:Request,res:Response)=>{
@@ -156,10 +153,10 @@ export const changeUserInformation = async(req:Request,res:Response)=>{
         );
         
         return res.status(200).json({message:"success",user})       
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const verifyCode = async (req:Request,res:Response)=>{
@@ -172,10 +169,10 @@ export const verifyCode = async (req:Request,res:Response)=>{
 
         await MailUtils.SendToResetPassword(email,userId)
         return res.status(200).json({message:"success"})       
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const resetPasswordViaCode = async (req:Request,res:Response)=>{
@@ -196,8 +193,8 @@ export const resetPasswordViaCode = async (req:Request,res:Response)=>{
         }
 
         return res.status(200).json({message:"success"})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }

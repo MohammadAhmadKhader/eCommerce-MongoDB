@@ -6,8 +6,8 @@ export const getAllCategories = async (req:Request,res:Response)=>{
         const categories = await Category.find({});
 
         return res.status(200).json({categories})
-    }catch(error){
-        console.log(error)
-        return res.status(400).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }

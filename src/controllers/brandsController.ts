@@ -8,10 +8,10 @@ export const getAllBrands = async (req:Request,res:Response) =>{
         const brands = await Brand.find()
 
         return res.status(200).json({brands})
-    }catch(error){
+    }catch(error : any){
         console.log(error)
-        return res.status(500).json({error})
-    }
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const createNewBrand = async (req:Request,res:Response)=>{
@@ -29,8 +29,8 @@ export const createNewBrand = async (req:Request,res:Response)=>{
         })
 
         return res.status(200).json({message:"success",brand})
-    }catch(error){
+    }catch(error : any){
         console.log(error)
-        return res.status(500).json({error})
-    }
+        return res.status(500).json({error:error?.message})
+   }
 }

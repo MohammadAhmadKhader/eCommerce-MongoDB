@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
 import Product from "../models/product";
-import mongoose from "mongoose";
 import { ObjectId } from "mongodb";
-
 
 export const getAllReviewsByUserId = async (req:Request,res:Response) =>{
     try{
@@ -10,22 +8,24 @@ export const getAllReviewsByUserId = async (req:Request,res:Response) =>{
         const userId = req.params.userId;
         console.log(userId)
         console.log(skip,page,limit);
-        const match = { 'reviews.userId' :new mongoose.Types.ObjectId(userId) }
+        const match = { 'reviews.userId' :new ObjectId(userId) }
 
         const reviews = await Product.aggregate([
             { $unwind : "$reviews"},
             { $match : match },
+            { $project : { review : "$reviews", _id : 0} },
             { $skip : skip },
-            { $project : { reviews : 1, _id : 0} },
             { $limit : limit }
         ])
         const matchingReviewsCount = await Product.aggregate([{ $unwind : "$reviews"},{ $match : match }]).count("reviews")
         const [{ reviews : reviewsCount}] = matchingReviewsCount
-        return res.status(200).json({count:reviewsCount,limit,page,reviews})
+        const improvedReviewsResponse = reviews.map(reviewObj => reviewObj.review);
+        return res.status(200).json({count:reviewsCount,limit,page,reviews:improvedReviewsResponse})
 
-    }catch(error){
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const addReviewToProduct = async (req:Request,res:Response)=>{
@@ -84,10 +84,10 @@ export const editReview = async (req:Request,res:Response)=>{
         }
         
         return res.status(201).json({message:"success"})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const deleteReview = async(req:Request,res:Response)=>{
@@ -110,8 +110,8 @@ export const deleteReview = async(req:Request,res:Response)=>{
         }
        
        return res.sendStatus(204);
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }

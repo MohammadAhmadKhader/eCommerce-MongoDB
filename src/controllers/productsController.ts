@@ -1,4 +1,3 @@
-import  mongoose from 'mongoose';
 import { IMulterFile,image } from '../@types/types';
 import { Request, Response } from "express"
 import Product from "../models/product"
@@ -6,7 +5,7 @@ import CloudinaryUtils from "../utils/CloudinaryUtils";
 import imageThumbnail from "image-thumbnail"
 import { ImageThumbnailOptions } from '../utils/ThumbnailUtils';
 import { isJSON } from '../utils/HelperFunctions';
-
+import { ObjectId } from 'mongodb';
 
 
 export const getProductById = async(req : Request,res : Response)=>{
@@ -14,67 +13,28 @@ export const getProductById = async(req : Request,res : Response)=>{
         const { limit,skip} = req.pagination;
         const productId = req.params.productId;
         
-        const aggregateToGetAvg = await Product.aggregate([
-             { $match : { _id : new mongoose.Types.ObjectId(productId) } },
-             { $unwind : "$reviews"},
-             { $group:{
-                _id:null,
-                originalProduct: { $first: '$$ROOT' },
-                reviews: {$push : "$reviews"}
-            } },
-            {
-                $lookup:{
-                    from:"users",
-                    localField:"reviews.userId",
-                    foreignField:"_id",
-                    as:"userReviews"
-                }
-            },
-            {
-                $addFields: {
-                    "reviews.user": "$userReviews"
-                }
-            },
-            {
-                $project: {
-                    originalProduct:1,
-                    reviews:{
-                       $slice:['$reviews',skip,limit],
-                    },
-                    avgRating: { $avg : "$reviews.rating"},
-                    reviewsCount : { $size : "$reviews"},
-
-                }
-            },
-        ])
+        const product = await Product.findOne({
+            _id:productId
+        }).populate({
+            path:"reviews.userId",
+            select:"name firstName lastName role userImg",
+            
+        });
         
-        if(aggregateToGetAvg.length == 0){
-            return res.status(400).json({error:"Product was not found"});
+        if(!product){
+            return res.status(400).json({error:"product was not found"})
         }
 
-        const { avgRating, originalProduct ,reviewsCount,reviews} = aggregateToGetAvg[0];
-
-        originalProduct.reviews = reviews
-        originalProduct.avgRating = avgRating;
-        originalProduct.reviewsCount = reviewsCount
-        originalProduct.__v = undefined;
+        product.reviews.sort((a,b) => b.rating - a.rating )
+        const paginatedReviews = product.reviews.slice(skip,skip + limit)
+        product.$set("reviews",paginatedReviews)
         
-        originalProduct.reviews.map((review : any)=>{
-            
-                review.user[0].password = undefined
-                review.user[0].wishList = undefined
-                review.user[0].orders = undefined
-                review.user[0].cart = undefined
-                review.user[0].addresses = undefined
-                review.user[0].__v = undefined
-            return review
-        })
-    
-        return res.status(200).json({product:originalProduct})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+
+        return res.status(200).json({product})
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const getAllProducts = async (req : Request, res: Response) =>{
@@ -118,7 +78,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
              console.log(brand)
         }
         if(category){
-            const categoryId = new mongoose.Types.ObjectId(category)
+            const categoryId = new ObjectId(category)
             matchStage.categoryId = categoryId;
         }
 
@@ -175,10 +135,10 @@ export const getAllProducts = async (req : Request, res: Response) =>{
         
 
         return res.status(200).json({page,limit,count,products})
-   }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-   }
+   }catch(error : any){
+    console.error(error)
+    return res.status(500).json({error:error?.message})
+}
   
 }
 
@@ -211,10 +171,10 @@ export const postNewProduct = async (req : Request , res : Response)=>{
         })
 
         return res.status(201).json({product:newProduct,message:"success"})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const appendImagesToProduct = async (req: Request, res: Response) =>{
@@ -235,10 +195,10 @@ export const appendImagesToProduct = async (req: Request, res: Response) =>{
             return res.status(400).json({error:"images were not uploaded successfully"})
         }
         return res.status(200).json({message:"success"})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const deleteProduct = async (req: Request, res: Response) =>{
@@ -266,8 +226,8 @@ export const deleteProduct = async (req: Request, res: Response) =>{
         }
 
         return res.status(200).json({message:"success",ArrOfImagesThumbnailToDelete,ArrOfImagesMainToDelete})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
