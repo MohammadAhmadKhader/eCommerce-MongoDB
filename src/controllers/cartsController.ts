@@ -6,29 +6,20 @@ import { ObjectId } from "mongodb";
 export const getAllCartItems = async (req:Request,res:Response)=>{
     try{
         const userId = req.params.userId;
-        const arrayOfProductsIds : any = []
-        const user = await User.findById(userId,{cart:1})
-        if(!user){
-            return res.status(400).json({error:"user was not found"});
-        }
-        if(user.cart.length == 0){
-            return res.status(200).json({cartItems:[]})
-        }
-
-        user.cart.forEach((cartItem)=>{
-            arrayOfProductsIds.push(cartItem.productId);
+        
+        const cartItems = await User.findById(userId,{cart:1}).populate({
+            path:"cart.productId",
+            select:"name images offer price finalPrice brand quantity"
         })
+        if(!cartItems){{
+            return res.status(400).json({error:"User was not found"})
+        }}
         
-        console.log(arrayOfProductsIds)
-        const cartItems = await Product.find(
-            {_id: {$in : arrayOfProductsIds }},
-            {reviews:0,__v:0,description:0,categoryId:0,brand:0})
-        
-
-        return res.status(200).json({cartItems})
-    }catch(error){
-        return res.status(500).json({error})
-    }
+        return res.status(200).json({cartItems:cartItems})
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const addToCart = async (req:Request,res:Response)=>{
@@ -52,9 +43,10 @@ export const addToCart = async (req:Request,res:Response)=>{
         },{new:true,select:"-password -__v"})
 
         return res.status(201).json({message:"success",user:userAfterCartChanged})
-    }catch(error){
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const deleteFromCart = async (req:Request,res:Response)=>{
@@ -67,9 +59,10 @@ export const deleteFromCart = async (req:Request,res:Response)=>{
         },{new:true,select:"-password -__v"})
 
         return res.status(204).json({message:"success",user:userAfterCartChanged})
-    }catch(error){
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
@@ -123,10 +116,10 @@ export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
         )
         
         return res.status(200).json({message:"success",user:userAfterCartItemQtyWasChanged})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const clearCart = async (req:Request,res:Response)=>{
@@ -138,9 +131,9 @@ export const clearCart = async (req:Request,res:Response)=>{
         console.log(userAfterCartCleared)
         return res.status(201).json({message:"success",user:userAfterCartCleared})
 
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 

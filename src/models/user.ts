@@ -12,9 +12,11 @@ const userSchema = new Schema({
     },
     firstName:{
         type:String,
+        required:true
     },
     lastName:{
         type:String,
+        required:true
     },
     mobileNumber:{
         type:String,
@@ -34,7 +36,11 @@ const userSchema = new Schema({
         streetAddress:String,
     }],
     wishList:[{
-        productId:Schema.Types.ObjectId,
+        productId:{
+            type:Schema.Types.ObjectId,
+            required:true,
+            ref:"Product"
+        },
     }],
     role:{
         type:String,
@@ -42,7 +48,11 @@ const userSchema = new Schema({
         enum:["user","admin"]
     },
     cart:[{
-        productId:Schema.Types.ObjectId,
+        productId:{
+            type:Schema.Types.ObjectId,
+            required:true,
+            ref:"Product"
+        },
         quantity:Number,
     }], 
 },{

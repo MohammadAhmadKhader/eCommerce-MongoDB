@@ -16,10 +16,10 @@ export const getAllOrders = async(req:Request,res:Response)=>{
         const count = await Order.find(match).countDocuments()
 
         return res.status(200).json({count,page,limit,orders})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const createOrder = async(req :Request,res:Response)=>{
@@ -74,11 +74,11 @@ export const createOrder = async(req :Request,res:Response)=>{
             cart: { $set : []}
         },{new:true,select:"-password -__v"})
 
-        return res.status(201).json({user:userAfterCartAndOrderChanged,order})
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+        return res.status(201).json({message:"success",user:userAfterCartAndOrderChanged,order})
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
 
 export const deleteOrder = async (req:Request,res:Response) => {
@@ -94,8 +94,8 @@ export const deleteOrder = async (req:Request,res:Response) => {
         },{new:true})
         
         return res.sendStatus(204)
-    }catch(error){
-        console.log(error)
-        return res.status(500).json({error})
-    }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
 }
