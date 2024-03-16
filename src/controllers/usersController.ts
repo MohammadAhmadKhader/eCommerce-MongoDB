@@ -74,7 +74,7 @@ export const getUserByToken = async(req:Request,res:Response)=>{
         
         const user = await User.findOne({
             _id:sessionToken.userId
-        })
+        },{password:0})
         
         if(!user){
             return res.sendStatus(401)

@@ -15,8 +15,9 @@ export const getAllReviewsByUserId = async (req:Request,res:Response) =>{
             { $match : match },
             { $project : { review : "$reviews", _id : 0} },
             { $skip : skip },
-            { $limit : limit }
+            { $limit : limit },
         ])
+        
         const matchingReviewsCount = await Product.aggregate([{ $unwind : "$reviews"},{ $match : match }]).count("reviews")
         const [{ reviews : reviewsCount}] = matchingReviewsCount
         const improvedReviewsResponse = reviews.map(reviewObj => reviewObj.review);

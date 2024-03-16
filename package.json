@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./dist/src/app.js",
-    "dev":"nodemon ./dist/src/app.js",
+    "dev": "nodemon ./dist/src/app.js",
     "build": "npm i && npm install typescript && npx tsc"
   },
   "author": "",
@@ -34,6 +34,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.3.0",
     "mongoose": "^8.1.1",
+    "mongoose-paginate": "^5.0.3",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.11"

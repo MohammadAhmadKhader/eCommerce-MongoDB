@@ -6,16 +6,25 @@ import { ObjectId } from "mongodb";
 export const getAllCartItems = async (req:Request,res:Response)=>{
     try{
         const userId = req.params.userId;
-        
+        if(!userId){
+            return res.status(400).json({error:"user id is required"})
+        }
+        // Its better to use aggregate for read performance
         const cartItems = await User.findById(userId,{cart:1}).populate({
             path:"cart.productId",
-            select:"name images offer price finalPrice brand quantity"
+            select:"name images offer price finalPrice brand quantity",
         })
-        if(!cartItems){{
-            return res.status(400).json({error:"User was not found"})
-        }}
+        const renamedParams : any = cartItems?.toObject();
+        renamedParams?.cart.map((item : any)=>{
+            item.cartItem = item.productId
+            delete item.productId
+        })
         
-        return res.status(200).json({cartItems:cartItems})
+        if(!cartItems){
+            return res.status(400).json({error:"User was not found"})
+        }
+        
+        return res.status(200).json({cart:renamedParams.cart})
     }catch(error : any){
         console.error(error)
         return res.status(500).json({error:error?.message})
