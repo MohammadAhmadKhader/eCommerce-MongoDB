@@ -6,7 +6,7 @@ import { validateUserReview } from '../middlewares/validationsFunctions';
 const router = express.Router()
 
 
-router.get("/:userId",pagination,reviewsRouter.getAllReviewsByUserId)
+router.get("/:userId",authenticateUser,pagination,reviewsRouter.getAllReviewsByUserId)
 router.post("/",authenticateUser,validateUserReview,reviewsRouter.addReviewToProduct)
 router.put("/",authenticateUser,reviewsRouter.editReview);
 router.delete("/",authenticateUser,reviewsRouter.deleteReview)
