@@ -47,11 +47,13 @@ export const getProductById = async(req : Request,res : Response)=>{
                 ratingNumbers:{$sum:1},
                 reviews:{
                     $push:"$reviews"
-                    
                 }
             }},
             {
                 $project:{
+                    avgRating:{
+                        $avg:"$reviews.rating"
+                    },
                     reviews:{
                         $slice:["$reviews",skip,limit] 
                     },
