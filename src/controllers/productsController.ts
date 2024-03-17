@@ -35,6 +35,7 @@ export const getProductById = async(req : Request,res : Response)=>{
                 _id:"$_id",
                 name:{$first:"$name"},
                 description:{$first:"$description"},
+                categoryId:{$first:"$categoryId"},
                 price:{$first:"$price"},
                 finalPrice:{$first:"$finalPrice"},
                 offer:{$first:"$offer"},
@@ -65,6 +66,7 @@ export const getProductById = async(req : Request,res : Response)=>{
                     createdAt: 1,
                     updatedAt: 1,
                     ratingNumbers: 1,
+                    categoryId:1,
                 }
             },
             {
