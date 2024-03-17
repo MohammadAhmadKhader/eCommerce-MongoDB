@@ -40,7 +40,9 @@ export const singIn = async (req:Request,res:Response)=>{
         if(!email || !password){
             return res.sendStatus(401)
         }
-        const user = await User.findOne({email:email})
+        
+        const user = await User.findOne({email:email},{},{select:"+password"})
+        
         if(!user || !await bcrypt.compare(password,user.password)){
             return res.status(401).json({error:"Invalid email or password"})
         }
@@ -48,7 +50,7 @@ export const singIn = async (req:Request,res:Response)=>{
         const deleteOldSession = await SessionToken.deleteOne({
             userId:user._id
         })
-
+        
         const sessionToken = await SessionToken.create({
             userId:user._id,
             token:crypto.randomBytes(32).toString('hex')
