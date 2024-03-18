@@ -3,7 +3,7 @@ import Category from "../models/category";
 
 export const getAllCategories = async (req:Request,res:Response)=>{
     try{
-        const categories = await Category.find({});
+        const categories = await Category.find({}).select("-__v");
 
         return res.status(200).json({categories})
     }catch(error : any){
