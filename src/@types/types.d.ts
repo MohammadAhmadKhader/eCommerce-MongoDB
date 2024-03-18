@@ -35,6 +35,59 @@ export interface IProduct {
     brand: string;
 }
 
+export interface IUser {
+    _id:ObjectId;
+    email:string;
+    password:string;
+    firstName:string;
+    lastName:string;
+    mobileNumber:string;
+    userImg:string;
+    birthdate:Date;
+    role:"user" | "admin";
+    passwordChangedAt:Date | undefined;
+    addresses:IAddresses[];
+    wishList:IWishListItem[];
+    cart:ICartItem[];
+    createdAt:Date;
+    updatedAt:Date;
+    isPasswordHasChanged:(JWT_Timestamps:number)=>Promise<boolean>
+}
+
+export interface IAddresses {
+    fullName:string;
+    mobileNumber:string;
+    state:string;
+    city:string;
+    pinCode:string;
+    streetAddress:string;
+}
+
+export interface IWishListItem {
+    _id:ObjectId;
+    productId:ObjectId;
+}
+
+export interface IImageThumbnailOptions {
+    width:number;
+    height:number;
+    fit:string ;
+    responseType: string | any ;
+    jpegOptions: {force:boolean,quality:number};
+}
+
+export interface ICartItem {
+    _id:ObjectId;
+    productId:ObjectId;
+    quantity:number;
+}
+
+export interface IDecodedToken {
+    id:string;
+    iat:number;
+    exp:number;
+}
+
 export type image = {
     imageUrl:string,
     thumbnailUrl:string,

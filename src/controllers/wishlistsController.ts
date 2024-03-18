@@ -62,6 +62,7 @@ export const getWishList = async (req:Request,res:Response)=>{
    }
 }
 
+// * we can pass user from authenticate middleware instead initiating a query for it
 export const addToWishList = async (req:Request, res:Response)=>{
     try{
         const productId = req.body.productId as string;

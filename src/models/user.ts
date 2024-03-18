@@ -1,6 +1,8 @@
+import { ObjectId } from "mongodb";
 import mongoose,{Schema} from "mongoose";
+import { IUser } from "../@types/types";
 
-const userSchema = new Schema({
+const userSchema = new Schema<IUser>({
     email:{
         type:String,
         required:true,
@@ -55,11 +57,20 @@ const userSchema = new Schema({
             ref:"Product"
         },
         quantity:Number,
-    }], 
+    }],
+    passwordChangedAt:Date
 },{
     timestamps:true
 })
 
+userSchema.methods.isPasswordHasChanged =async function(JWT_Timestamps : number){
+    if(this.passwordChangedAt){
+        const pwInTimestamps = Math.floor(this.passwordChangedAt.getTime() / 1000)
+        return JWT_Timestamps < pwInTimestamps 
+        // if token was made after password return true
+    }
+    return false;
+}
 
 const User = mongoose.model("User",userSchema);
 export default User;

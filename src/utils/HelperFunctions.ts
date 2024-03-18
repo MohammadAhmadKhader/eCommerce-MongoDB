@@ -1,3 +1,5 @@
+
+import jwt from "jsonwebtoken" ;
 export function isJSON(brand:string){
     try{
         JSON.parse(brand)
@@ -5,4 +7,12 @@ export function isJSON(brand:string){
     }catch{
         return false
     }
+}
+
+
+
+export const signToken = (id:string)=>{
+    return jwt.sign({id},process.env.TOKEN_SECRET as string,{
+        expiresIn:process.env.LOGIN_EXPIRES,
+    })
 }

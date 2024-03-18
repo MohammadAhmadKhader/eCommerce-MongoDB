@@ -2,11 +2,12 @@ import { Request, Response } from "express";
 import User from "../models/user";
 import bcrypt from "bcrypt"
 import SessionToken from "../models/sessionToken";
-import crypto from "crypto"
 import MailUtils from "../utils/MailUtils";
 import ResetPassCode from "../models/resetPassCode";
 import CloudinaryUtils from "../utils/CloudinaryUtils";
 import { IMulterFile } from "../@types/types";
+import { signToken } from "../utils/HelperFunctions";
+import crypto from 'crypto';
 
 export const signUp = async (req:Request,res:Response)=>{
     try{
@@ -19,12 +20,14 @@ export const signUp = async (req:Request,res:Response)=>{
             email,
             password:hashPassword
         })
+
+        const token = signToken(user._id.toString())
         user.$set("password",undefined);
         user.$set("__v",undefined);
         
         const sessionToken = await SessionToken.create({
             userId:user._id,
-            token:crypto.randomBytes(32).toString('hex')
+            token:token
         })
 
         return res.status(201).json({message:"success",user,token:sessionToken.token})
@@ -34,7 +37,7 @@ export const signUp = async (req:Request,res:Response)=>{
    }
 }
 
-export const singIn = async (req:Request,res:Response)=>{
+export const signIn = async (req:Request,res:Response)=>{
     try{
         const { email,password } = req.body;
         if(!email || !password){
@@ -51,9 +54,11 @@ export const singIn = async (req:Request,res:Response)=>{
             userId:user._id
         })
         
+        const token = signToken(user._id.toString())
+        
         const sessionToken = await SessionToken.create({
             userId:user._id,
-            token:crypto.randomBytes(32).toString('hex')
+            token:token
         })
         user.$set("password",undefined)
 
@@ -109,25 +114,36 @@ export const logout = async (req:Request,res:Response)=>{
 export const changePassword = async (req:Request,res:Response)=>{
     try{
         const { oldPassword, newPassword ,userId} = req.body;
+       
         if(!userId){
             return res.status(400).json({error:"User Id is required"});
         }
-
-        const user = await User.findById(userId)
+       
+        const user = await User.findById(userId).select("+password")
+        
         if(!user){
             return res.status(400).json({error:"User was not found"});
         }
-        if(!bcrypt.compareSync(oldPassword,user.password)){
+        
+        if(!await bcrypt.compare(oldPassword,user.password)){
             return res.status(400).json({error:"Invalid password"})
         }
+        
         const updateUser = await User.findByIdAndUpdate(userId,{
-            password:bcrypt.hashSync(newPassword,10)
+            password:await bcrypt.hash(newPassword,10)
         })
         if(!updateUser){
             return res.status(400).json({error:"Something went wrong during password update"});
         }
+        const token = signToken(user._id.toString())
         
-        return res.status(200).json({message:"success"})
+        const sessionToken = await SessionToken.findOneAndUpdate({
+            userId:user._id,
+        },{
+            token:token
+        })
+
+        return res.status(200).json({message:"success",token})
     }catch(error : any){
         console.error(error)
         return res.status(500).json({error:error?.message})
@@ -161,37 +177,91 @@ export const changeUserInformation = async(req:Request,res:Response)=>{
    }
 }
 
-export const verifyCode = async (req:Request,res:Response)=>{
+export const resetPasswordViaCode = async (req:Request,res:Response)=>{
     try{
-        const {email,userId} = req.body;
-        const user = await User.findById(userId);
-        if(!user || user.email !== email){
-            return res.status(400).json({message:"Invalid user"})
+        const {newPassword,confirmedNewPassword} = req.body;
+        
+        if(!newPassword || !confirmedNewPassword){
+            return res.status(400).json({error:"Missing Password"});
         }
+        if(newPassword !== confirmedNewPassword){
+            return res.status(400).json({error:"Password Does Not Match"});
+        }
+        const token = req.params.token;
+        const code = await ResetPassCode.findOne(
+            {
+                code:token,
+                expiredAt:{
+                    $gt:Date.now()
+                }
+            })
+        if(!code){
+            return res.status(403).json({error:"Wrong token or it has expired"})
+        }
+        const updateUserPassword = await User.findOneAndUpdate({_id:code.userId},{
+            password:bcrypt.hashSync(newPassword,10)
+        })
+        if(!updateUserPassword){
+            return res.status(400).json({error:"Something Went Wrong Please Try Again Later"})
+        }
+        // mongoDB will convert timestamps into actual date
+        //@ts-expect-error
+        updateUserPassword.passwordChangedAt = Date.now();
+        await updateUserPassword.save()
 
-        await MailUtils.SendToResetPassword(email,userId)
-        return res.status(200).json({message:"success"})       
+        return res.status(200).json({message:"success"})
     }catch(error : any){
         console.error(error)
         return res.status(500).json({error:error?.message})
    }
 }
 
-export const resetPasswordViaCode = async (req:Request,res:Response)=>{
+export const forgotPassword = async (req:Request,res:Response)=>{
     try{
-        const {newPassword,confirmNewPassword,userId} = req.body;
-        if(newPassword !== confirmNewPassword){
-            return res.status(400).json({error:"Password Must Match"})
+        const {email} = req.body;
+        const user = await User.findOne({email:email})
+        if(!user){
+            return res.sendStatus(401)
         }
-        const code = await ResetPassCode.findOne({userId})
-        if(!code){
-            return res.status(403).json({error:"There is no code for you"})
-        }
-        const updateUserPassword = await User.findByIdAndUpdate(userId,{
-            password:bcrypt.hashSync(newPassword,10)
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        const resetCode = await ResetPassCode.create({
+            userId:user?._id,
+            code:resetToken
         })
-        if(!updateUserPassword){
-            return res.status(400).json({error:"Something went wrong"})
+        if(!resetCode || !resetCode.code){
+            return res.status(200).json({error:"Something Went Wrong Please Try Again"})
+        }
+        
+        const resetUrl = `${req.protocol}://${req.get('host')}/api/users/resetPassword/${resetToken}`;
+
+        try{
+            await MailUtils.SendToResetPassword(email,resetUrl as string);
+            return res.status(202).json({
+                message:"success",
+
+            })
+        }catch(error){
+            console.error(error);
+            resetCode.code = undefined;
+            await resetCode.save();
+            return res.status(500).json({error});
+        }
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
+}
+
+export const verifyResetPasswordToken = async (req:Request,res:Response)=>{
+    try{
+        const {token} = req.params;
+        if(!token){
+            return res.status(400).json({error:"Something Went Wrong"});
+        }
+        const storedToken = await ResetPassCode.findOne({code:token});
+        if(!storedToken){
+            return res.status(400).json({error:"Token was not found"})
         }
 
         return res.status(200).json({message:"success"})
