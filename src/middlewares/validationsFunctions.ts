@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { creatingAddressSchema, creatingProductValidationSchema, reviewSchema, userChangePasswordSchema, userRegistrationSchema } from "./validationsSchemas";
+import { creatingAddressSchema, creatingProductValidationSchema, reviewSchema, sendingMessageSchema, userChangePasswordSchema, userRegistrationSchema } from "./validationsSchemas";
 
 export const validateUserRegistration = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = userRegistrationSchema.validate({
@@ -89,6 +89,21 @@ export const validateCreateProduct = (req:Request,res:Response,next:NextFunction
         quantity:req.body.quantity,
         images:req.body.images,
         brand:req.body.brand,
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateSendingMessage = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = sendingMessageSchema.validate({
+        fullName:req.body.fullName,
+        email:req.body.email,
+        subject:req.body.subject,
+        message:req.body.message,
     },{abortEarly:false})
 
     if(error){

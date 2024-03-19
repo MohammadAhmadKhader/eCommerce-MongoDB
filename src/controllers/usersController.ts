@@ -45,8 +45,8 @@ export const signIn = async (req:Request,res:Response)=>{
         }
         
         const user = await User.findOne({email:email},{},{select:"+password"})
-        
-        if(!user || !await bcrypt.compare(password,user.password)){
+         
+        if(!user || !(await bcrypt.compare(password,user.password))){
             return res.status(401).json({error:"Invalid email or password"})
         }
 
@@ -199,7 +199,7 @@ export const resetPasswordViaCode = async (req:Request,res:Response)=>{
             return res.status(403).json({error:"Wrong token or it has expired"})
         }
         const updateUserPassword = await User.findOneAndUpdate({_id:code.userId},{
-            password:bcrypt.hashSync(newPassword,10)
+            password:await bcrypt.hash(newPassword,10)
         })
         if(!updateUserPassword){
             return res.status(400).json({error:"Something Went Wrong Please Try Again Later"})
@@ -208,7 +208,9 @@ export const resetPasswordViaCode = async (req:Request,res:Response)=>{
         //@ts-expect-error
         updateUserPassword.passwordChangedAt = Date.now();
         await updateUserPassword.save()
-
+        // To ensure none use the token again
+        code.code = undefined;
+        await code.save()
         return res.status(200).json({message:"success"})
     }catch(error : any){
         console.error(error)
@@ -227,13 +229,13 @@ export const forgotPassword = async (req:Request,res:Response)=>{
         const resetToken = crypto.randomBytes(32).toString("hex");
         const resetCode = await ResetPassCode.create({
             userId:user?._id,
-            code:resetToken
+            code:resetToken,
         })
         if(!resetCode || !resetCode.code){
             return res.status(200).json({error:"Something Went Wrong Please Try Again"})
         }
         
-        const resetUrl = `${req.protocol}://${req.get('host')}/api/users/resetPassword/${resetToken}`;
+        const resetUrl = `${req.protocol}://${req.get('host')}/resetPassword/${resetToken}`;
 
         try{
             await MailUtils.SendToResetPassword(email,resetUrl as string);

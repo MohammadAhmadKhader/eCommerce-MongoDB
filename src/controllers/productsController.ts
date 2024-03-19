@@ -291,3 +291,18 @@ export const deleteProduct = async (req: Request, res: Response) =>{
         return res.status(500).json({error:error?.message})
    }
 }
+
+export const searchForProducts = async (req: Request, res: Response) =>{
+    try{
+        const {text} = req.params;
+        const products = await Product.find({
+            $text:{
+                $search:text
+            }
+        }).select({score: {$meta:"textScore"},reviews:0,__v:0,updatedAt:0,createdAt:0}).sort({score:{$meta:"textScore"}})
+        return res.status(200).json({count:products.length,products})
+    }catch(error : any){
+        console.error(error)
+        return res.status(500).json({error:error?.message})
+   }
+}

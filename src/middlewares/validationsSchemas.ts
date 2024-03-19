@@ -59,3 +59,10 @@ export const creatingProductValidationSchema = Joi.object({
       }),
     }
   );
+
+export const sendingMessageSchema = Joi.object({
+    fullName:Joi.string().min(4).max(32).required(),
+    email:Joi.string().email().min(5).max(64).required(),
+    subject: Joi.string().min(4).max(32),
+    message: Joi.string().min(4).max(256),
+})
