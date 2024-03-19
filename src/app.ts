@@ -10,6 +10,7 @@ import reviewsRoute from "./routes/reviewsRoute"
 import addressesRoute from "./routes/addressesRoute"
 import categoriesRoute from "./routes/categoriesRoute"
 import brandsRoute from "./routes/brandsRoute"
+import contactUsRoute from "./routes/contactUsRoute"
 import dotenv from "dotenv";
 dotenv.config();
 import "./config/database";
@@ -41,3 +42,4 @@ app.use("/api/orders",ordersRoute)
 app.use("/api/reviews",reviewsRoute);
 app.use("/api/addresses",addressesRoute);
 app.use("/api/brands",brandsRoute);
+app.use("/api/contactUs",contactUsRoute)
