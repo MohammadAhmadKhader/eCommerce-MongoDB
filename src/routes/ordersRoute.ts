@@ -5,7 +5,7 @@ import express from "express"
 const router = express.Router()
 
 
-router.get("/",authenticateUser,pagination,ordersRouter.getAllOrders)
+router.get("/:userId",authenticateUser,pagination,ordersRouter.getAllOrders)
 router.post("/",authenticateUser,ordersRouter.createOrder)
 router.delete("/",authenticateUser,ordersRouter.deleteOrder)
 

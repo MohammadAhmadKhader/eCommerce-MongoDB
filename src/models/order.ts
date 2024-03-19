@@ -29,14 +29,6 @@ const orderSchema = new Schema({
             message:"Value must be one of Completed, Processing or Cancelled"
         }
     },
-    date:{
-        type:Date,
-        default:Date.now()
-    },
-    updatedDate:{
-        type:Date,
-        default:Date.now()
-    },
     orderItems:[{
         name:String,
         quantity:Number,

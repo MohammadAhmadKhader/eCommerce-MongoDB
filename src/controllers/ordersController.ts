@@ -6,13 +6,13 @@ import Product from "../models/product";
 export const getAllOrders = async(req:Request,res:Response)=>{
     try{
         const { limit,skip,page} = req.pagination;
-        const userId = req.body.userId
-        const status = req.body.status;
+        const userId = req.params.userId
+        const status = req.query.status;
         if(!status){
             return res.status(400).json({error:"Status is required"});
         }
-        const match = {status:status,userId:userId}
-        const orders = await Order.find(match).skip(skip).limit(limit)
+        const match = {status:status,userId:userId};
+        const orders = await Order.find(match).sort({createdAt:-1}).skip(skip).limit(limit)
         const count = await Order.find(match).countDocuments()
 
         return res.status(200).json({count,page,limit,orders})
