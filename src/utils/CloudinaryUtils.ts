@@ -59,7 +59,7 @@ async function UploadManySubImagesAndThumbnails(Iterable : IMulterFile[]){
 
 async function DeleteOne(ImageLink : string,Folder : string){
     const ImageName = getImageName(ImageLink);
-
+    
     const deleteAnImage = await Cloudinary.api.delete_resources(
         [`${Folder}/${ImageName}`],
         { type: 'upload', resource_type: 'image' })
