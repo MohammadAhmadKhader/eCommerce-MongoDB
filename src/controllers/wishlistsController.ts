@@ -48,8 +48,7 @@ export const getWishList = async (req:Request,res:Response)=>{
                     "wishListItem.__v":0,
                     "wishListItem.description":0,
                 }
-            }
-           
+            }  
         ]).allowDiskUse(true)
 
         if(wishList.length == 0){
