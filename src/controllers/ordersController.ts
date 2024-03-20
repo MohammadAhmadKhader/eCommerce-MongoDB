@@ -22,6 +22,21 @@ export const getAllOrders = async(req:Request,res:Response)=>{
    }
 }
 
+export const getSingleOrderById = async(req:Request,res:Response)=>{
+    try{
+        const {orderId} = req.params;
+        const order = await Order.findOne({_id:orderId});
+        if(!order){
+            return res.status(400).json({error:"order was not found"})
+        }
+        console.log(order)
+        return res.status(200).json({order})
+    }catch(error){
+        console.error(error)
+        return res.status(500).json({error})
+    }
+}
+
 export const createOrder = async(req :Request,res:Response)=>{
     try{
         const userId = req.body.userId;
@@ -71,7 +86,7 @@ export const createOrder = async(req :Request,res:Response)=>{
         })
 
         const userAfterCartAndOrderChanged = await User.findOneAndUpdate({_id:userId},{
-            cart: { $set : []}
+            $set :{cart:[]}
         },{new:true,select:"-password -__v"})
 
         return res.status(201).json({message:"success",user:userAfterCartAndOrderChanged,order})
@@ -80,6 +95,8 @@ export const createOrder = async(req :Request,res:Response)=>{
         return res.status(500).json({error:error?.message})
    }
 }
+
+
 
 export const deleteOrder = async (req:Request,res:Response) => {
     try{

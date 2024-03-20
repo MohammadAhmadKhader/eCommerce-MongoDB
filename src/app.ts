@@ -4,7 +4,7 @@ const cors = require("cors");
 import productsRoute from "./routes/productsRoute"
 import usersRoute from "./routes/usersRoute"
 import cartsRoute from "./routes/cartsRoute"
-import wishlistsRoute from "./routes/wishlists"
+import wishlistsRoute from "./routes/wishlistsRoute"
 import ordersRoute from "./routes/ordersRoute"
 import reviewsRoute from "./routes/reviewsRoute"
 import addressesRoute from "./routes/addressesRoute"

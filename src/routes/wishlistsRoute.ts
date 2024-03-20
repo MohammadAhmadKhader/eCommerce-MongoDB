@@ -1,4 +1,4 @@
-import { authenticateUser } from './../middlewares/authenticate';
+import { authenticateUser } from '../middlewares/authenticate';
 import * as wishListsRouter from "../controllers/wishlistsController" 
 import express from "express"
 const router = express.Router()
