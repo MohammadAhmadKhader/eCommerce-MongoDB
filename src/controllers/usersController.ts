@@ -153,9 +153,9 @@ export const changePassword = async (req:Request,res:Response)=>{
 export const changeUserInformation = async(req:Request,res:Response)=>{
     try{
         const userId = req.params.userId;
-        const {email,firstName,lastName,mobileNumber,birthdate} = req.body;
-        const userImg = req.file;
-
+        const {email,firstName,lastName,mobileNumber,birthdate,userImg : deleteUserImage} = req.body;
+        const userImageAsBinary = req.file;
+        
         const user = await User.findOneAndUpdate(
             {_id:userId},
             { 
@@ -164,11 +164,24 @@ export const changeUserInformation = async(req:Request,res:Response)=>{
                 lastName,
                 mobileNumber,
                 birthdate,
-                userImg: userImg ? await CloudinaryUtils.UploadOne(req.file as IMulterFile,process.env.UsersImages as string,400,400) : undefined
+                userImg: userImageAsBinary ? await CloudinaryUtils.UploadOne(userImageAsBinary as IMulterFile,process.env.UsersImages as string,400,400) : deleteUserImage ? null : undefined
             },{
                 new:true,select:"-password -__v"
             }
         );
+
+        if(!user){
+            return res.status(400).json({error:"User was not found"})
+        }
+
+        if(deleteUserImage == "deleteImg"){
+            try{
+                await CloudinaryUtils.DeleteOne(user.userImg,process.env.UsersImages as string);
+            }catch(error){
+                console.error(error);
+                return res.status(400).json({error:"Something Went Wrong Please Try Again Later"});
+            }   
+        }
         
         return res.status(200).json({message:"success",user})       
     }catch(error : any){
