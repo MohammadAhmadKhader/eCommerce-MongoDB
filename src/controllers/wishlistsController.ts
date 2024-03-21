@@ -5,57 +5,23 @@ import { ObjectId } from "mongodb";
 export const getWishList = async (req:Request,res:Response)=>{
     try{
         const userId = req.params.userId;
-        // the response time was 100-120 with populate, with aggregate has become 100-80~ good performance improvement
-        const wishList = await User.aggregate([
-            {$match:{
-                _id:new ObjectId(userId)
-            }},
-            {
-                $sort:{
-                    "wishList.createdAt":-1,
-                }
-            },
-            {$unwind:"$wishList"},
-            {$lookup:{
-                from:"products",
-                localField:"wishList.productId",
-                foreignField:"_id",
-                as:"wishList"
-            }},
-            {$group:{
-                _id:"$wishList._id",
-                wishListItem:{
-                    $first:{
-                        $first:"$wishList"
-                    }
-                }
-            }},
-            {
-                $addFields:{
-                    _id:{
-                        $first:"$_id"
-                    },
-                    "wishListItem.avgRating":{
-                        $avg:"$wishListItem.reviews.rating"
-                    },
-                   
-                }
-            },
-            {
-                $project:{
-                    "wishListItem.reviews":0,
-                    "wishListItem.updatedAt":0,
-                    "wishListItem.createdAt":0,
-                    "wishListItem.__v":0,
-                    "wishListItem.description":0,
-                }
-            }
-        ]).allowDiskUse(true)
-
-        if(wishList.length == 0){
+        const user = await User.findOne({_id:userId}).populate({
+            path:"wishList.productId",
+            select:"-description -reviews"
+        })  
+       
+        if(!user){
             return res.status(400).json({error:"user was not found"})
         }
-        return res.status(200).json({wishList})
+        const wishlist = user.wishList;
+        
+        const optimizedResponse = wishlist.map((item)=>{
+            const wishListItem : any = {};
+            wishListItem._id = item._id;
+            wishListItem.product = item.productId;
+            return wishListItem;
+        })
+        return res.status(200).json({wishList:optimizedResponse})
     }catch(error : any){
         console.error(error)
         return res.status(500).json({error:error?.message})
