@@ -44,7 +44,7 @@ const productSchema: Schema<IProduct>= new Schema({
                 validator: function(value : number){
                     return value >= 0;
                 },
-                message: '{VALUE} is not an integer value'
+                message: 'Quantity Cant Be Minus'
             }]
     },
     reviews:[{
