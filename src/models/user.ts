@@ -32,6 +32,7 @@ const userSchema = new Schema<IUser>({
     },
     addresses:[{
         fullName:String,
+        country:String,
         mobileNumber:String,
         state:String,
         city:String,
