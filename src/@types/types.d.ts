@@ -61,6 +61,7 @@ export interface IAddresses {
     city:string;
     pinCode:string;
     streetAddress:string;
+    country:string;
 }
 
 export interface IWishListItem {

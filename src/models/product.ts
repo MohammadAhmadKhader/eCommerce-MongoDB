@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { IProduct } from "../@types/types";
+import { NextFunction } from "express";
 
 const productSchema: Schema<IProduct>= new Schema({
     name:{
@@ -36,10 +37,15 @@ const productSchema: Schema<IProduct>= new Schema({
     quantity:{
         type:Number,
         default:1,
-        validate: {
-            validator: Number.isInteger,
-            message: '{VALUE} is not an integer value'
-        }
+        validate:[{ 
+                validator: Number.isInteger,
+                message: '{VALUE} is not an integer value'
+            },{
+                validator: function(value : number){
+                    return value >= 0;
+                },
+                message: '{VALUE} is not an integer value'
+            }]
     },
     reviews:[{
         comment:{
