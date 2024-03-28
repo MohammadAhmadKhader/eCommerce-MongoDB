@@ -21,7 +21,7 @@ export const signUp = async (req:Request,res:Response)=>{
             password:hashPassword
         })
 
-        const token = signToken(user._id.toString())
+        const token = signToken(user._id.toString(),user.email)
         user.$set("password",undefined);
         user.$set("__v",undefined);
         
@@ -54,7 +54,7 @@ export const signIn = async (req:Request,res:Response)=>{
             userId:user._id
         })
         
-        const token = signToken(user._id.toString())
+        const token = signToken(user._id.toString(),user.email)
         
         const sessionToken = await SessionToken.create({
             userId:user._id,
@@ -135,7 +135,7 @@ export const changePassword = async (req:Request,res:Response)=>{
         if(!updateUser){
             return res.status(400).json({error:"Something went wrong during password update"});
         }
-        const token = signToken(user._id.toString())
+        const token = signToken(user._id.toString(),user.email)
         
         const sessionToken = await SessionToken.findOneAndUpdate({
             userId:user._id,

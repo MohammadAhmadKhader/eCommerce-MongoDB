@@ -85,6 +85,7 @@ export interface ICartItem {
 
 export interface IDecodedToken {
     id:string;
+    email:string;
     iat:number;
     exp:number;
 }
