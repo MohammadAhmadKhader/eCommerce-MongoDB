@@ -21,11 +21,15 @@ const orderSchema = new Schema({
         type:Number,
         required:true,
     },
+    isPaid:{
+        type:Boolean,
+        default:false,
+    },
     status:{
         type:String,
-        default:"Processing",
+        default:"Placed",
         enum: {
-            values:["Completed","Processing","Cancelled"],
+            values:["Completed","Placed","Processing","Cancelled"],
             message:"Value must be one of Completed, Processing or Cancelled"
         }
     },
@@ -39,6 +43,7 @@ const orderSchema = new Schema({
     }],
     address:{
         fullName:String,
+        country:String,
         mobileNumber:String,
         state:String,
         city:String,
@@ -47,7 +52,6 @@ const orderSchema = new Schema({
     },
     paymentDetails:{
         type:String,
-        default:"Cash on Delivery"
     },
 },{
     timestamps:true
