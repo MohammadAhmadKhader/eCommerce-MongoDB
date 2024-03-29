@@ -98,7 +98,7 @@ export const createOrder = async(req :Request,res:Response)=>{
                 price:cartItem.finalPrice,
                 thumbnailUrl:cartItem.images[0].thumbnailUrl,
                 quantity:mapper[cartItem._id.toString()] <= cartItem.quantity ? mapper[cartItem._id.toString()] : (()=>{
-                    return res.status(400).json({error:"You cant buy more than the existing amount"})
+                    throw new Error("You cant buy more than the existing amount")
                 })() ,
                 productId:cartItem._id,
                 subTotal:Number(cartItem.quantity * cartItem.finalPrice!).toFixed(2)
@@ -157,7 +157,7 @@ export const createPaymentIntent = async(req:Request,res:Response)=>{
         let customer : Stripe.Response<Stripe.ApiSearchResult<Stripe.Customer> | Stripe.Customer> = await stripe.customers.search({
             query:`metadata[\'customerId\']:\'${customerId}\'`
         })
-        console.log(customer,"Customer")
+        
         if(customer.data.length ==0){
             const createdCustomer = await stripe.customers.create({
                 email:decodedToken.email,
@@ -201,7 +201,8 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
             (await transaction).abortTransaction();
             return res.sendStatus(401);
         }
-        console.log(address)
+        console.log(address);
+        console.log("Order Checking Out");
         if(!address || (address && (!address.city || !address.state || !address.country || !address.streetAddress || !address.mobileNumber || !address.fullName))){
             return res.status(400).json({error:"Address is required"});
         }
@@ -289,14 +290,14 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
                 updateOne:{
                     filter: { _id :products[i]._id },
                     update: { $inc :{ quantity : productsIdQuantityMapper[products[i]._id.toString()] >= orderItemsProductIdQuantityMapper[products[i]._id.toString()] ? 
-                        -productsIdQuantityMapper[products[i]._id.toString()] : await (async()=>{
+                        -orderItemsProductIdQuantityMapper[products[i]._id.toString()] : await (async()=>{
                             throw new Error("You cant buy more than the existing amount")
                         })()
                     }} 
                 }
             })
         }
-
+       
         const updateProductQuantity = await Product.bulkWrite(bulkWriteArray);
         if(updateProductQuantity.modifiedCount !== arrayOfProductsIds.length){
             (await transaction).abortTransaction();
