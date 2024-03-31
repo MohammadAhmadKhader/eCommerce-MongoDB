@@ -17,6 +17,14 @@ export async function getCache(req:Request,res:Response,next:NextFunction){
     }
 }
 
+export async function getCacheAllProductsRoute(req:Request,res:Response,next:NextFunction){
+    if(req.url.includes("price")){
+      return next()
+    }else{
+      await getCache(req,res,next)
+    }
+} 
+
 export async function setCache(cacheKey : string,value : string | Buffer){
     try{
       const cachedValue = await redis.set(cacheKey,value);
@@ -24,4 +32,12 @@ export async function setCache(cacheKey : string,value : string | Buffer){
     }catch(error){
         console.error(error);
     }
+}
+
+export async function deleteCache(){
+  try{
+
+  }catch(error){
+    console.log(error)
+  }
 }
