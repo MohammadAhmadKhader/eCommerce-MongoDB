@@ -15,7 +15,7 @@ import { getCache } from '../middlewares/cache';
 
 
 router.get("/:productId",pagination,productsRouter.getProductById)
-router.get("/",pagination,productsRouter.getAllProducts)
+router.get("/",getCache,pagination,productsRouter.getAllProducts)
 router.get("/search/:text",productsRouter.searchForProducts)
 router.post("/:userId",authenticateAdmin, upload.single('image'),validateCreateProduct,productsRouter.postNewProduct)
 router.post("/:productId/:userId",authenticateAdmin, upload.any(),productsRouter.appendImagesToProduct)
