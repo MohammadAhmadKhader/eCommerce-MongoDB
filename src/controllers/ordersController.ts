@@ -2,12 +2,8 @@ import { Request, Response } from "express";
 import Order from "../models/order";
 import User from "../models/user";
 import Product from "../models/product";
-import { ICartItem, IDecodedToken } from "../@types/types";
 import mongoose, { startSession } from "mongoose";
 import Stripe from "stripe";
-import { v4 as uuid} from "uuid";
-import jwt from "jsonwebtoken";
-import util from "util"
 import { verifyAndDecodeToken } from "../utils/HelperFunctions";
 import Invoice from "../models/Invoice";
 import { ObjectId } from "mongodb";
@@ -23,7 +19,7 @@ export const getAllOrders = async(req:Request,res:Response)=>{
         const match = {status:status,userId:userId};
         const orders = await Order.find(match).sort({createdAt:-1}).skip(skip).limit(limit)
         const count = await Order.find(match).countDocuments()
-        console.log(orders)
+        
         return res.status(200).json({count,page,limit,orders})
     }catch(error : any){
         console.error(error)
@@ -38,7 +34,7 @@ export const getSingleOrderById = async(req:Request,res:Response)=>{
         if(!order){
             return res.status(400).json({error:"order was not found"})
         }
-        console.log(order)
+        
         return res.status(200).json({order})
     }catch(error){
         console.error(error)
@@ -201,8 +197,7 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
             (await transaction).abortTransaction();
             return res.sendStatus(401);
         }
-        console.log(address);
-        console.log("Order Checking Out");
+        
         if(!address || (address && (!address.city || !address.state || !address.country || !address.streetAddress || !address.mobileNumber || !address.fullName))){
             return res.status(400).json({error:"Address is required"});
         }

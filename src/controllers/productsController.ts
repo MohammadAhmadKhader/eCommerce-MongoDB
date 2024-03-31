@@ -1,11 +1,12 @@
 import { IMulterFile,image } from '../@types/types';
-import { Request, Response } from "express"
+import { NextFunction, Request, Response } from "express"
 import Product from "../models/product"
 import CloudinaryUtils from "../utils/CloudinaryUtils";
 import imageThumbnail from "image-thumbnail"
 import { ImageThumbnailOptions } from '../utils/ThumbnailUtils';
 import { isJSON } from '../utils/HelperFunctions';
 import { ObjectId } from 'mongodb';
+import {setCache} from "../middlewares/cache";
 
 export const getProductById = async(req : Request,res : Response)=>{
     try{
@@ -89,6 +90,7 @@ export const getProductById = async(req : Request,res : Response)=>{
             return res.status(400).json({error:"product was not found"})
         }
         const count = product[0].ratingNumbers;
+        setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
 
        return res.status(200).json({count,page,limit,product:product[0]})
     }catch(error : any){
@@ -97,7 +99,7 @@ export const getProductById = async(req : Request,res : Response)=>{
    }
 }
 
-export const getAllProducts = async (req : Request, res: Response) =>{
+export const getAllProducts = async (req : Request, res: Response,next:NextFunction) =>{
    try{
         const { limit , skip , page } = req.pagination;
         const searchText = req.query.search as string;
@@ -110,16 +112,16 @@ export const getAllProducts = async (req : Request, res: Response) =>{
         const offer = req.query.offer as string;
         let fieldToSort = "createdAt";
         let sortDirection = -1;
-        
-        const matchStage : any = {}
+
+        const matchStage :  any = {}
         const orArray = []
         if(minPrice || maxPrice){
-            matchStage.price = {}
+            matchStage.finalPrice = {}
             if(minPrice){
-                matchStage.price.$gte= parseInt(minPrice);
+                matchStage.finalPrice.$gte= parseInt(minPrice);
             }
             if(maxPrice){
-                matchStage.price.$lte  = parseInt(maxPrice);
+                matchStage.finalPrice.$lte  = parseInt(maxPrice);
                 
             }
         }
@@ -176,6 +178,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
             matchStage.$and = andArray;
         }
 
+
         const products = await Product.aggregate([
             { $match : matchStage },
             { 
@@ -192,7 +195,7 @@ export const getAllProducts = async (req : Request, res: Response) =>{
             { $project : { __v:0 , reviews:0,description:0 } },
         ])
         const count = await Product.countDocuments( matchStage )
-        
+        setCache(req.url,JSON.stringify({page,limit,count,products}))
 
         return res.status(200).json({page,limit,count,products})
    }catch(error : any){

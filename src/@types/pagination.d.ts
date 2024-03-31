@@ -6,5 +6,6 @@ declare namespace Express {
           skip: number;
           page: number;
         };
+        user:IUser;
     }
 }

@@ -11,6 +11,7 @@ const router = express.Router()
 import * as productsRouter from "../controllers/productsController"
 import { authenticateAdmin } from '../middlewares/authenticate';
 import { validateCreateProduct } from '../middlewares/validationsFunctions';
+import { getCache } from '../middlewares/cache';
 
 
 router.get("/:productId",pagination,productsRouter.getProductById)
