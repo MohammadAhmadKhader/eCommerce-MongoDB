@@ -90,8 +90,10 @@ export const getProductById = async(req : Request,res : Response)=>{
             return res.status(400).json({error:"product was not found"})
         }
         const count = product[0].ratingNumbers;
-        setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
-
+        
+        //setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
+        
+        
        return res.status(200).json({count,page,limit,product:product[0]})
     }catch(error : any){
         console.error(error)
@@ -195,8 +197,10 @@ export const getAllProducts = async (req : Request, res: Response,next:NextFunct
             { $project : { __v:0 , reviews:0,description:0 } },
         ])
         const count = await Product.countDocuments( matchStage )
-        setCache(req.url,JSON.stringify({page,limit,count,products}))
-
+        // if(!req.url.includes("price")){
+        //     setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
+        // }
+        
         return res.status(200).json({page,limit,count,products})
    }catch(error : any){
     console.error(error)
