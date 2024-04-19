@@ -1,6 +1,6 @@
-import { validateCreatingAddress, validateSendingMessage } from './../../../middlewares/validationsFunctions';
+import { validateCreatingAddress, validateSendingMessage } from '../../middlewares/validationsFunctions';
 import { Request, Response } from 'express';
-import { validateUserRegistration,validateUserChangePassword, validateUserReview, validateCreateProduct, validateUpdatingAddress } from '../../../middlewares/validationsFunctions';
+import { validateUserRegistration,validateUserChangePassword, validateUserReview, validateCreateProduct, validateUpdatingAddress } from '../../middlewares/validationsFunctions';
 
 describe("Validation Middlewares",()=>{
     const stringWith25Char = "2i3n8sLqAe7z0m9c6R4s2W1t8";
