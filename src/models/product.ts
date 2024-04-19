@@ -1,6 +1,5 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose,{ Schema } from "mongoose";
 import { IProduct } from "../@types/types";
-import { NextFunction } from "express";
 
 const productSchema: Schema<IProduct>= new Schema({
     name:{
