@@ -1,0 +1,9 @@
+{
+  "productsRoute": {
+    "productIdForDelete": "6622db830b1116c42b974d30",
+    "productIdForUpdate": "662235c6cad780dab5700373"
+  },
+  "adminUserId": "65e782ed368c22e35422f4ad",
+  "categoryIdForTesting": "65e7d89b62bb29693a0d1c58",
+  "adminUserToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZTc4MmVkMzY4YzIyZTM1NDIyZjRhZCIsImVtYWlsIjoiTW9oYW1tYWRLaGFkZXJyMTk5OUBnbWFpbC5jb20iLCJpYXQiOjE3MTM0ODEzMzEsImV4cCI6MTcxNjA3MzMzMX0.yEXlbMeSZvXqTXXVutUt5L3ofjrtT5ccFsCmemV4ECc"
+}

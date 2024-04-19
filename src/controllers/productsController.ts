@@ -14,7 +14,7 @@ export const getProductById = async(req : Request,res : Response)=>{
         const productId = req.params.productId;
         const product = await Product.aggregate([
             {$match:{_id:new ObjectId(productId)}},
-            {$unwind:"$reviews"},
+            {$unwind:{path:"$reviews",preserveNullAndEmptyArrays:true}},
             {$sort:{
                 "reviews.createdAt":-1
             }},
@@ -30,7 +30,8 @@ export const getProductById = async(req : Request,res : Response)=>{
                 $addFields:{
                     "reviews.user":{
                         $arrayElemAt:["$reviews.user",0]
-                    }
+                    },
+                    
                 }
             },{$group:{
                 _id:"$_id",
@@ -86,11 +87,14 @@ export const getProductById = async(req : Request,res : Response)=>{
                 }
             }
         ]).allowDiskUse(true)
+        console.log(productId)
         if(product.length == 0){
             return res.status(400).json({error:"product was not found"})
         }
+        if(product[0].reviews[0] && !product[0].reviews[0].comment){
+            product[0].reviews = []
+        }
         const count = product[0].ratingNumbers;
-        
         //setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
         
         
@@ -211,8 +215,10 @@ export const getAllProducts = async (req : Request, res: Response,next:NextFunct
 
 export const postNewProduct = async (req : Request , res : Response)=>{
     try{
-        const { name, quantity, description, price , brand, categoryId,offer,finalPrice} = req.body
-
+        const { name, quantity, description, price , brand, categoryId,offer,finalPrice} = req.body;
+        if(!req.file){
+            return res.status(400).json({error:"Image does not exist"});
+        }
         const ImageUrl = await CloudinaryUtils.UploadOne(req.file as IMulterFile,process.env.ProductsImagesFolder as string)
         if(!ImageUrl){
             console.log(ImageUrl)
@@ -271,7 +277,7 @@ export const appendImagesToProduct = async (req: Request, res: Response) =>{
 export const deleteProduct = async (req: Request, res: Response) =>{
     try{
         const productId = req.params.productId;
-        const productToDelete = await Product.findById(productId)
+        const productToDelete = await Product.findOne({_id:productId})
         const ArrOfImagesThumbnailToDelete : string[] = []
         const ArrOfImagesMainToDelete : string[] = []
         if(!productToDelete){

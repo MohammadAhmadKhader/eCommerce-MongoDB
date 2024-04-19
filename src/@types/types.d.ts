@@ -1,3 +1,4 @@
+import { IReview } from './types.d';
 import { Schema } from "mongoose";
 
 export interface IMulterFile {
@@ -33,6 +34,14 @@ export interface IProduct {
         thumbnailUrl: string;
     }[];
     brand: string;
+}
+
+export interface IReview {
+    comment: string;
+    userId: Schema.Types.ObjectId;
+    rating: number;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface IUser {

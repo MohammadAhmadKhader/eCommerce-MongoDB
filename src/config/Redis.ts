@@ -10,8 +10,8 @@ client.on("error", function(err) {
 });
 client.on("connect",()=>{
     console.log("Redis Client Connected Successfully...")
-})
-;(async()=>{
+});
+(async()=>{
     await client.connect()
 })();
 

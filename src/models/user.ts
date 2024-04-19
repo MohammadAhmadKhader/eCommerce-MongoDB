@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import mongoose,{Schema} from "mongoose";
 import { IUser } from "../@types/types";
 
