@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import supertest from "supertest";
-import createServer from "../../../utils/Server";
-import DatabaseTestHandler from '../../../utils/DatabaseTestHandler';
+import createServer from "../../utils/Server";
+import DatabaseTestHandler from '../../utils/DatabaseTestHandler';
 
 const app = createServer()
 
