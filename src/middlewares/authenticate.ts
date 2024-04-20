@@ -18,21 +18,19 @@ export const authenticateUser = async (req:Request,res:Response,next:NextFunctio
         //@ts-expect-error
         const decodedToken : IDecodedToken = await util.promisify(jwt.verify)(sessionId,process.env.TOKEN_SECRET as string)
         
-        const session = await SessionToken.find({
+        const session = await SessionToken.findOne({
             token:sessionId,userId:decodedToken.id ? decodedToken.id : ""
         })
 
         const user = await User.findOne({_id:decodedToken.id})
-        if(!user){
+        if(!user || !session){
             return res.sendStatus(401)
         }
         if(await user.isPasswordHasChanged(decodedToken.iat)){
             return res.status(401).json({error:"Unauthorized password has changed"})
         }
-        if(!session){
-            return res.sendStatus(401)
-        }
-        
+
+        req.user = user;
         return next()
     }catch(error){
         console.log(error);
@@ -43,20 +41,25 @@ export const authenticateUser = async (req:Request,res:Response,next:NextFunctio
 export const authenticateAdmin = async (req:Request,res:Response,next:NextFunction)=>{
     try{
         const sessionId = req.headers.authorization;
+        
+        if(!sessionId){
+            return res.status(401).json({error:"Unauthorized - Session id is not provided"});
+        }
         //@ts-expect-error
         const decodedToken : IDecodedToken = await util.promisify(jwt.verify)(sessionId,process.env.TOKEN_SECRET as string)
-        const user = await User.findOne(new ObjectId(decodedToken.id));
+        const user = await User.findOne({_id:new ObjectId(decodedToken.id)});
         
-        if(!user || user.role != "admin" || !sessionId){
+        if(!user || user.role != "admin"){
             return res.sendStatus(401)
         }
-        const session = await SessionToken.find({
+        const session = await SessionToken.findOne({
             token:sessionId,userId:decodedToken.id ? decodedToken.id : ""
         })
         if(!session){
             return res.sendStatus(401)
         }
 
+        req.user = user;
         return next()
     }catch(error){
         console.log(error);
