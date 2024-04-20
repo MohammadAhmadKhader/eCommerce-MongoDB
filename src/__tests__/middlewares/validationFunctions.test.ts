@@ -1076,3 +1076,8 @@ describe("Validation Middlewares",()=>{
         })
     })
 })
+
+// * Next To Do
+// change cart item quantity
+// addToCart
+// maximizing product images length to 10

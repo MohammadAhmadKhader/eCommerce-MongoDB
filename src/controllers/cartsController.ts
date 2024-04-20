@@ -5,11 +5,12 @@ import { ObjectId } from "mongodb";
 
 export const getAllCartItems = async (req:Request,res:Response)=>{
     try{
+        // Should be refactored and use req.user instead of request
         const userId = req.params.userId;
         if(!userId){
             return res.status(400).json({error:"user id is required"})
         }
-        // Its better to use aggregate for read performance
+        
         const cartItems = await User.findById(userId,{cart:1}).populate({
             path:"cart.productId",
             select:"name images offer price finalPrice brand quantity",
@@ -62,10 +63,14 @@ export const deleteFromCart = async (req:Request,res:Response)=>{
     try{
         const cartItemId = req.body.cartItemId as string;
         const userId = req.body.userId as string;
-
+        const userBeforeCartChange = req.user;
         const userAfterCartChanged = await User.findOneAndUpdate({_id:userId},{
             $pull : {cart : { _id:cartItemId}}
-        },{new:true,select:"-password -__v"})
+        },{new:true,select:"-password -__v"});
+
+        if(userAfterCartChanged?.cart.length === userBeforeCartChange.cart.length){
+            return res.status(400).json({error:"Something went wrong cartItem was not removed"})
+        }
 
         return res.status(204).json({message:"success",user:userAfterCartChanged})
     }catch(error : any){
@@ -76,9 +81,9 @@ export const deleteFromCart = async (req:Request,res:Response)=>{
 
 export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
     try{
-        const productId = req.body.productId;
-        const cartItemId = req.body.cartItemId;
-        const userId = req.body.userId;
+        const productId = req.body.productId as string;
+        const cartItemId = req.body.cartItemId as string;
+        const userId = req.body.userId as string;
         const operation = req.body.operation;
         let amount = 1;
         let indexInCart : number;
@@ -89,11 +94,11 @@ export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
             amount = -1
         }
 
-        const product = await Product.findById(productId,{quantity:1});
+        const product = await Product.findOne({_id:new ObjectId(productId)},{quantity:1});
         if(!product){
             return res.status(400).json({error:"product does was not found"})
         }
-        const user = await User.findById(userId)
+        const user = await User.findOne({_id:new ObjectId(userId)})
         if(!user){
             return res.status(400).json({error:"wrong user id"})
         }
@@ -117,7 +122,7 @@ export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
         const userAfterCartItemQtyWasChanged = await User.findByIdAndUpdate(
             { _id:userId , 'cart._id':new ObjectId(cartItemId as string) },
             { $inc :{ 'cart.$[elem].quantity' : amount}},
-            { new : true ,select:"-password -__v",
+            { new : true ,select:"-__v",
               arrayFilters: [{ 
                 "elem._id": new ObjectId(cartItemId as string)
              }],
@@ -136,7 +141,7 @@ export const clearCart = async (req:Request,res:Response)=>{
         const userId = req.body.userId;
         const userAfterCartCleared = await User.findOneAndUpdate({_id:userId},{
             $set : {cart : []}
-        },{new:true,select:"-password -__v"})
+        },{new:true,select:"-__v"})
         console.log(userAfterCartCleared)
         return res.status(201).json({message:"success",user:userAfterCartCleared})
 

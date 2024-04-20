@@ -6,5 +6,5 @@ module.exports = {
   verbose:true,
   forceExit:true,
   testTimeout:20000
- // clearMocks:true,
+ //clearMocks:true,
 };

@@ -44,6 +44,19 @@ export const setProductTestData = (filePath:string,newProductId : string,route:s
     });
 }
 
+export const setTestData = (filePath:string,appendedNewData : any,route:string)=>{
+    const testDataFilePath = filePath;
+    if(!route){
+        throw "Route is required"
+    }
+    const data = fs.readFileSync(testDataFilePath, 'utf8')
+    const testData = JSON.parse(data);
+    testData[route] = appendedNewData;
+    const updatedTestData = JSON.stringify(testData, null, 2);
+    fs.writeFileSync(testDataFilePath, updatedTestData, 'utf8');
+};
+
+
 export const getProductTestData = async(filePath : string,route:string) : Promise<string | undefined>=>{
     const testDataFilePath = filePath;
     try{

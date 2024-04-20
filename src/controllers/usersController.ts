@@ -5,9 +5,10 @@ import SessionToken from "../models/sessionToken";
 import MailUtils from "../utils/MailUtils";
 import ResetPassCode from "../models/resetPassCode";
 import CloudinaryUtils from "../utils/CloudinaryUtils";
-import { IMulterFile } from "../@types/types";
+import { IMulterFile, IUser } from "../@types/types";
 import { signToken } from "../utils/HelperFunctions";
 import crypto from 'crypto';
+import { ObjectId } from "mongodb";
 
 export const signUp = async (req:Request,res:Response)=>{
     try{
@@ -49,17 +50,16 @@ export const signIn = async (req:Request,res:Response)=>{
         if(!user || !(await bcrypt.compare(password,user.password))){
             return res.status(401).json({error:"Invalid email or password"})
         }
-
-        const deleteOldSession = await SessionToken.deleteOne({
-            userId:user._id
-        })
         
         const token = signToken(user._id.toString(),user.email)
         
-        const sessionToken = await SessionToken.create({
+        const sessionToken = await SessionToken.findOneAndUpdate({
             userId:user._id,
+        },{
+            userId:new ObjectId(user._id as string),
             token:token
-        })
+        },{upsert:true,new:true})
+        
         user.$set("password",undefined)
 
         return res.status(200).json({message:"success",user,token:sessionToken.token})
@@ -113,23 +113,15 @@ export const logout = async (req:Request,res:Response)=>{
 
 export const changePassword = async (req:Request,res:Response)=>{
     try{
-        const { oldPassword, newPassword ,userId} = req.body;
-       
-        if(!userId){
-            return res.status(400).json({error:"User Id is required"});
-        }
-       
-        const user = await User.findById(userId).select("+password")
-        
-        if(!user){
-            return res.status(400).json({error:"User was not found"});
-        }
+        const { oldPassword, newPassword } = req.body;
+        const userId = req.user._id as string;
+        const user : IUser = await User.findOne({_id:new ObjectId(userId)}).select("+password")
         
         if(!await bcrypt.compare(oldPassword,user.password)){
             return res.status(400).json({error:"Invalid password"})
         }
         
-        const updateUser = await User.findByIdAndUpdate(userId,{
+        const updateUser = await User.findOneAndUpdate({_id:new ObjectId(userId)},{
             password:await bcrypt.hash(newPassword,10)
         })
         if(!updateUser){
@@ -138,10 +130,16 @@ export const changePassword = async (req:Request,res:Response)=>{
         const token = signToken(user._id.toString(),user.email)
         
         const sessionToken = await SessionToken.findOneAndUpdate({
-            userId:user._id,
+            userId:new ObjectId(user._id as string),
         },{
             token:token
+        },{
+            upsert:true,
+            new:true
         })
+        if(!sessionToken){
+            res.status(400).json({error:"Something went wrong and token was not created"});
+        }
 
         return res.status(200).json({message:"success",token})
     }catch(error : any){
