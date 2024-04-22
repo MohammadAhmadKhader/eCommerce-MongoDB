@@ -30,7 +30,7 @@ export const signUp = async (req:Request,res:Response)=>{
             userId:user._id,
             token:token
         })
-
+        
         return res.status(201).json({message:"success",user,token:sessionToken.token})
     }catch(error : any){
         console.error(error)
@@ -96,14 +96,13 @@ export const getUserByToken = async(req:Request,res:Response)=>{
 
 export const logout = async (req:Request,res:Response)=>{
     try{
-        const {userId} = req.body;
-        
-        const deleteOldSession = await SessionToken.deleteOne({
-            userId:userId
+        const userId = req.user._id;
+        const sessionId = req.headers.authorization;
+        await SessionToken.deleteOne({
+            userId:userId,
+            token:sessionId
         })
-        if(deleteOldSession.deletedCount == 0){
-            return res.status(400).json({error:"Something went wrong during token deletion, token was not deleted"});
-        }
+
         return res.sendStatus(204)
     }catch(error : any){
         console.error(error)
@@ -162,19 +161,15 @@ export const changeUserInformation = async(req:Request,res:Response)=>{
                 lastName,
                 mobileNumber,
                 birthdate,
-                userImg: userImageAsBinary ? await CloudinaryUtils.UploadOne(userImageAsBinary as IMulterFile,process.env.UsersImages as string,400,400) : deleteUserImage ? null : undefined
+                userImg: userImageAsBinary ? await CloudinaryUtils.UploadOne(userImageAsBinary as IMulterFile,process.env.UsersImages as string,400,400) : deleteUserImage == "deleteImg" ? null : undefined
             },{
                 new:true,select:"-password -__v"
             }
         );
 
-        if(!user){
-            return res.status(400).json({error:"User was not found"})
-        }
-
         if(deleteUserImage == "deleteImg"){
             try{
-                await CloudinaryUtils.DeleteOne(user.userImg,process.env.UsersImages as string);
+                await CloudinaryUtils.DeleteOne(user!.userImg,process.env.UsersImages as string);
             }catch(error){
                 console.error(error);
                 return res.status(400).json({error:"Something Went Wrong Please Try Again Later"});
@@ -209,9 +204,11 @@ export const resetPasswordViaCode = async (req:Request,res:Response)=>{
         if(!code){
             return res.status(403).json({error:"Wrong token or it has expired"})
         }
+        
         const updateUserPassword = await User.findOneAndUpdate({_id:code.userId},{
             password:await bcrypt.hash(newPassword,10)
         })
+        
         if(!updateUserPassword){
             return res.status(400).json({error:"Something Went Wrong Please Try Again Later"})
         }
@@ -252,7 +249,6 @@ export const forgotPassword = async (req:Request,res:Response)=>{
             await MailUtils.SendToResetPassword(email,resetUrl as string);
             return res.status(202).json({
                 message:"success",
-
             })
         }catch(error){
             console.error(error);
@@ -261,7 +257,7 @@ export const forgotPassword = async (req:Request,res:Response)=>{
             return res.status(500).json({error});
         }
     }catch(error : any){
-        console.error(error)
+        console.error(error);
         return res.status(500).json({error:error?.message})
    }
 }
