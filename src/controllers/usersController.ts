@@ -152,7 +152,7 @@ export const changeUserInformation = async(req:Request,res:Response)=>{
         const userId = req.params.userId;
         const {email,firstName,lastName,mobileNumber,birthdate,userImg : deleteUserImage} = req.body;
         const userImageAsBinary = req.file;
-        
+
         const user = await User.findOneAndUpdate(
             {_id:userId},
             { 
@@ -186,13 +186,6 @@ export const changeUserInformation = async(req:Request,res:Response)=>{
 export const resetPasswordViaCode = async (req:Request,res:Response)=>{
     try{
         const {newPassword,confirmedNewPassword} = req.body;
-        
-        if(!newPassword || !confirmedNewPassword){
-            return res.status(400).json({error:"Missing Password"});
-        }
-        if(newPassword !== confirmedNewPassword){
-            return res.status(400).json({error:"Password Does Not Match"});
-        }
         const token = req.params.token;
         const code = await ResetPassCode.findOne(
             {
