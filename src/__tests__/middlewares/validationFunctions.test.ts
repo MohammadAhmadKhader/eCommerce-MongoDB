@@ -1,4 +1,4 @@
-import { validateCreatingAddress, validateSendingMessage } from '../../middlewares/validationsFunctions';
+import { validateAddingToCart, validateChangeCartItemQuantityByOne, validateCreatingAddress, validateDeletingFromCart, validateForgotPassword, validateResetPasswordViaCode, validateSendingMessage, validateUserSignIn } from '../../middlewares/validationsFunctions';
 import { Request, Response } from 'express';
 import { validateUserRegistration,validateUserChangePassword, validateUserReview, validateCreateProduct, validateUpdatingAddress } from '../../middlewares/validationsFunctions';
 
@@ -265,7 +265,306 @@ describe("Validation Middlewares",()=>{
         })
     })
 
-    describe("Testing user add review middle ware",()=>{
+    describe("Testing user sign in middleware",()=>{
+        it("Should return an error when all fields are empty",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    
+                }
+            } as Request;
+            validateUserSignIn(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "email is required",
+                "password is required",
+            ]});
+        })
+
+        it("Should return an error with when all fields are less than the minimum length allowed or when email is invalid",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    email:emailWith5Char,
+                    password:stringWith5Char
+                }
+            } as Request;
+            validateUserSignIn(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "email must be a valid email",
+                "email length must be at least 6 characters long",
+                "password length must be at least 6 characters long",
+            ]});
+        })
+
+        it("Should return an error with when all fields are more than maximum length",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    email:emailWith65Char,
+                    password:stringWith25Char
+                }
+            } as Request;
+            validateUserSignIn(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "email length must be less than or equal to 64 characters long",
+                "password length must be less than or equal to 24 characters long",
+            ]});
+        })
+
+
+        it("Should pass successfully when email and password set to minimum allowed",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    email:emailWith6Char,
+                    password:stringWith6Char
+                }
+            } as Request;
+            validateUserSignIn(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled();
+        })
+
+        it("Should pass successfully when email and password set to maximum allowed",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    email:emailWith64Char,
+                    password:stringWith24Char
+                }
+            } as Request;
+            validateUserSignIn(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled();
+        })
+    })
+
+    describe("Testing user validateResetPasswordViaCode middleware",()=>{
+        it("Should return an error when all fields are empty",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    
+                }
+            } as Request;
+            validateResetPasswordViaCode(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "newPassword is required",
+                "confirmedNewPassword is required",
+            ]});
+        })
+
+        it("Should return an error when passwords are not matching",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    newPassword:stringWith6Char,
+                    confirmedNewPassword:stringWith10Char
+                }
+            } as Request;
+            validateResetPasswordViaCode(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "Password Must Match",
+            ]});
+        })
+
+        it("Should return an error when passwords are less than 6 characters",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    newPassword:stringWith5Char,
+                    confirmedNewPassword:stringWith5Char
+                }
+            } as Request;
+            validateResetPasswordViaCode(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "newPassword length must be at least 6 characters long",
+            ]});
+        })
+
+        it("Should return an error when passwords are more than 24 characters",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    newPassword:stringWith25Char,
+                    confirmedNewPassword:stringWith25Char
+                }
+            } as Request;
+            validateResetPasswordViaCode(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "newPassword length must be less than or equal to 24 characters long",
+            ]});
+        })
+
+        it("Should pass successfully when passwords are set to maximum allowed",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    newPassword:stringWith24Char,
+                    confirmedNewPassword:stringWith24Char
+                }
+            } as Request;
+            validateResetPasswordViaCode(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled();
+        })
+
+        it("Should pass successfully when passwords are set to minimum allowed allowed",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    newPassword:stringWith6Char,
+                    confirmedNewPassword:stringWith6Char
+                }
+            } as Request;
+            validateResetPasswordViaCode(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled();
+        })
+    })
+
+    describe("Testing user validateForgotPassword middleware",()=>{
+        it("Should return an error when email is missing",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    
+                }
+            } as Request;
+            validateForgotPassword(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "email is required",
+            ]});
+        })
+
+        it("Should return an error when email is less than minimum or invalid",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    email:emailWith5Char,
+                }
+            } as Request;
+            validateForgotPassword(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "email must be a valid email",
+                "email length must be at least 6 characters long",
+            ]});
+        })
+
+        it("Should return an error when email is more than maximum",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    email:emailWith65Char,
+                }
+            } as Request;
+            validateForgotPassword(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "email length must be less than or equal to 64 characters long",
+            ]});
+        })
+
+        it("Should pass successfully when email set to max allowed (64 characters)",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    email:emailWith64Char,
+                }
+            } as Request;
+            validateForgotPassword(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled();
+        })
+
+
+        it("Should pass successfully when email set to min allowed (6 characters)",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    email:emailWith6Char,
+                }
+            } as Request;
+            validateForgotPassword(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled();
+        })
+    })
+
+    describe("Testing user add review to product middle ware",()=>{
         it("Should return an error with all data empty",()=>{
             const res = {
                 status: jest.fn().mockReturnThis(),
@@ -1075,9 +1374,253 @@ describe("Validation Middlewares",()=>{
             expect(res.json).not.toHaveBeenCalled()
         })
     })
+
+    describe("Testing cart Middlewares",()=>{
+        describe("Testing validatAddingToCart middleware",()=>{
+            it("Should return an error that all fields are empty",()=>{
+                    const res = {
+                        status: jest.fn().mockReturnThis(),
+                        json: jest.fn()
+                    } as unknown as Response;
+                    const next = jest.fn(); 
+                    const req = {
+                        body:{
+
+                        }
+                    } as Request;
+                    validateAddingToCart(req,res,next);
+                    expect(res.status).toHaveBeenCalledWith(400);
+                    expect(res.json).toHaveBeenCalledWith({error:[
+                        "productId is required",
+                         "quantity is required",
+                    ]})
+            })
+
+            it("Should return an error when quantity is not integer",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        productId:hexWith24Char,
+                        quantity:1.5
+                    }
+                } as Request;
+                validateAddingToCart(req,res,next);
+                expect(res.status).toHaveBeenCalledWith(400);
+                expect(res.json).toHaveBeenCalledWith({error:[
+                    "quantity must be an integer"
+                ]})
+            })
+
+            it("Should return an error when quantity is minus",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        productId:hexWith24Char,
+                        quantity:-1
+                    }
+                } as Request;
+                validateAddingToCart(req,res,next);
+                expect(res.status).toHaveBeenCalledWith(400);
+                expect(res.json).toHaveBeenCalledWith({error:[
+                    "quantity must be greater than or equal to 1",
+                ]})
+            })
+
+            it("Should return an error when productId is not hex 24 length",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        productId:hexWith25Char,
+                        quantity:1
+                    }
+                } as Request;
+                validateAddingToCart(req,res,next);
+                expect(res.status).toHaveBeenCalledWith(400);
+                expect(res.json).toHaveBeenCalledWith({error:[
+                    "productId length must be 24 characters long",
+                ]})
+            })
+
+            it("Should pass successfully when quantity is 1 and productId is hex 24 length",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        productId:hexWith24Char,
+                        quantity:1
+                    }
+                } as Request;
+                validateAddingToCart(req,res,next);
+                expect(res.status).not.toHaveBeenCalled();
+                expect(res.json).not.toHaveBeenCalled()
+            })
+
+            it("Should pass successfully when quantity is more than 1 and positive and productId is hex 24 length",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        productId:hexWith24Char,
+                        quantity:5
+                    }
+                } as Request;
+                validateAddingToCart(req,res,next);
+                expect(res.status).not.toHaveBeenCalled();
+                expect(res.json).not.toHaveBeenCalled()
+            })
+        })
+        
+        describe("Testing validateChangeCartItemQuantityByOne middleware",()=>{
+            it("Should return an error that all fields are empty",()=>{
+                    const res = {
+                        status: jest.fn().mockReturnThis(),
+                        json: jest.fn()
+                    } as unknown as Response;
+                    const next = jest.fn(); 
+                    const req = {
+                        body:{
+
+                        }
+                    } as Request;
+                    validateChangeCartItemQuantityByOne(req,res,next);
+                    expect(res.status).toHaveBeenCalledWith(400);
+                    expect(res.json).toHaveBeenCalledWith({error:[
+                        "productId is required",
+                        "cartItemId is required",
+                        "operation is required",
+                    ]})
+            })
+
+            it("Should return an error when operation is not +1 or -1",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        productId:hexWith24Char,
+                        cartItemId:hexWith24Char,
+                        operation:"+2"
+                    }
+                } as Request;
+                validateChangeCartItemQuantityByOne(req,res,next);
+                expect(res.status).toHaveBeenCalledWith(400);
+                expect(res.json).toHaveBeenCalledWith({error:[
+                    "operation must be one of [+1, -1]",
+                ]})
+            })
+
+            it("Should pass successfully when productId cartItemId are hex 24 length and operation is +1",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        productId:hexWith24Char,
+                        cartItemId:hexWith24Char,
+                        operation:"+1"
+                    }
+                } as Request;
+                validateChangeCartItemQuantityByOne(req,res,next);
+                expect(res.status).not.toHaveBeenCalled();
+                expect(res.json).not.toHaveBeenCalled()
+            })
+
+            it("Should pass successfully when productId cartItemId are hex 24 length and operation is -1",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        productId:hexWith24Char,
+                        cartItemId:hexWith24Char,
+                        operation:"-1"
+                    }
+                } as Request;
+                validateChangeCartItemQuantityByOne(req,res,next);
+                expect(res.status).not.toHaveBeenCalled();
+                expect(res.json).not.toHaveBeenCalled()
+            })
+        })
+
+        describe("Testing validateDeletingFromCart middleware",()=>{
+            it("Should return an error that all fields are empty",()=>{
+                    const res = {
+                        status: jest.fn().mockReturnThis(),
+                        json: jest.fn()
+                    } as unknown as Response;
+                    const next = jest.fn(); 
+                    const req = {
+                        body:{
+
+                        }
+                    } as Request;
+                    validateDeletingFromCart(req,res,next);
+                    expect(res.status).toHaveBeenCalledWith(400);
+                    expect(res.json).toHaveBeenCalledWith({error:[
+                        "cartItemId is required",
+                    ]})
+            })
+
+            it("Should return an error when cartItem Id is not 24 length",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        cartItemId:hexWith25Char, 
+                    }
+                } as Request;
+                validateDeletingFromCart(req,res,next);
+                expect(res.status).toHaveBeenCalledWith(400);
+                expect(res.json).toHaveBeenCalledWith({error:[
+                    "cartItemId length must be 24 characters long",
+                ]})
+            })
+
+            it("Should pass successfully when cartItemId is hex 24 length",()=>{
+                const res = {
+                    status: jest.fn().mockReturnThis(),
+                    json: jest.fn()
+                } as unknown as Response;
+                const next = jest.fn(); 
+                const req = {
+                    body:{
+                        cartItemId:hexWith24Char,
+                    }
+                } as Request;
+                validateDeletingFromCart(req,res,next);
+                expect(res.status).not.toHaveBeenCalled();
+                expect(res.json).not.toHaveBeenCalled()
+            })
+        })
+    })
 })
 
 // * Next To Do
-// change cart item quantity
-// addToCart
 // maximizing product images length to 10

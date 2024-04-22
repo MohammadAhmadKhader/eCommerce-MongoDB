@@ -71,3 +71,32 @@ export const sendingMessageSchema = Joi.object({
     subject: Joi.string().min(4).max(32),
     message: Joi.string().min(4).max(256),
 })
+
+export const userSignInSchema = Joi.object({
+    email:Joi.string().email().min(6).max(64).required(),
+    password:Joi.string().min(6).max(24).required()
+})
+
+export const addToCartSchema = Joi.object({
+    productId:Joi.string().hex().length(24).required(),
+    quantity:Joi.number().min(1).integer().required()
+})
+
+export const deleteFromCartSchema = Joi.object({
+    cartItemId:Joi.string().hex().length(24).required(),
+})
+
+export const changeCartItemQuantityByOneSchema = Joi.object({
+    productId:Joi.string().hex().length(24).required(),
+    cartItemId:Joi.string().hex().length(24).required(),
+    operation:Joi.string().valid("+1","-1").required()
+})
+
+export const resetPasswordViaCodeSchema = Joi.object({
+    newPassword:Joi.string().min(6).max(24).required(),
+    confirmedNewPassword:Joi.string().min(6).max(24).equal(Joi.ref("newPassword")).required().messages({"any.only":"Password Must Match"}),
+})
+
+export const forgotPasswordSchema = Joi.object({
+    email:Joi.string().email().min(6).max(64).required(),
+})

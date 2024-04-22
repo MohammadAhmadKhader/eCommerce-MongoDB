@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { creatingAddressSchema, creatingProductValidationSchema, reviewSchema, sendingMessageSchema, updatingAddressSchema, userChangePasswordSchema, userRegistrationSchema } from "./validationsSchemas";
+import { addToCartSchema, changeCartItemQuantityByOneSchema, creatingAddressSchema, creatingProductValidationSchema, deleteFromCartSchema, forgotPasswordSchema, resetPasswordViaCodeSchema, reviewSchema, sendingMessageSchema, updatingAddressSchema, userChangePasswordSchema, userRegistrationSchema, userSignInSchema } from "./validationsSchemas";
 
 export const validateUserRegistration = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = userRegistrationSchema.validate({
@@ -118,6 +118,83 @@ export const validateSendingMessage = (req:Request,res:Response,next:NextFunctio
         email:req.body.email,
         subject:req.body.subject,
         message:req.body.message,
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateAddingToCart = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = addToCartSchema.validate({
+        productId:req.body.productId,
+        quantity:req.body.quantity,
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateUserSignIn = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = userSignInSchema.validate({
+        email:req.body.email,
+        password:req.body.password,
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateChangeCartItemQuantityByOne = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = changeCartItemQuantityByOneSchema.validate({
+        cartItemId:req.body.cartItemId,
+        productId:req.body.productId,
+        operation:req.body.operation,
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateDeletingFromCart = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = deleteFromCartSchema.validate({
+        cartItemId:req.body.cartItemId,
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateResetPasswordViaCode = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = resetPasswordViaCodeSchema.validate({
+        newPassword:req.body.newPassword,
+        confirmedNewPassword:req.body.confirmedNewPassword,
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateForgotPassword = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = forgotPasswordSchema.validate({
+        email:req.body.email
     },{abortEarly:false})
 
     if(error){

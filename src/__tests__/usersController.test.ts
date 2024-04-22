@@ -39,7 +39,7 @@ describe("Users",()=>{
                 firstName:faker.person.firstName(),
                 lastName:faker.person.lastName(),
                 email:faker.internet.email({firstName:faker.person.firstName(),lastName:`${faker.person.lastName()}_${faker.number.int()}`}),
-                password:faker.internet.password(),
+                password:process.env.USER_TEST_PASSWORD,
             };
             const {body,statusCode} = await supertest(app).post("/api/users/signup").send(user);
             expect(statusCode).toBe(201);
@@ -65,15 +65,15 @@ describe("Users",()=>{
     })
 
     describe("User sign in",()=>{  
-        const userTestEmail = "Margot_Greenfelder@yahoo.com";
-        const userTestPassword = "newPassword#1";
+        const userTestEmail = "Elaina_OKon_40879312705945643@yahoo.com";
+        const userTestPassword = process.env.USER_TEST_PASSWORD as string;
         const wrongEmail = "WrongEmail@gmal.com";
         const wrongPassword = "wrongPassword";
         it("Should sign in successfully and update token for testData file",async()=>{
            const testSessionTokenFindOneAndUpdate = jest.spyOn(SessionToken,"findOneAndUpdate");
             const {body,statusCode} = await supertest(app).post("/api/users/signin").send({
                 email:userTestEmail,
-                password:userTestPassword,
+                password:process.env.USER_TEST_PASSWORD,
             })
             expect(statusCode).toBe(200);
             expect(typeof body.token).toBe("string");
@@ -107,6 +107,7 @@ describe("Users",()=>{
          })
     })
 
+    // Should be refactored to make a complete isolation
     describe("User changepassword",()=>{
         const userIdToChangePassword = "65ef5891082b6a0698d5cee9";
         const lastPassword = testData.newPassword;

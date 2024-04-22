@@ -1,3 +1,4 @@
+import { IUser } from './../@types/types.d';
 import { Request , Response} from "express"
 import User from "../models/user";
 import Product from "../models/product";
@@ -34,14 +35,12 @@ export const getAllCartItems = async (req:Request,res:Response)=>{
 
 export const addToCart = async (req:Request,res:Response)=>{
     try{
-        let userId = req.body.userId;
-        let productId = req.body.productId
-        const quantity = Number(parseInt(req.body.quantity));
+        const {productId,quantity} : {productId:string,quantity:number} = req.body;
+        const user = req.user as IUser;
+        const userId = req.user._id;
         if(Number.isNaN(quantity) || quantity <= 0){
             return res.status(400).json({error:"Invalid quantity"})
         }
-        
-        const user = await User.findById(userId,{password:0,__v:0})
         
         const doesUserHaveThisItem = user!.cart.filter((item) => item.productId == productId)
         if(doesUserHaveThisItem.length > 0){
@@ -62,12 +61,13 @@ export const addToCart = async (req:Request,res:Response)=>{
 export const deleteFromCart = async (req:Request,res:Response)=>{
     try{
         const cartItemId = req.body.cartItemId as string;
-        const userId = req.body.userId as string;
-        const userBeforeCartChange = req.user;
+        const userBeforeCartChange = req.user as IUser;
+        const userId = req.user._id as string;
+
         const userAfterCartChanged = await User.findOneAndUpdate({_id:userId},{
             $pull : {cart : { _id:cartItemId}}
         },{new:true,select:"-password -__v"});
-
+        
         if(userAfterCartChanged?.cart.length === userBeforeCartChange.cart.length){
             return res.status(400).json({error:"Something went wrong cartItem was not removed"})
         }
@@ -83,7 +83,7 @@ export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
     try{
         const productId = req.body.productId as string;
         const cartItemId = req.body.cartItemId as string;
-        const userId = req.body.userId as string;
+        const userId : string = req.user._id;
         const operation = req.body.operation;
         let amount = 1;
         let indexInCart : number;
@@ -138,11 +138,10 @@ export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
 
 export const clearCart = async (req:Request,res:Response)=>{
     try{
-        const userId = req.body.userId;
+        const userId : string = req.user._id;
         const userAfterCartCleared = await User.findOneAndUpdate({_id:userId},{
             $set : {cart : []}
         },{new:true,select:"-__v"})
-        console.log(userAfterCartCleared)
         return res.status(201).json({message:"success",user:userAfterCartCleared})
 
     }catch(error : any){
