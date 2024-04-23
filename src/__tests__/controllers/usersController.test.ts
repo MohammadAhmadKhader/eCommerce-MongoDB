@@ -37,7 +37,7 @@ describe("Users",()=>{
             const user = {
                 firstName:faker.person.firstName(),
                 lastName:faker.person.lastName(),
-                email:faker.internet.email({firstName:faker.person.firstName(),lastName:`${faker.person.lastName()}_${faker.number.int()}`}),
+                email:faker.internet.email({firstName:faker.person.firstName(),lastName:`${faker.person.lastName()}_${faker.number.int({min:1,max:5000})}`}),
                 password:process.env.USER_TEST_PASSWORD,
             };
             const {body,statusCode} = await supertest(app).post("/api/users/signup").send(user);
@@ -219,11 +219,17 @@ describe("Users",()=>{
         const userIdToUpdateWithoutImg = "65ef5891082b6a0698d5cee1";
         const userIdToUpdateWithImg = "65ef5891082b6a0698d5cedf";
         const userIdToUpdateBeforeOneWeekIsFinished = "6626921b7a6e757723b59431"
+        let imageBeforeUpdating:string;
         beforeAll(async()=>{
             const twoWeeks =  1209600000
-            await User.findOneAndUpdate({_id:userIdToUpdateBeforeOneWeekIsFinished},{$set:{updatedAt:Date.now()}});
-            await User.findOneAndUpdate({_id:userIdToUpdateWithImg},{$set:{updatedAt:Date.now() - twoWeeks}},{timestamps:false});
-            await User.findOneAndUpdate({_id:userIdToUpdateWithoutImg},{$set:{updatedAt:Date.now() - twoWeeks}},{timestamps:false});
+            try{
+                await User.findOneAndUpdate({_id:userIdToUpdateBeforeOneWeekIsFinished},{$set:{updatedAt:Date.now()}});
+                const userToUpdateWithImg = await User.findOneAndUpdate({_id:userIdToUpdateWithImg},{$set:{updatedAt:Date.now() - twoWeeks}},{timestamps:false});
+                await User.findOneAndUpdate({_id:userIdToUpdateWithoutImg},{$set:{updatedAt:Date.now() - twoWeeks}},{timestamps:false});
+                imageBeforeUpdating = userToUpdateWithImg?.userImg as string;
+            }catch(error){
+                throw error
+            }
         })
         const userFirstName = faker.person.firstName();
             const userLastName = faker.person.lastName();
@@ -232,11 +238,13 @@ describe("Users",()=>{
             const userEmail = faker.internet.email();
             const mobileNumber = "0592718312812";
             const birthdate = faker.date.birthdate();
+
             const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithoutImg}`)
             .field("firstName",userFirstName).field("lastName",userLastName)
             .field("email",userEmail).field("mobileNumber",mobileNumber)
             .field("birthdate",birthdate.toJSON())
             .set("authorization",userTokenToUpdateWithoutImg);
+
             expect(statusCode).toBe(200);
             expect(body.message).toBe("success");
             expect(body.user).toBeDefined();
@@ -248,6 +256,7 @@ describe("Users",()=>{
             expect(body.user.birthdate).toBe(birthdate.toJSON());
             expect(typeof body.user.userImg).toBe("string");
             expect(body.user._id).toBe(userIdToUpdateWithoutImg);
+            
         })
 
         it("Should return success message and status code 200 and user after update with updating image",async()=>{
@@ -257,11 +266,13 @@ describe("Users",()=>{
                 const userEmail = faker.internet.email();
                 const mobileNumber = "0592718312812";
                 const birthdate = faker.date.birthdate();
+
                 const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}`)
                 .field("firstName",userFirstName).field("lastName",userLastName)
                 .field("email",userEmail).field("mobileNumber",mobileNumber)
                 .field("birthdate",birthdate.toJSON()).attach("userImg",imagePath)
                 .set("authorization",userTokenToUpdateWithImg);
+                
                 expect(statusCode).toBe(200);
                 expect(body.message).toBe("success");
                 expect(body.user).toBeDefined();
@@ -272,15 +283,14 @@ describe("Users",()=>{
                 expect(body.user.mobileNumber).toBe(mobileNumber);
                 expect(body.user.birthdate).toBe(birthdate.toJSON());
                 expect(typeof body.user.userImg).toBe("string");
+                expect(body.user.userImg).not.toBe(imageBeforeUpdating);
                 expect(body.user._id).toBe(userIdToUpdateWithImg);
                 expect(testUploadingImage).toHaveBeenCalledTimes(1);
             }catch(error){
-                throw error
+                throw error;
             }finally{
                 testUploadingImage.mockRestore();
             }
-            
-            
         })
 
         it("Should return an error with 400 status code when a normal user try to update once in same week",async()=>{

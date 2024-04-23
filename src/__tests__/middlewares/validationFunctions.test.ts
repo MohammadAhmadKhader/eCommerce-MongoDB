@@ -1,4 +1,4 @@
-import { validateAddingToCart, validateChangeCartItemQuantityByOne, validateCreatingAddress, validateDeletingFromCart, validateForgotPassword, validateResetPasswordViaCode, validateSendingMessage, validateUserSignIn } from '../../middlewares/validationsFunctions';
+import { validateAddToWishList, validateAddingToCart, validateChangeCartItemQuantityByOne, validateCreatingAddress, validateDeleteUserReview, validateDeletingFromCart, validateEditUserReview, validateForgotPassword, validateRemoveFromWishlist, validateResetPasswordViaCode, validateSendingMessage, validateUserSignIn } from '../../middlewares/validationsFunctions';
 import { Request, Response } from 'express';
 import { validateUserRegistration,validateUserChangePassword, validateUserReview, validateCreateProduct, validateUpdatingAddress } from '../../middlewares/validationsFunctions';
 
@@ -1618,6 +1618,364 @@ describe("Validation Middlewares",()=>{
                 expect(res.status).not.toHaveBeenCalled();
                 expect(res.json).not.toHaveBeenCalled()
             })
+        })
+    })
+
+    describe("Testing validateAddToWishList middleware",()=>{
+        it("Should return an error that productId is required",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+
+                }
+            } as Request;
+            validateAddToWishList(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "productId is required",
+            ]})
+        })
+
+        it("Should return an error that when productId is length 24 and not hex",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    productId:stringWith24Char
+                }
+            } as Request;
+            validateAddToWishList(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "productId must only contain hexadecimal characters",
+            ]})
+        })
+
+        it("Should return an error that when productId is not string",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    productId:[]
+                }
+            } as Request;
+            validateAddToWishList(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "productId must be a string",
+            ]})
+        })
+
+        it("Should return an error that when productId is length is not 24",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    productId:hexWith25Char
+                }
+            } as Request;
+            validateAddToWishList(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "productId length must be 24 characters long",
+            ]})
+        })
+
+        it("Should pass successfully when productId is hex 24 length",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    productId:hexWith24Char
+                }
+            } as Request;
+            validateAddToWishList(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("Testing validateRemoveFromWishlist middleware",()=>{
+        it("Should return an error that wishlistItemtId is required",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+
+                }
+            } as Request;
+            validateRemoveFromWishlist(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "wishlistItemId is required",
+            ]})
+        })
+
+        it("Should return an error that when wishlistItemId is length 24 and not hex",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    wishlistItemId:stringWith24Char
+                }
+            } as Request;
+            validateRemoveFromWishlist(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "wishlistItemId must only contain hexadecimal characters",
+            ]})
+        })
+
+        it("Should return an error that when wishlistItemId is not string",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    wishlistItemId:[]
+                }
+            } as Request;
+            validateRemoveFromWishlist(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "wishlistItemId must be a string",
+            ]})
+        })
+
+        it("Should return an error that when wishlistItemId is length is not 24",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    wishlistItemId:hexWith25Char
+                }
+            } as Request;
+            validateRemoveFromWishlist(req,res,next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "wishlistItemId length must be 24 characters long",
+            ]})
+        })
+
+        it("Should pass successfully when wishlistItemId is hex 24 length",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    wishlistItemId:hexWith24Char
+                }
+            } as Request;
+            validateRemoveFromWishlist(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("Testing validateEditUserReview middleware",()=>{
+        it("Should return an error that all fields are equired",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+
+                }
+            } as Request;
+            validateEditUserReview(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "rating is required",
+                "comment is required",
+                "reviewId is required",
+            ]})
+        })
+
+        it("Should return an error when rating is invalid number",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    rating:1.5,
+                    comment:"comment",
+                    reviewId:hexWith24Char
+                }
+            } as Request;
+            validateEditUserReview(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "rating must be one of [1, 2, 3, 4, 5]",
+            ]})
+        })
+
+        it("Should return an error when rating is invalid number",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    rating:1,
+                    comment:"comment",
+                    reviewId:stringWith24Char
+                }
+            } as Request;
+            validateEditUserReview(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "reviewId must only contain hexadecimal characters",
+            ]})
+        })
+
+        it("Should return an error when review length is not 24",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    rating:1,
+                    comment:"comment",
+                    reviewId:hexWith25Char
+                }
+            } as Request;
+            validateEditUserReview(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "reviewId length must be 24 characters long",
+            ]})
+        })
+
+        it("Should pass successfully when all parameters meet the conditions",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    rating:1,
+                    comment:"comment",
+                    reviewId:hexWith24Char
+                }
+            } as Request;
+            validateEditUserReview(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("Testing validateDeleteUserReview middleware",()=>{
+        it("Should return an error that all fields are equired",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+
+                }
+            } as Request;
+            validateDeleteUserReview(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "productId is required",
+                "reviewId is required",
+            ]})
+        })
+
+        it("Should return an error that productId and reviewId must 24 length",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    productId:hexWith25Char,
+                    reviewId:hexWith25Char
+                }
+            } as Request;
+            validateDeleteUserReview(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "productId length must be 24 characters long",
+                "reviewId length must be 24 characters long",
+            ]})
+        })
+
+        it("Should return an error that productId and reviewId must be hex type",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    productId:stringWith24Char,
+                    reviewId:stringWith24Char
+                }
+            } as Request;
+            validateDeleteUserReview(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "productId must only contain hexadecimal characters",
+                "reviewId must only contain hexadecimal characters",
+            ]})
+        })
+
+        it("Should pass successfully when all parameters meet the conditions",()=>{
+            const res = {
+                status: jest.fn().mockReturnThis(),
+                json: jest.fn()
+            } as unknown as Response;
+            const next = jest.fn(); 
+            const req = {
+                body:{
+                    productId:hexWith24Char,
+                    reviewId:hexWith24Char
+                }
+            } as Request;
+            validateDeleteUserReview(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
         })
     })
 })
