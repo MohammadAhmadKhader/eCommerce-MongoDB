@@ -33,7 +33,7 @@ export const authenticateUser = async (req:Request,res:Response,next:NextFunctio
         req.user = user;
         return next()
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.sendStatus(500)
     }
 }
@@ -62,7 +62,7 @@ export const authenticateAdmin = async (req:Request,res:Response,next:NextFuncti
         req.user = user;
         return next()
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.sendStatus(500)
     }
 }

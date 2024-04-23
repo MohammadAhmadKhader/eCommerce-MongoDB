@@ -87,7 +87,7 @@ export const getProductById = async(req : Request,res : Response)=>{
                 }
             }
         ]).allowDiskUse(true)
-        console.log(productId)
+        
         if(product.length == 0){
             return res.status(400).json({error:"product was not found"})
         }
@@ -221,7 +221,6 @@ export const postNewProduct = async (req : Request , res : Response)=>{
         }
         const ImageUrl = await CloudinaryUtils.UploadOne(req.file as IMulterFile,process.env.ProductsImagesFolder as string)
         if(!ImageUrl){
-            console.log(ImageUrl)
             return res.status(400).json({error:"Failed To Upload Image"})
         }
         

@@ -27,7 +27,6 @@ describe("Addresses",()=>{
     })
 
     describe("Create new address",()=>{
-        
         it("Should create a new address for the user and return user information with address inserted inside user and message success and statusCode 201",async()=>{
             const newAddress = {
                 pinCode:faker.location.zipCode(),
