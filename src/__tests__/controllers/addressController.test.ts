@@ -1,20 +1,19 @@
-import { setTestData } from './../utils/HelperFunctions';
+import { setTestData } from '../../utils/HelperFunctions';
 import supertest from "supertest";
-import createServer from "../utils/Server";
+import createServer from "../../utils/Server";
 import mongoose from "mongoose";
-import DatabaseTestHandler from "../utils/DatabaseTestHandler";
+import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import { faker } from '@faker-js/faker';
-//@ts-expect-error
-import testData from "./assets/testData/testData.json"
+import testData from "../assets/testData/testData.json"
 const app = createServer();
 
 
 describe("Addresses",()=>{
-    const adminUserId = testData.adminUserId as string;
-    const adminUserToken = testData.adminUserToken as string;
-    const addressIdForUpdate = testData.addressIdForUpdate as string;
-    const addressIdForDelete = testData.addressIdForDelete as string;
-    const randomAddressId = testData.randomAddressId as string;
+    const adminUserId = testData.adminUserId;
+    const adminUserToken = testData.adminUserToken;
+    const addressIdForUpdate = testData.addressIdForUpdate;
+    const addressIdForDelete = testData.addressIdForDelete;
+    const randomAddressId = testData.randomAddressId;
     const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
     const userId = adminUserId;
     beforeAll(async()=>{

@@ -1,7 +1,7 @@
 import supertest from "supertest";
-import createServer from "../utils/Server";
+import createServer from "../../utils/Server";
 import mongoose from "mongoose";
-import DatabaseTestHandler from "../utils/DatabaseTestHandler";
+import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 const app = createServer()
 
 describe("Categories",()=>{

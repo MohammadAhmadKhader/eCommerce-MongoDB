@@ -1,19 +1,17 @@
-import { setTestData } from './../utils/HelperFunctions';
 import supertest from "supertest";
-import createServer from "../utils/Server";
+import createServer from "../../utils/Server";
 import mongoose from "mongoose";
-import DatabaseTestHandler from "../utils/DatabaseTestHandler";
-//@ts-expect-error
-import testData from "./assets/testData/testData.json"
-import User from '../models/user';
+import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
+import testData from "../assets/testData/testData.json"
+import User from '../../models/user';
 import { ObjectId } from 'mongodb';
 const app = createServer()
 
 describe("Carts",()=>{
-    const adminUserId = testData.adminUserId as string;
-    const adminUserToken = testData.adminUserToken as string;
-    const productIdToAddToCartHighQuantity = testData.productIdToAddToCartHighQuantity as string;
-    const productIdToAddToCart0Quantity = testData.productIdToAddToCart0Quantity as string;
+    const adminUserId = testData.adminUserId;
+    const adminUserToken = testData.adminUserToken;
+    const productIdToAddToCartHighQuantity = testData.productIdToAddToCartHighQuantity;
+    const productIdToAddToCart0Quantity = testData.productIdToAddToCart0Quantity;
     const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
     const userId = adminUserId;
     const userIdWithEmptyCart = "65ef5890082b6a0698d5cecd"
@@ -130,66 +128,88 @@ describe("Carts",()=>{
         const testUserChangeCartItemsQuantityToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZWY1ODkxMDgyYjZhMDY5OGQ1Y2VkNCIsImVtYWlsIjoiQnJlbmRvbi5SZW1wZWwzOUBnbWFpbC5jb20iLCJpYXQiOjE3MTM2MjA3MDUsImV4cCI6MTcxNjIxMjcwNX0.-R5C3zThhWIZNP_H_aefie_1Cuzs7EESwP7J9ystYDg"
         
         it("Should increase cart Item by 1 when operation set to +1",async()=>{
-            const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate")
-            const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
-                cartItemId:cartItemId_1,
-                productId:productId_1,
-                operation:"+1",
-            }).set("Authorization",testUserChangeCartItemsQuantityToken);
-            const expectedAmount = 1;
-            expect(body.user).toBeDefined();
-            expect(body.user.password).toBeUndefined();
-            expect(body.message).toBe("success");
-            expect(statusCode).toBe(200);
-            const query = [
-                { _id:new ObjectId(userId) , 'cart._id':new ObjectId(cartItemId_1 as string) },
-                { $inc :{ 'cart.$[elem].quantity' : expectedAmount}},
-                { new : true ,select:"-__v",
-                  arrayFilters: [{ 
-                    "elem._id": new ObjectId(cartItemId_1 as string)
-                 }],
-                }
-            ]
-            expect(testUserFindByIdAndUpdate).toHaveBeenCalledWith(...query)
-            testUserFindByIdAndUpdate.mockRestore()
+            const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");
+            try{
+                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
+                    cartItemId:cartItemId_1,
+                    productId:productId_1,
+                    operation:"+1",
+                }).set("Authorization",testUserChangeCartItemsQuantityToken);
+
+                const expectedAmount = 1;
+                expect(body.user).toBeDefined();
+                expect(body.user.password).toBeUndefined();
+                expect(body.message).toBe("success");
+                expect(statusCode).toBe(200);
+                const query = [
+                    { _id:new ObjectId(userId) , 'cart._id':new ObjectId(cartItemId_1 as string) },
+                    { $inc :{ 'cart.$[elem].quantity' : expectedAmount}},
+                    { new : true ,select:"-__v",
+                      arrayFilters: [{ 
+                        "elem._id": new ObjectId(cartItemId_1 as string)
+                     }],
+                    }
+                ];
+                expect(testUserFindByIdAndUpdate).toHaveBeenCalledWith(...query);
+
+            }catch(error){
+                throw error;
+            }finally{
+               testUserFindByIdAndUpdate.mockRestore() 
+            }
         })
         
         it("Should decrease cart Item by 1 when operation is set to -1",async()=>{
-            const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate")
-            const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
-                cartItemId:cartItemId_2,
-                productId:productId_2,
-                operation:"-1",
-            }).set("Authorization",testUserChangeCartItemsQuantityToken);
-            expect(statusCode).toBe(200);
-            expect(body.user).toBeDefined();
-            expect(body.user.password).toBeUndefined();
-            expect(body.message).toBe("success");
-            const expectedAmount = -1;
-            const query = [
-                { _id:new ObjectId(userId) , 'cart._id':new ObjectId(cartItemId_2 as string) },
-                { $inc :{ 'cart.$[elem].quantity' : expectedAmount}},
-                { new : true ,select:"-__v",
-                  arrayFilters: [{ 
-                    "elem._id": new ObjectId(cartItemId_2 as string)
-                 }],
-                }
-            ]
-            expect(testUserFindByIdAndUpdate).toHaveBeenCalledWith(...query)
-            testUserFindByIdAndUpdate.mockRestore()
+            const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");
+            try{
+                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
+                    cartItemId:cartItemId_2,
+                    productId:productId_2,
+                    operation:"-1",
+                }).set("Authorization",testUserChangeCartItemsQuantityToken);
+
+                expect(statusCode).toBe(200);
+                expect(body.user).toBeDefined();
+                expect(body.user.password).toBeUndefined();
+                expect(body.message).toBe("success");
+                const expectedAmount = -1;
+                const query = [
+                    { _id:new ObjectId(userId) , 'cart._id':new ObjectId(cartItemId_2 as string) },
+                    { $inc :{ 'cart.$[elem].quantity' : expectedAmount}},
+                    { new : true ,select:"-__v",
+                      arrayFilters: [{ 
+                        "elem._id": new ObjectId(cartItemId_2 as string)
+                     }],
+                    }
+                ];
+                expect(testUserFindByIdAndUpdate).toHaveBeenCalledWith(...query);
+
+            }catch(error){
+                throw error;
+            }finally{
+                testUserFindByIdAndUpdate.mockRestore();
+            }
         })
 
         it("Should return an error that product is not available with status code",async()=>{
-            const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate")
-            const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
-                cartItemId:cartItemId_3,
-                productId:productIdWithQuantity0,
-                operation:"-1",
-            }).set("Authorization",testUserChangeCartItemsQuantityToken);
-            expect(statusCode).toBe(400);
-            expect(body).toStrictEqual({error:"Quantity can't be less than 1"})
-            expect(testUserFindByIdAndUpdate).not.toHaveBeenCalled();
-            testUserFindByIdAndUpdate.mockRestore()
+            const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");
+            try{
+                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
+                    cartItemId:cartItemId_3,
+                    productId:productIdWithQuantity0,
+                    operation:"-1",
+                }).set("Authorization",testUserChangeCartItemsQuantityToken);
+
+                expect(statusCode).toBe(400);
+                expect(body).toStrictEqual({error:"Quantity can't be less than 1"})
+                expect(testUserFindByIdAndUpdate).not.toHaveBeenCalled();
+            }catch(error){
+                throw error;
+            }finally{
+                testUserFindByIdAndUpdate.mockRestore()
+            }
+            
+            
         })
     })
 
@@ -214,12 +234,18 @@ describe("Carts",()=>{
         })
         it("Should return user with empty cart and message equal to success and status code 201",async()=>{
             const testUserFindOneAndUpdate = jest.spyOn(User,"findOneAndUpdate");
-            const {body,statusCode} = await supertest(app).delete("/api/carts/clearCart").set("Authorization",testUserToken);
-            expect(statusCode).toBe(201);
-            expect(body.message).toBe("success");
-            expect(body.user.cart).toStrictEqual([]);
-            expect(testUserFindOneAndUpdate).toHaveBeenCalledTimes(1);
-            testUserFindOneAndUpdate.mockRestore()
+            try{
+                const {body,statusCode} = await supertest(app).delete("/api/carts/clearCart").set("Authorization",testUserToken);
+                
+                expect(statusCode).toBe(201);
+                expect(body.message).toBe("success");
+                expect(body.user.cart).toStrictEqual([]);
+                expect(testUserFindOneAndUpdate).toHaveBeenCalledTimes(1);
+            }catch(error){
+                throw error;
+            }finally{
+                testUserFindOneAndUpdate.mockRestore()
+            }
         })
 
     })

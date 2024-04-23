@@ -1,19 +1,18 @@
-import {  getAdminUserTokenTestData, getAdminUserIdTestData, setTestData } from './../utils/HelperFunctions';
+import {  getAdminUserTokenTestData, getAdminUserIdTestData, setTestData } from '../../utils/HelperFunctions';
 import supertest from "supertest";
-import createServer from "../utils/Server";
+import createServer from "../../utils/Server";
 import mongoose from "mongoose";
-import DatabaseTestHandler from "../utils/DatabaseTestHandler";
-//@ts-expect-error
-import testData from "./assets/testData/testData.json"
-import SessionToken from '../models/sessionToken';
-import User from '../models/user';
+import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
+import testData from "../assets/testData/testData.json"
+import SessionToken from '../../models/sessionToken';
+import User from '../../models/user';
 import { faker } from '@faker-js/faker';
 import { ObjectId } from 'mongodb';
-import "../config/cloudinary";
-import CloudinaryUtils from '../utils/CloudinaryUtils';
-import ResetPassCode from '../models/resetPassCode';
+import "../../config/cloudinary";
+import CloudinaryUtils from '../../utils/CloudinaryUtils';
+import ResetPassCode from '../../models/resetPassCode';
 import crypto from 'crypto';
-import MailUtils from '../utils/MailUtils';
+import MailUtils from '../../utils/MailUtils';
 
 const app = createServer()
 
@@ -42,6 +41,7 @@ describe("Users",()=>{
                 password:process.env.USER_TEST_PASSWORD,
             };
             const {body,statusCode} = await supertest(app).post("/api/users/signup").send(user);
+            
             expect(statusCode).toBe(201);
             expect(body.user).toBeDefined();
             expect(body.user.password).toBeUndefined();
@@ -71,39 +71,57 @@ describe("Users",()=>{
         const wrongPassword = "wrongPassword";
         it("Should sign in successfully and update token for testData file",async()=>{
            const testSessionTokenFindOneAndUpdate = jest.spyOn(SessionToken,"findOneAndUpdate");
-            const {body,statusCode} = await supertest(app).post("/api/users/signin").send({
-                email:userTestEmail,
-                password:process.env.USER_TEST_PASSWORD,
-            })
-            expect(statusCode).toBe(200);
-            expect(typeof body.token).toBe("string");
-            expect(body.token.length).toBeGreaterThan(0);
-           expect(testSessionTokenFindOneAndUpdate).toHaveBeenCalledTimes(1)
-           testSessionTokenFindOneAndUpdate.mockRestore();
+           try{
+                const {body,statusCode} = await supertest(app).post("/api/users/signin").send({
+                    email:userTestEmail,
+                    password:process.env.USER_TEST_PASSWORD,
+                });
+
+                expect(statusCode).toBe(200);
+                expect(typeof body.token).toBe("string");
+                expect(body.token.length).toBeGreaterThan(0);
+                expect(testSessionTokenFindOneAndUpdate).toHaveBeenCalledTimes(1)
+           }catch(error){
+                throw error;
+           }finally{
+                testSessionTokenFindOneAndUpdate.mockRestore();
+           }
         })
 
         it("Should return an error when email is wrong",async()=>{
             const testSessionTokenFindOneAndUpdate = jest.spyOn(SessionToken,"findOneAndUpdate");
-             const {body,statusCode} = await supertest(app).post("/api/users/signin").send({
-                 email:wrongEmail,
-                 password:userTestPassword,
-             })
-             expect(statusCode).toBe(401);
-             expect(body).toStrictEqual({error:"Invalid email or password"});
-             expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
-           testSessionTokenFindOneAndUpdate.mockRestore();
+            try{
+                const {body,statusCode} = await supertest(app).post("/api/users/signin").send({
+                    email:wrongEmail,
+                    password:userTestPassword,
+                });
+
+                expect(statusCode).toBe(401);
+                expect(body).toStrictEqual({error:"Invalid email or password"});
+                expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
+            }catch(error){
+                throw error;
+            }finally{
+                testSessionTokenFindOneAndUpdate.mockRestore();
+            }
          })
 
          it("Should return an error when password is wrong",async()=>{
             const testSessionTokenFindOneAndUpdate = jest.spyOn(SessionToken,"findOneAndUpdate");
-             const {body,statusCode} = await supertest(app).post("/api/users/signin").send({
-                 email:userTestEmail,
-                 password:wrongPassword,
-             })
-             expect(statusCode).toBe(401);
-             expect(body).toStrictEqual({error:"Invalid email or password"});
-             expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
-           testSessionTokenFindOneAndUpdate.mockRestore();
+            try{
+                const {body,statusCode} = await supertest(app).post("/api/users/signin").send({
+                    email:userTestEmail,
+                    password:wrongPassword,
+                });
+
+                expect(statusCode).toBe(401);
+                expect(body).toStrictEqual({error:"Invalid email or password"});
+                expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
+            }catch(error){
+                throw error;
+            }finally{
+                testSessionTokenFindOneAndUpdate.mockRestore();
+            }
          })
     })
 
@@ -122,39 +140,48 @@ describe("Users",()=>{
         }
         it("Should change password successfully and return message is success with token and status code 200",async()=>{
             const test = jest.spyOn(SessionToken,"findOneAndUpdate");
-            const {body,statusCode} = await supertest(app).put("/api/users/changepassword").send({
-                oldPassword:lastPassword,
-                newPassword:newPassword,
-                confirmNewPassword:newPassword,
-                userId:userIdToChangePassword
-            }).set("Authorization",newPasswordUserToken)
-            console.log(body)
-            expect(statusCode).toBe(200);
-            expect(body.message).toBe("success");
-            expect(body.token.length).toBeGreaterThan(0);
-            expect(typeof body.token).toBe("string");
-            setTestData(testDataFilePath,newPassword,"newPassword")
-            setTestData(testDataFilePath,body.token,"newPasswordUserToken")
-            expect(test).toHaveBeenCalledTimes(1)
-            test.mockRestore();
+            try{
+                const {body,statusCode} = await supertest(app).put("/api/users/changepassword").send({
+                    oldPassword:lastPassword,
+                    newPassword:newPassword,
+                    confirmNewPassword:newPassword,
+                    userId:userIdToChangePassword
+                }).set("Authorization",newPasswordUserToken)
+                expect(statusCode).toBe(200);
+                expect(body.message).toBe("success");
+                expect(body.token.length).toBeGreaterThan(0);
+                expect(typeof body.token).toBe("string");
+                setTestData(testDataFilePath,newPassword,"newPassword")
+                setTestData(testDataFilePath,body.token,"newPasswordUserToken")
+                expect(test).toHaveBeenCalledTimes(1)
+            }catch(error){
+                console.error(error)
+            }finally{
+                test.mockRestore();
+            }
         })
 
         it("Should return an error when password is not correct",async()=>{
-            const testSessionTokenFindOneAndUpdate = jest.spyOn(SessionToken,"findOneAndUpdate")
-            const testUserFindOneAndUpdate = jest.spyOn(User,"findOneAndUpdate")
+            const testSessionTokenFindOneAndUpdate = jest.spyOn(SessionToken,"findOneAndUpdate");
+            const testUserFindOneAndUpdate = jest.spyOn(User,"findOneAndUpdate");
             const wrongPassword = "wrongPassword"
-            const {body,statusCode} = await supertest(app).put("/api/users/changepassword").send({
-                oldPassword:wrongPassword,
-                newPassword:newPassword,
-                confirmNewPassword:newPassword,
-            }).set("Authorization",newPasswordUserToken)
-            expect(statusCode).toBe(400);
-            expect(body).toStrictEqual({error:"Invalid password"});
-            expect(body.token).toBeUndefined()
-            expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
-            expect(testUserFindOneAndUpdate).not.toHaveBeenCalled()
-            testSessionTokenFindOneAndUpdate.mockRestore();
-            testUserFindOneAndUpdate.mockRestore();
+            try{
+                const {body,statusCode} = await supertest(app).put("/api/users/changepassword").send({
+                    oldPassword:wrongPassword,
+                    newPassword:newPassword,
+                    confirmNewPassword:newPassword,
+                }).set("Authorization",newPasswordUserToken)
+                expect(statusCode).toBe(400);
+                expect(body).toStrictEqual({error:"Invalid password"});
+                expect(body.token).toBeUndefined()
+                expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
+                expect(testUserFindOneAndUpdate).not.toHaveBeenCalled()
+            }catch(error){
+
+            }finally{
+                testSessionTokenFindOneAndUpdate.mockRestore();
+                testUserFindOneAndUpdate.mockRestore();
+            }
         })
     })
 
@@ -164,13 +191,20 @@ describe("Users",()=>{
         const userEmailToSignOut = "Keara.Bogisich@gmail.com";
         it("User should sign out and return status code 204 and its token must be deleted",async()=>{
             const testSignOut = jest.spyOn(SessionToken,"deleteOne");
-            const {statusCode} = await supertest(app).delete("/api/users/logout").set("authorization",userTokenToSignOut);
-            expect(statusCode).toBe(204)
-            expect(testSignOut).toHaveBeenCalledWith({
-                userId:new ObjectId(userIdToSignOut),
-                token:userTokenToSignOut
-            });
-            testSignOut.mockRestore();
+            try{
+                const {statusCode} = await supertest(app).delete("/api/users/logout").set("authorization",userTokenToSignOut);
+                expect(statusCode).toBe(204)
+                expect(testSignOut).toHaveBeenCalledWith({
+                    userId:new ObjectId(userIdToSignOut),
+                    token:userTokenToSignOut
+                });
+                
+            }catch(error){
+                throw error;
+            }finally{
+                testSignOut.mockRestore();
+            }
+            
         })
         afterAll(async()=>{
             const {body} = await supertest(app).post("/api/users/signin").send({
@@ -194,7 +228,7 @@ describe("Users",()=>{
         const userFirstName = faker.person.firstName();
             const userLastName = faker.person.lastName();
         it("Should return success message and status code 200 and user after update without updating image",async()=>{
-            const userTokenToUpdateWithoutImg = testData.userTokenToUpdateWithoutImg as string;
+            const userTokenToUpdateWithoutImg = testData.userTokenToUpdateWithoutImg;
             const userEmail = faker.internet.email();
             const mobileNumber = "0592718312812";
             const birthdate = faker.date.birthdate();
@@ -218,32 +252,39 @@ describe("Users",()=>{
 
         it("Should return success message and status code 200 and user after update with updating image",async()=>{
             const testUploadingImage = jest.spyOn(CloudinaryUtils,"UploadOne");
-            const userTokenToUpdateWithImg = testData.userTokenToUpdateWithImg as string;
-            const userEmail = faker.internet.email();
-            const mobileNumber = "0592718312812";
-            const birthdate = faker.date.birthdate();
-            const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}`)
-            .field("firstName",userFirstName).field("lastName",userLastName)
-            .field("email",userEmail).field("mobileNumber",mobileNumber)
-            .field("birthdate",birthdate.toJSON()).attach("userImg",imagePath)
-            .set("authorization",userTokenToUpdateWithImg);
-            expect(statusCode).toBe(200);
-            expect(body.message).toBe("success");
-            expect(body.user).toBeDefined();
-            expect(body.user.password).toBeUndefined();
-            expect(body.user.email).toBe(userEmail);
-            expect(body.user.firstName).toBe(userFirstName);
-            expect(body.user.lastName).toBe(userLastName);
-            expect(body.user.mobileNumber).toBe(mobileNumber);
-            expect(body.user.birthdate).toBe(birthdate.toJSON());
-            expect(typeof body.user.userImg).toBe("string");
-            expect(body.user._id).toBe(userIdToUpdateWithImg);
-            expect(testUploadingImage).toHaveBeenCalledTimes(1);
-            testUploadingImage.mockRestore();
+            try{
+                const userTokenToUpdateWithImg = testData.userTokenToUpdateWithImg;
+                const userEmail = faker.internet.email();
+                const mobileNumber = "0592718312812";
+                const birthdate = faker.date.birthdate();
+                const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}`)
+                .field("firstName",userFirstName).field("lastName",userLastName)
+                .field("email",userEmail).field("mobileNumber",mobileNumber)
+                .field("birthdate",birthdate.toJSON()).attach("userImg",imagePath)
+                .set("authorization",userTokenToUpdateWithImg);
+                expect(statusCode).toBe(200);
+                expect(body.message).toBe("success");
+                expect(body.user).toBeDefined();
+                expect(body.user.password).toBeUndefined();
+                expect(body.user.email).toBe(userEmail);
+                expect(body.user.firstName).toBe(userFirstName);
+                expect(body.user.lastName).toBe(userLastName);
+                expect(body.user.mobileNumber).toBe(mobileNumber);
+                expect(body.user.birthdate).toBe(birthdate.toJSON());
+                expect(typeof body.user.userImg).toBe("string");
+                expect(body.user._id).toBe(userIdToUpdateWithImg);
+                expect(testUploadingImage).toHaveBeenCalledTimes(1);
+            }catch(error){
+                throw error
+            }finally{
+                testUploadingImage.mockRestore();
+            }
+            
+            
         })
 
         it("Should return an error with 400 status code when a normal user try to update once in same week",async()=>{
-            const userTokenToUpdateBeforeOneWeekIsFinished = testData.userTokenToUpdateBeforeOneWeekIsFinished as string
+            const userTokenToUpdateBeforeOneWeekIsFinished = testData.userTokenToUpdateBeforeOneWeekIsFinished;
             const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}`)
             .field("firstName",userFirstName).field("lastName",userLastName)
             .set("authorization",userTokenToUpdateBeforeOneWeekIsFinished);
@@ -271,32 +312,42 @@ describe("Users",()=>{
         it("Should return success with message = success and status code 200",async()=>{
             const testTestPassCodeFindOne = jest.spyOn(ResetPassCode,"findOne");
             const testUserFindOneAndUpdate = jest.spyOn(User,"findOneAndUpdate");
-            const {body,statusCode} = await supertest(app).patch(`/api/users/resetPassword/${linkToken}`).send({
-                newPassword:newPassword,
-                confirmedNewPassword:newPassword,
-            });
-            
-            expect(statusCode).toBe(200);
-            expect(body.message).toBe("success");
-            expect(testTestPassCodeFindOne).toHaveBeenCalledTimes(1);
-            expect(testUserFindOneAndUpdate).toHaveBeenCalledTimes(1);
-            testTestPassCodeFindOne.mockRestore();
-            testUserFindOneAndUpdate.mockRestore();
+            try{
+                const {body,statusCode} = await supertest(app).patch(`/api/users/resetPassword/${linkToken}`).send({
+                    newPassword:newPassword,
+                    confirmedNewPassword:newPassword,
+                });
+                expect(statusCode).toBe(200);
+                expect(body.message).toBe("success");
+                expect(testTestPassCodeFindOne).toHaveBeenCalledTimes(1);
+                expect(testUserFindOneAndUpdate).toHaveBeenCalledTimes(1);
+            }catch(error){
+                throw error;
+            }finally{
+                testTestPassCodeFindOne.mockRestore();
+                testUserFindOneAndUpdate.mockRestore();
+            }
         })
 
         it("Should return an error with status code 403 that PassCode is wrong or expired",async()=>{
             const wrongToken = "WrongToken"
             const testTestPassCodeFindOne = jest.spyOn(ResetPassCode,"findOne");
             const testUserFindOneAndUpdate = jest.spyOn(User,"findOneAndUpdate");
-            const {statusCode} = await supertest(app).patch(`/api/users/resetPassword/${wrongToken}`).send({
-                newPassword:newPassword,
-                confirmedNewPassword:newPassword,
-            });;
-            expect(statusCode).toBe(403);
-            expect(testTestPassCodeFindOne).toHaveBeenCalledTimes(1);
-            expect(testUserFindOneAndUpdate).not.toHaveBeenCalled();
-            testTestPassCodeFindOne.mockRestore();
-            testUserFindOneAndUpdate.mockRestore();
+            try{
+                const {statusCode} = await supertest(app).patch(`/api/users/resetPassword/${wrongToken}`).send({
+                    newPassword:newPassword,
+                    confirmedNewPassword:newPassword,
+                });
+
+                expect(statusCode).toBe(403);
+                expect(testTestPassCodeFindOne).toHaveBeenCalledTimes(1);
+                expect(testUserFindOneAndUpdate).not.toHaveBeenCalled();
+            }catch(error){
+                throw error;
+            }finally{
+               testTestPassCodeFindOne.mockRestore();
+               testUserFindOneAndUpdate.mockRestore(); 
+            }
         })
         afterAll(async()=>{
             await ResetPassCode.deleteOne({
@@ -310,24 +361,36 @@ describe("Users",()=>{
         const incorrectEmail = "incorrectEmail@example.com";
         it("Should return success message with status code 200",async()=>{
             const testSendMessageToEmail = jest.spyOn(MailUtils,"SendToResetPassword");
-            const {body,statusCode} = await supertest(app).post("/api/users/forgotPassword").send({
-                email:correctEmail
-            })
-            expect(statusCode).toBe(202);
-            expect(body.message).toBe("success");
-            expect(testSendMessageToEmail).toHaveBeenCalled();
-            testSendMessageToEmail.mockRestore();
+            try{
+                const {body,statusCode} = await supertest(app).post("/api/users/forgotPassword").send({
+                    email:correctEmail
+                });
+
+                expect(statusCode).toBe(202);
+                expect(body.message).toBe("success");
+                expect(testSendMessageToEmail).toHaveBeenCalled();
+            }catch(error){
+                throw error;
+            }finally{
+                testSendMessageToEmail.mockRestore();
+            }
         })
 
         it("Should return an error with status code 401",async()=>{
             const testSendMessageToEmail = jest.spyOn(MailUtils,"SendToResetPassword");
-            const {body,statusCode} = await supertest(app).post("/api/users/forgotPassword").send({
-                email:incorrectEmail
-            })
-            expect(statusCode).toBe(401);
-            expect(body);
-            expect(testSendMessageToEmail).not.toHaveBeenCalled()
-            testSendMessageToEmail.mockRestore();
+            try{
+                const {body,statusCode} = await supertest(app).post("/api/users/forgotPassword").send({
+                    email:incorrectEmail
+                });
+
+                expect(statusCode).toBe(401);
+                expect(body);
+                expect(testSendMessageToEmail).not.toHaveBeenCalled()
+            }catch(error){
+                throw error;
+            }finally{
+                testSendMessageToEmail.mockRestore();
+            } 
         })
     })
 
