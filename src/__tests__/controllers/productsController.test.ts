@@ -1,10 +1,10 @@
-import { image ,IProduct} from './../@types/types.d';
-import { setProductTestData, getProductTestData, getAdminUserTokenTestData, getAdminUserIdTestData, getCategoryIdTestData } from './../utils/HelperFunctions';
+import { image ,IProduct} from '../../@types/types';
+import { setProductTestData, getProductTestData, getAdminUserTokenTestData, getAdminUserIdTestData, getCategoryIdTestData } from '../../utils/HelperFunctions';
 import supertest from "supertest";
-import createServer from "../utils/Server";
+import createServer from "../../utils/Server";
 import mongoose from "mongoose";
-import DatabaseTestHandler from "../utils/DatabaseTestHandler";
-import "../config/cloudinary"
+import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
+import "../../config/cloudinary"
 const app = createServer()
 
 describe("Products",()=>{

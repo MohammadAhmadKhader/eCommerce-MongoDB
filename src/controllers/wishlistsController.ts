@@ -4,7 +4,8 @@ import { ObjectId } from "mongodb";
 
 export const getWishList = async (req:Request,res:Response)=>{
     try{
-        const userId = req.params.userId;
+        //const userId = req.params.userId;
+        const userId = req.user._id as string;
         const user = await User.findOne({_id:userId}).populate({
             path:"wishList.productId",
             select:"-description -reviews"
@@ -32,9 +33,9 @@ export const getWishList = async (req:Request,res:Response)=>{
 export const addToWishList = async (req:Request, res:Response)=>{
     try{
         const productId = req.body.productId as string;
-        const userId = req.body.userId as string;
+        const userId = req.user._id as string;
 
-        const user = await User.findById(userId);
+        const user = await User.findOne({_id:userId});
         if(!user){
             return res.status(400).json({error:"user was not found"})
         }
@@ -60,7 +61,7 @@ export const addToWishList = async (req:Request, res:Response)=>{
 export const removeFromWishList = async (req:Request,res:Response)=>{
     try{
         const wishlistItemId = req.body.wishlistItemId as string;
-        const userId = req.body.userId as string;
+        const userId = req.user._id as string;
 
         const userAfterChanges = await User.findOneAndUpdate({_id:userId},{
             $pull : { wishList : { _id :new ObjectId(wishlistItemId)} },

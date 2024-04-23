@@ -1,13 +1,13 @@
 import { Request, Response } from "express";
 import Product from "../models/product";
 import { ObjectId } from "mongodb";
+import { IUser } from "../@types/types";
 
 export const getAllReviewsByUserId = async (req:Request,res:Response) =>{
     try{
         const {skip,page,limit} = req.pagination;
-        const userId = req.params.userId;
-        console.log(userId)
-        console.log(skip,page,limit);
+        const userId = req.user._id as string;
+       // const userId = req.params.userId;
         const match = { 'reviews.userId' :new ObjectId(userId) }
 
         const reviews = await Product.aggregate([
@@ -17,11 +17,19 @@ export const getAllReviewsByUserId = async (req:Request,res:Response) =>{
             { $skip : skip },
             { $limit : limit },
         ])
+    
+        const matchingReviewsCount = await Product.aggregate([{ $unwind : "$reviews"},{ $match : match }]).count("reviews");
+        let count : number;
         
-        const matchingReviewsCount = await Product.aggregate([{ $unwind : "$reviews"},{ $match : match }]).count("reviews")
-        const [{ reviews : reviewsCount}] = matchingReviewsCount
+        if(matchingReviewsCount.length > 0){
+            const [{ reviews : reviewsCount}] = matchingReviewsCount;
+            count = reviewsCount
+        }else{
+            count = 0
+        }    
+        
         const improvedReviewsResponse = reviews.map(reviewObj => reviewObj.review);
-        return res.status(200).json({count:reviewsCount,limit,page,reviews:improvedReviewsResponse})
+        return res.status(200).json({count:count,limit,page,reviews:improvedReviewsResponse})
 
     }catch(error : any){
         console.error(error)
@@ -32,7 +40,8 @@ export const getAllReviewsByUserId = async (req:Request,res:Response) =>{
 export const addReviewToProduct = async (req:Request,res:Response)=>{
     try{
         const {comment, rating} = req.body
-        const userId = req.body.userId as string;
+        const userId = req.user._id as string;
+       // const userId = req.body.userId as string;
         const productId = req.body.productId;
 
         const oldReviews = await Product.find(
@@ -67,8 +76,9 @@ export const addReviewToProduct = async (req:Request,res:Response)=>{
 export const editReview = async (req:Request,res:Response)=>{
     try{
         const {comment,rating} = req.body
+        const userId = req.user._id as string;
         const reviewId = req.body.reviewId as string;
-        const userId = req.body.userId as string;
+        //const userId = req.body.userId as string;
 
         const editReview = await Product.findOneAndUpdate(
             {'reviews._id' : reviewId,'reviews.userId': userId},

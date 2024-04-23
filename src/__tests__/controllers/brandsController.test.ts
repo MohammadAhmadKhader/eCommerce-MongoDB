@@ -1,10 +1,10 @@
-import {  getAdminUserTokenTestData, getAdminUserIdTestData, getCategoryIdTestData } from './../utils/HelperFunctions';
+import {  getAdminUserTokenTestData, getAdminUserIdTestData, getCategoryIdTestData } from '../../utils/HelperFunctions';
 import supertest from "supertest";
 import { v4 as uuid } from 'uuid';
-import createServer from "../utils/Server";
+import createServer from "../../utils/Server";
 import mongoose from "mongoose";
-import DatabaseTestHandler from "../utils/DatabaseTestHandler";
-import "../config/cloudinary"
+import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
+import "../../config/cloudinary"
 const app = createServer()
 
 describe("Brands",()=>{
