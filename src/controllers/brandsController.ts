@@ -9,7 +9,7 @@ export const getAllBrands = async (req:Request,res:Response) =>{
 
         return res.status(200).json({brands})
     }catch(error : any){
-        console.log(error)
+        console.error(error)
         return res.status(500).json({error:error?.message})
    }
 }
@@ -33,7 +33,7 @@ export const createNewBrand = async (req:Request,res:Response)=>{
 
         return res.status(200).json({message:"success",brand})
     }catch(error : any){
-        console.log(error,"<=============================")
+        console.error(error)
         return res.status(500).json({error:error?.message})
    }
 }

@@ -12,7 +12,7 @@ export const authorizeUserInfoUpdate = async (req:Request,res:Response,next:Next
         } 
         return next()
     }catch(error){
-        console.log(error);
+        console.error(error);
         return res.sendStatus(500)
     }
 }
