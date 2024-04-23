@@ -2,7 +2,6 @@ import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import mongoose from "mongoose";
 import {Request,Response} from "express"
 import { authenticateAdmin, authenticateUser } from "../../middlewares/authenticate"
-//@ts-expect-error
 import testData from "../assets/testData/testData.json"
 import dotenv from "dotenv";
 
