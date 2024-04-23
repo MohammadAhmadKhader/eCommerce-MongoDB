@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { addToCartSchema, changeCartItemQuantityByOneSchema, creatingAddressSchema, creatingProductValidationSchema, deleteFromCartSchema, forgotPasswordSchema, resetPasswordViaCodeSchema, reviewSchema, sendingMessageSchema, updatingAddressSchema, userChangePasswordSchema, userRegistrationSchema, userSignInSchema } from "./validationsSchemas";
+import { addToCartSchema, addToWishlistSchema, changeCartItemQuantityByOneSchema, creatingAddressSchema, creatingProductValidationSchema, deleteFromCartSchema, deleteUserReviewSchema, editUserReviewSchema, forgotPasswordSchema, removeFromWishlistSchema, resetPasswordViaCodeSchema, reviewSchema, sendingMessageSchema, updatingAddressSchema, userChangePasswordSchema, userRegistrationSchema, userSignInSchema } from "./validationsSchemas";
 
 export const validateUserRegistration = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = userRegistrationSchema.validate({
@@ -10,7 +10,6 @@ export const validateUserRegistration = (req:Request,res:Response,next:NextFunct
     },{abortEarly:false})
     
     if(error){
-        console.log(error)
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         return res.status(400).json({error:errorMessage});
     }
@@ -76,14 +75,12 @@ export const validateUpdatingAddress = (req:Request,res:Response,next:NextFuncti
     const {error} = updatingAddressSchema.validate(addressToUpdate,{abortEarly:false})
 
     if(error){
-        console.log(error)
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         return res.status(400).json({error:errorMessage});
     }
     for(const key in addressToUpdate){
         if(addressToUpdate[key] === undefined){
             delete addressToUpdate[key]
-            console.log("first")
         }
     }
     
@@ -195,6 +192,57 @@ export const validateResetPasswordViaCode = (req:Request,res:Response,next:NextF
 export const validateForgotPassword = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = forgotPasswordSchema.validate({
         email:req.body.email
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateAddToWishList = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = addToWishlistSchema.validate({
+        productId:req.body.productId
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateRemoveFromWishlist = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = removeFromWishlistSchema.validate({
+        wishlistItemId:req.body.wishlistItemId
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateEditUserReview = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = editUserReviewSchema.validate({
+        comment:req.body.comment,
+        rating:req.body.rating,
+        reviewId:req.body.reviewId
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateDeleteUserReview = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = deleteUserReviewSchema.validate({
+        productId:req.body.productId,
+        reviewId:req.body.reviewId
     },{abortEarly:false})
 
     if(error){

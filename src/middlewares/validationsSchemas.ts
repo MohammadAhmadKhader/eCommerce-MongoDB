@@ -100,3 +100,22 @@ export const resetPasswordViaCodeSchema = Joi.object({
 export const forgotPasswordSchema = Joi.object({
     email:Joi.string().email().min(6).max(64).required(),
 })
+
+export const addToWishlistSchema = Joi.object({
+    productId:Joi.string().hex().length(24).required(),
+})
+
+export const removeFromWishlistSchema = Joi.object({
+    wishlistItemId:Joi.string().hex().length(24).required(),
+})
+
+export const editUserReviewSchema = Joi.object({
+    rating:Joi.number().valid(1,2,3,4,5).required(),
+    comment:Joi.string().min(4).max(256).required(),
+    reviewId:Joi.string().hex().length(24).required(),
+})
+
+export const deleteUserReviewSchema = Joi.object({
+    productId:Joi.string().hex().length(24).required(),
+    reviewId:Joi.string().hex().length(24).required(),
+})
