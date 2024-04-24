@@ -6,7 +6,7 @@ import imageThumbnail from "image-thumbnail"
 import { ImageThumbnailOptions } from '../utils/ThumbnailUtils';
 import { isJSON } from '../utils/HelperFunctions';
 import { ObjectId } from 'mongodb';
-import {setCache} from "../middlewares/cache";
+// import {setCache} from "../middlewares/cache";
 
 export const getProductById = async(req : Request,res : Response)=>{
     try{
@@ -216,6 +216,7 @@ export const getAllProducts = async (req : Request, res: Response,next:NextFunct
 export const postNewProduct = async (req : Request , res : Response)=>{
     try{
         const { name, quantity, description, price , brand, categoryId,offer,finalPrice} = req.body;
+        
         if(!req.file){
             return res.status(400).json({error:"Image does not exist"});
         }

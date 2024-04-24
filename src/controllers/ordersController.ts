@@ -3,10 +3,12 @@ import Order from "../models/order";
 import User from "../models/user";
 import Product from "../models/product";
 import mongoose, { startSession } from "mongoose";
-import Stripe from "stripe";
-import { verifyAndDecodeToken } from "../utils/HelperFunctions";
 import Invoice from "../models/Invoice";
 import { ObjectId } from "mongodb";
+import { IUser } from "../@types/types";
+import StripeUtils from "../utils/StripeUtils";
+import Stripe from "stripe";
+import { collectInvoiceData } from "../utils/HelperFunctions";
 
 export const getAllOrders = async(req:Request,res:Response)=>{
     try{
@@ -44,13 +46,10 @@ export const getSingleOrderById = async(req:Request,res:Response)=>{
 
 export const createOrder = async(req :Request,res:Response)=>{
     try{
-        const userId = req.body.userId;
+        // const userId = req.body.userId;
         const arrayOfProductsIds : any = [];
-        const user = await User.findOne({_id:userId},{cart:1,addresses:1})
-
-        if(!user){
-            return res.status(400).json({error:"user does not exist"});
-        }
+        const user = req.user as IUser;
+        const userId = user._id;
 
         if(user.cart.length == 0){
             return res.status(400).json({error:"cart is empty"});
@@ -63,7 +62,7 @@ export const createOrder = async(req :Request,res:Response)=>{
         const mapper : any ={};
         
         arrayOfProductsIds.forEach((item : any)=>{
-            user!.cart.forEach((cartItem)=>{
+            user.cart.forEach((cartItem)=>{
                 if(cartItem.productId == item){
                     mapper[item] = cartItem.quantity
                 }
@@ -114,7 +113,8 @@ export const createOrder = async(req :Request,res:Response)=>{
 
 export const deleteOrder = async (req:Request,res:Response) => {
     try{
-        const userId = req.body.userId as string
+        //const userId = req.body.userId as string
+        const userId = req.user._id as string
         const orderId = req.body.orderId as string
         
         const order = await Order.findOneAndUpdate({
@@ -134,37 +134,17 @@ export const deleteOrder = async (req:Request,res:Response) => {
 export const createPaymentIntent = async(req:Request,res:Response)=>{
     try{
         const {orderId,customerId} = req.body;
-        const token = req.headers.authorization;
-        if(!token){
-            return res.sendStatus(401);
-        }
+        const user = req.user;
         if(!customerId){
             return res.status(400).json({error:"Missing customer"});
         }
-        const decodedToken = await verifyAndDecodeToken(token);
         const order = await Order.findOne({_id:orderId});
         if(!order){
             return res.status(400).json({error:"Order was not found"})
         }
 
-        const stripe = new Stripe(process.env.STRIPE_SECRET as string);
-
-        let hasCreatedNewCustomer = false;
-        let customer : Stripe.Response<Stripe.ApiSearchResult<Stripe.Customer> | Stripe.Customer> = await stripe.customers.search({
-            query:`metadata[\'customerId\']:\'${customerId}\'`
-        })
-        
-        if(customer.data.length ==0){
-            const createdCustomer = await stripe.customers.create({
-                email:decodedToken.email,
-                metadata:{
-                    customerId:decodedToken.id
-                }
-            });
-            hasCreatedNewCustomer = true;
-            customer = createdCustomer;
-        }
-        
+        const stripe = StripeUtils.createStripe();
+        const customer = await StripeUtils.searchCustomerCreateOneIfDoesNotExist(customerId,stripe,user)
 
         const paymentIntent = await stripe.paymentIntents.create({
             currency:"usd",
@@ -173,14 +153,8 @@ export const createPaymentIntent = async(req:Request,res:Response)=>{
                 enabled:true
             },
         })
-        let returnedCustomerData;
-        if(hasCreatedNewCustomer){
-            returnedCustomerData = customer
-        }else{
-            returnedCustomerData = (customer as Stripe.ApiSearchResult<Stripe.Customer>).data[0]
-        }
 
-        return res.status(200).json({clientSecret:paymentIntent.client_secret,customer:returnedCustomerData})
+        return res.status(200).json({clientSecret:paymentIntent.client_secret,customer:customer})
     }catch(error : any){
         console.error(error)
         return res.status(500).json({error:error?.message})
@@ -191,19 +165,15 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
     const transaction = mongoose.startSession();
     try{
         ;(await transaction).startTransaction();
+        const user = req.user;
         const {orderId,customerId,address} = req.body;
-        const token = req.headers.authorization
-        if(!token){
-            (await transaction).abortTransaction();
-            return res.sendStatus(401);
-        }
-        
+         
         if(!address || (address && (!address.city || !address.state || !address.country || !address.streetAddress || !address.mobileNumber || !address.fullName))){
             return res.status(400).json({error:"Address is required"});
         }
-        const decodedToken = await verifyAndDecodeToken(token);
+        
         const order = await Order.findOneAndUpdate(
-            {_id:orderId,userId:decodedToken.id},
+            {_id:orderId,userId:user._id},
             {$set:{address:address,status:"Completed",isPaid:true}}
         );
         if(!order){
@@ -211,60 +181,22 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
             return res.status(400).json({error:"Order was not found"})
         }
 
-        const stripe = new Stripe(process.env.STRIPE_SECRET as string);
-        const customers = await stripe.customers.search({
-            query:`metadata[\'customerId\']:\'${customerId}\'`
-        })
+        const stripe = StripeUtils.createStripe();
+        const customers = await StripeUtils.searchCustomer(customerId,stripe);
+
         if(customers.data.length == 0){
             (await transaction).abortTransaction();
             return res.status(400).json({error:"Customer was not found"})
         }  
-       
-        const invoice = await stripe.invoices.create({
-            currency:"usd",
-            customer:customers.data[0].id,
-            collection_method:"charge_automatically",
-        })
+        const customer = customers.data[0];
+        const invoice = await StripeUtils.createInvoice(customer,stripe);
         
-        for(let i =0; i < order.orderItems.length ;i++){
-            const invoiceItems = await stripe.invoiceItems.create({
-                customer:customers.data[0].id,
-                invoice:invoice.id,
-                quantity:order.orderItems[i].quantity as number,
-                unit_amount:Number((order.orderItems[i].price! * 100).toFixed(0)),
-                description:`
-                || Product name : ${order.orderItems[i].name}
-                || Product image link : ${order.orderItems[i].thumbnailUrl}
-                || Product price after offer if exists : ${order.orderItems[i].price}
-                `,
-                metadata:{
-                    productId:order.orderItems[i].productId!.toString()
-                }
-            })
-            console.log(invoiceItems,`invoice Item number ${i + 1} @@ quantity = 
-            ${order.orderItems[i].quantity} @@ name ${order.orderItems[i].name}`)
-        }
-        
+        const createInvoiceItems = await StripeUtils.createInvoiceItems(customer,invoice,order,stripe);
         const finalizingTheInvoice = await stripe.invoices.finalizeInvoice(invoice.id);
 
-        const InvoiceData : any = {};
-        InvoiceData["hostedLink"] = finalizingTheInvoice.hosted_invoice_url;
-        InvoiceData["pdfLink"] = finalizingTheInvoice.invoice_pdf;
-        InvoiceData["subTotal"] = finalizingTheInvoice.subtotal;
-        InvoiceData["grandTotal"] = finalizingTheInvoice.total;
-        InvoiceData["userId"] = order.userId;
-        InvoiceData["orderId"] = order._id;
-        InvoiceData["invoiceItems"] = [];
-
-        finalizingTheInvoice.lines.data.forEach((item)=> {
-            const newInvoiceLine : any = {};
-            newInvoiceLine["quantity"] = item.quantity;
-            newInvoiceLine["productId"] = item.metadata.productId;
-            newInvoiceLine["unitPrice"] = (item.price! as any).unit_amount / 100;
-            (InvoiceData["invoiceItems"] as Array<any>).push(newInvoiceLine)
-        });
-            
+        const InvoiceData = collectInvoiceData(finalizingTheInvoice,order);
         const issuedInvoice = await Invoice.create(InvoiceData);
+
         const arrayOfProductsIds : any = [];
         issuedInvoice.invoiceItems.forEach((item)=>{
             arrayOfProductsIds.push(item.productId);
@@ -276,7 +208,7 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
             productsIdQuantityMapper[product._id.toString()] = product.quantity;
         });
         order.orderItems.forEach((orderItem)=>{
-            orderItemsProductIdQuantityMapper[(orderItem.productId as ObjectId).toString()] = orderItem.quantity;
+            orderItemsProductIdQuantityMapper[orderItem.productId.toString()] = orderItem.quantity;
         })
 
         const bulkWriteArray : any= [];
@@ -300,7 +232,7 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
         }
 
         ;(await transaction).commitTransaction();
-        return res.status(200).json({invoice,finalizingTheInvoice,order,InvoiceData,issuedInvoice})
+        return res.status(200).json({order,invoice:issuedInvoice})
     }catch(error : any){
         (await transaction).abortTransaction();
         console.error(error)

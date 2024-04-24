@@ -24,7 +24,7 @@ export const creatingAddressSchema = Joi.object({
     city:Joi.string().min(3).max(32).required(),
     state:Joi.string().min(4).max(32).required(),
     mobileNumber:Joi.string().min(6).max(15).required(),
-    pinCode:Joi.string().min(3).max(12).required(),
+    pinCode:Joi.string().min(3).max(12).required().allow(""),
 })
 
 export const updatingAddressSchema = Joi.object({

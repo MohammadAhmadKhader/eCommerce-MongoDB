@@ -709,7 +709,6 @@ describe("Validation Middlewares",()=>{
                 "city is not allowed to be empty",
                 "state is not allowed to be empty",
                 "mobileNumber is not allowed to be empty",
-                "pinCode is not allowed to be empty",
             ]})
         })
 
@@ -1982,3 +1981,5 @@ describe("Validation Middlewares",()=>{
 
 // * Next To Do
 // maximizing product images length to 10
+// add middlewares for params routes that contain authentication middleware
+// separating validation functions into multiple files

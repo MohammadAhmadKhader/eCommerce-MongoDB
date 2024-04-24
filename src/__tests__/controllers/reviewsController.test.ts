@@ -69,12 +69,12 @@ describe("Reviews",()=>{
         });
 
         // Trying to add a review to a product that already reviewed by the user
-        it("Should return an error ",async()=>{
+        it("Should return an error with status code 400 and message with user already reviews this product",async()=>{
             const reviewedUserToken = testData.userTokenForAddingReviewsWithUserAlreadyReviewed;
             const {body,statusCode} = await supertest(app).post(`/api/reviews`)
             .set("Authorization",reviewedUserToken).send({
                 productId:productIdToUserForAddingReview,
-                comment:faker.word.words({count:{min:1,max:3}}),
+                comment:faker.word.words({count:{min:2,max:3}}),
                 rating:faker.number.int({min:1,max:5}),
             })
             expect(statusCode).toBe(400);

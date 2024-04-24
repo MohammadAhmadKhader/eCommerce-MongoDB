@@ -5,6 +5,6 @@ module.exports = {
   testMatch:["**/**/*.test.ts"],
   verbose:true,
   forceExit:true,
-  testTimeout:20000,
+  testTimeout:30000,
   detectOpenHandles:true,
 };

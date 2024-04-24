@@ -1,7 +1,8 @@
 import { ObjectId } from "mongodb";
 import mongoose,{Schema} from "mongoose";
+import { IInvoice } from "../@types/types";
 
-const InvoiceSchema = new Schema ({
+const InvoiceSchema : Schema<IInvoice>= new Schema ({
     hostedLink:{
         type:String,
         required:true

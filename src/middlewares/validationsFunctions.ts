@@ -101,8 +101,9 @@ export const validateCreateProduct = (req:Request,res:Response,next:NextFunction
         quantity:req.body.quantity,
         brand:req.body.brand,
     },{abortEarly:false})
-
+    
     if(error){
+        console.log(error)
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         return res.status(400).json({error:errorMessage});
     }

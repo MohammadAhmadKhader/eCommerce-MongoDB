@@ -5,6 +5,7 @@ import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import { faker } from '@faker-js/faker';
 import testData from "../assets/testData/testData.json"
+import { expectId } from '../utils/helperTestFunctions.test';
 const app = createServer();
 
 
@@ -40,15 +41,10 @@ describe("Addresses",()=>{
             expect(statusCode).toBe(201)
             expect(body.message).toBe("success");
             expect(body.user.password).toBeUndefined();
-            expect(body.user.addresses[body.user.addresses.length - 1].pinCode).toBe(newAddress.pinCode);
-            expect(body.user.addresses[body.user.addresses.length - 1].fullName).toBe(newAddress.fullName);
-            expect(body.user.addresses[body.user.addresses.length - 1].state).toBe(newAddress.state);
-            expect(body.user.addresses[body.user.addresses.length - 1].mobileNumber).toBe(newAddress.mobileNumber);
-            expect(body.user.addresses[body.user.addresses.length - 1].streetAddress).toBe(newAddress.streetAddress);
-            expect(body.user.addresses[body.user.addresses.length - 1].city).toBe(newAddress.city);
-            expect(body.user.addresses[body.user.addresses.length - 1]._id.length).toBe(24);
-            setTestData(testDataFilePath,body.user.addresses[body.user.addresses.length - 1]._id,"addressIdForDelete")
-            
+            const createdAddress = body.user.addresses[body.user.addresses.length - 1];
+            expect(createdAddress).toMatchObject(newAddress);
+            expectId(createdAddress._id);
+            setTestData(testDataFilePath,body.user.addresses[body.user.addresses.length - 1]._id,"addressIdForDelete");
         })
     })
 

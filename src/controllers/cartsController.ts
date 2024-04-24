@@ -42,7 +42,7 @@ export const addToCart = async (req:Request,res:Response)=>{
             return res.status(400).json({error:"Invalid quantity"})
         }
         
-        const doesUserHaveThisItem = user!.cart.filter((item) => item.productId == productId)
+        const doesUserHaveThisItem = user!.cart.filter((item) => item.productId.toString() == productId)
         if(doesUserHaveThisItem.length > 0){
             return res.status(400).json({error:"User already have this item"})
         }
@@ -104,7 +104,7 @@ export const changeCartItemQuantityByOne = async (req:Request,res:Response)=>{
         }
 
         const wantedCartItem = user.cart.filter((item,index) => {
-            if(item._id == cartItemId && item.productId == productId){
+            if(item._id.toString() == cartItemId && item.productId.toString() == productId){
                 indexInCart = index
                 return true;
             }

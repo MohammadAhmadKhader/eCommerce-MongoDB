@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongoose';
 import { IReview } from './types.d';
 import { Schema } from "mongoose";
 
@@ -30,6 +31,7 @@ export interface IProduct {
         updatedAt: Date;
     }[];
     images: {
+        _id:Schema.Types.ObjectId;
         imageUrl: string;
         thumbnailUrl: string;
     }[];
@@ -45,7 +47,7 @@ export interface IReview {
 }
 
 export interface IUser {
-    _id:ObjectId;
+    _id:Schema.Types.ObjectId;
     email:string;
     password:string;
     firstName:string;
@@ -74,8 +76,22 @@ export interface IAddresses {
 }
 
 export interface IWishListItem {
-    _id:ObjectId;
-    productId:ObjectId;
+    _id:Schema.Types.ObjectId;
+    productId:Schema.Types.ObjectId;
+}
+
+export interface IWishListItemPopulated {
+    _id:Schema.Types.ObjectId;
+    product:{
+        name:string;
+        categoryId:Schema.Types.ObjectId;
+        price:number;
+        finalPrice:number;
+        offer:number;
+        quantity:number;
+        images:image[];
+        brand:string;
+    }
 }
 
 export interface IImageThumbnailOptions {
@@ -97,6 +113,59 @@ export interface IDecodedToken {
     email:string;
     iat:number;
     exp:number;
+}
+
+export interface IOrder {
+    _id:Schema.Types.ObjectId
+    subTotal:number,
+    discount:number,
+    userId:Schema.Types.ObjectId,
+    deliveryFee:number,
+    grandTotal:number,
+    isPaid:Boolean,
+    status:"Placed" | "Processing" | "Cancelled" | "Completed",
+    orderItems:IOrderItem[],
+    address:IAddresses;
+    paymentDetails:string | undefined;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface IInvoice {
+    _id:Schema.Types.ObjectId,
+    hostedLink:string;
+    pdfLink:string;
+    subTotal:number;
+    grandTotal:number;
+    userId:Schema.Types.ObjectId;
+    orderId:Schema.Types.ObjectId;
+    invoiceItems:IInvoiceItem[];
+    createdAt:Date;
+    updatedAt:Date;
+}
+
+export interface IInvoiceItem {
+    quantity:number;
+    unitPrice:number;
+    productId:Schema.Types.ObjectId;
+    _id:Schema.Types.ObjectId;
+}
+
+export interface IOrderItem {
+    name:string,
+    quantity:number,
+    productId:Schema.Types.ObjectId,
+    thumbnailUrl:string,
+    price:number,
+    subTotal:number,
+    brand:string;
+
+}
+
+export interface IProductImage {
+    _id:Schema.Types.ObjectId;
+    imageUrl:string;
+    thumbnailUrl:string;
 }
 
 export type image = {
