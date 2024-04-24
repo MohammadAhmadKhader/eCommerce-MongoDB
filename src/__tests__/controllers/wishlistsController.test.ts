@@ -5,6 +5,8 @@ import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import "../../config/cloudinary"
 import User from '../../models/user';
 import testData from "../assets/testData/testData.json"
+import { expectPopulatedWishlistItem } from "../utils/wishlist.test";
+import { IWishListItemPopulated } from "../../@types/types";
 const app = createServer()
 
 describe("Wishlists",()=>{
@@ -31,24 +33,9 @@ describe("Wishlists",()=>{
             const {body,statusCode} = await supertest(app).get(`/api/wishlists/${adminUserId}`).set("Authorization",adminUserToken);
             expect(statusCode).toBe(200);
             expect(body.wishList).toBeTruthy();
-            body.wishList.forEach((wishlistItem : any)=>{
-                expect(typeof wishlistItem._id).toBe("string");
-                expect(wishlistItem._id.length).toBe(24);
-                expect(wishlistItem.product).toBeTruthy();
-                expect(typeof wishlistItem.product.name).toBe("string");
-                expect(typeof wishlistItem.product.categoryId).toBe("string");
-                expect(typeof wishlistItem.product.price).toBe("number");
-                expect(typeof wishlistItem.product.finalPrice).toBe("number");
-                expect(typeof wishlistItem.product.quantity).toBe("number");
-                expect(typeof wishlistItem.product.brand).toBe("string");
-                expect(wishlistItem.product.images).toBeTruthy();
+            body.wishList.forEach((wishlistItem : IWishListItemPopulated)=>{
                 expect(wishlistItem.product.images.length).toBeGreaterThanOrEqual(1);
-                wishlistItem.product.images.forEach((image:any)=>{
-                    expect(typeof image.imageUrl).toBe("string");
-                    expect(typeof image.thumbnailUrl).toBe("string");
-                    expect(typeof image._id).toBe("string");
-                    expect(image._id.length).toBe(24);
-                })
+                expectPopulatedWishlistItem(wishlistItem)
             })
         })
 
@@ -68,7 +55,6 @@ describe("Wishlists",()=>{
             });
             expect(statusCode).toBe(201);
             expect(body.message).toBe("success");
-            expect(body.user.wishList).toBeTruthy(); 
             body.user.wishList.forEach((wishListItem : any)=>{
                 if(wishListItem.productId == productIdForPosting){
                     isWishListHasBeenAdded = true
@@ -112,8 +98,8 @@ describe("Wishlists",()=>{
                     throw "User was not modified before testing on removing wishlist item"
                 }
                 updatedUser.wishList.forEach((item)=>{
-                    if(item.productId == productIdForDeletion){
-                        wishlistItemId = item._id;
+                    if(item.productId as unknown as string == productIdForDeletion){
+                        wishlistItemId = item._id.toString();
                     }
                 })
                 
@@ -125,6 +111,7 @@ describe("Wishlists",()=>{
             const {body,statusCode} = await supertest(app).delete("/api/wishlists").set("Authorization",userToken).send({
                 wishlistItemId:wishlistItemId
             });
+            console.log(JSON.stringify(body))
             expect(statusCode).toBe(202);
             expect(body.message).toBe("success");
             expect(body.user).toBeTruthy();

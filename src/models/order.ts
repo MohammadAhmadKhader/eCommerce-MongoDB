@@ -1,6 +1,7 @@
 import mongoose,{ Schema } from "mongoose";
+import { IOrder } from "../@types/types";
 
-const orderSchema = new Schema({
+const orderSchema : Schema<IOrder> = new Schema({
     subTotal:{
         type:Number,
         required:true

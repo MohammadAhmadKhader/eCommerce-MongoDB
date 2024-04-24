@@ -56,7 +56,7 @@ export const signIn = async (req:Request,res:Response)=>{
         const sessionToken = await SessionToken.findOneAndUpdate({
             userId:user._id,
         },{
-            userId:new ObjectId(user._id as string),
+            userId:user._id,
             token:token
         },{upsert:true,new:true})
         
@@ -129,7 +129,7 @@ export const changePassword = async (req:Request,res:Response)=>{
         const token = signToken(user._id.toString(),user.email)
         
         const sessionToken = await SessionToken.findOneAndUpdate({
-            userId:new ObjectId(user._id as string),
+            userId:user._id,
         },{
             token:token
         },{

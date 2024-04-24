@@ -4,20 +4,21 @@ import supertest from "supertest";
 import createServer from "../../utils/Server";
 import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
+import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
+import { expectId } from '../utils/helperTestFunctions.test';
 const app = createServer()
 
 describe("Products",()=>{
-    let adminUserToken : any;
-    let categoryId: any;
-    let adminUserId: any;
+    const adminUserToken = testData.adminUserToken;
+    const categoryId= testData.categoryIdForTesting;
+    const adminUserId= testData.adminUserId;
     const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
+    const imagePath = "./src/__tests__/assets/images/testImage.jpg"
+    // 
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST); 
-        adminUserToken = await getAdminUserTokenTestData(testDataFilePath) as string;
-        adminUserId = await getAdminUserIdTestData(testDataFilePath) as string;
-        categoryId = await getCategoryIdTestData(testDataFilePath) as string;
     })
 
     afterAll(async()=>{
@@ -26,7 +27,6 @@ describe("Products",()=>{
     
     describe("get product by id controller",()=>{
         const expectedRatingValues = [1,2,3,4,5];
-        
         it("should return product with comments and average ratings", async ()=>{
             const productId = "65ecde9d50cbedf3920a2c2b"
             const {body,statusCode} = await supertest(app).get(`/api/products/${productId}`);
@@ -244,14 +244,17 @@ describe("Products",()=>{
 
     describe("Create Product Controller",()=>{
         
-        it("Should Create Product and return",async()=>{
+        it("Should Create Product and return status code 201 and return the created product",async()=>{
             const productName = "TestingProducts";
             const productDescription = "test Description Product";
             const productBrand = "Levi's";
+
             const {body,statusCode} = await supertest(app).post(`/api/products/${adminUserId}`)
             .field("name",productName).field("categoryId",categoryId).field("brand",productBrand)
-            .field("price",200).field("description",productDescription).attach("image","./src/__tests__/assets/images/testImage.jpg")
-            .set('Authorization', adminUserToken as string)
+            .field("price",200).field("description",productDescription).field("offer",0)
+            .attach("image",imagePath).set('Authorization', adminUserToken);
+            
+            console.log(JSON.stringify(body))
             expect(statusCode).toBe(201);
             expect(body.message).toBe("success");
             expect(body.product.name).toBe(productName);
@@ -270,15 +273,16 @@ describe("Products",()=>{
 
     describe("Append Images to Product",()=>{
         it("Should append images to product",async()=>{
-            const productIdForUpdate = await getProductTestData(testDataFilePath,"productIdForUpdate");
-            expect(typeof productIdForUpdate).toBe("string");
-            expect((productIdForUpdate as string).length).toBe(24);
+            const productIdForUpdate = testData.productsRoute.productIdForUpdate;
+            expectId(productIdForUpdate)
             const {body,statusCode} = await supertest(app).post(`/api/products/${productIdForUpdate}/${adminUserId}`)
-            .set('Authorization', adminUserToken as string)
-            .attach("images","./src/__tests__/assets/images/testImage.jpg")
-            .attach("images","./src/__tests__/assets/images/testImage.jpg")
-            .attach("images","./src/__tests__/assets/images/testImage.jpg")
-            .attach("images","./src/__tests__/assets/images/testImage.jpg")
+            .set('Authorization', adminUserToken)
+            .attach("images",imagePath)
+            .attach("images",imagePath)
+            .attach("images",imagePath)
+            .attach("images",imagePath);
+            expect(statusCode).toBe(200);
+            expect(body).toStrictEqual({message:"success"})
         })
         
     })
@@ -287,12 +291,12 @@ describe("Products",()=>{
         it("Should delete product and return status code 200",async()=>{
             const productIdForDelete  = await getProductTestData(testDataFilePath,"productIdForDelete");
             const {body : bodyOfProductBeforeDelete} = await supertest(app).get(`/api/products/${productIdForDelete}`)
-            const productBeforeDelete = bodyOfProductBeforeDelete.product;
+            const productBeforeDelete : IProduct = bodyOfProductBeforeDelete.product;
 
             const arrayOfImagesUrl : any = [];
             const arrayOfThumbnailsUrl : any = [];
 
-            productBeforeDelete.images.forEach((item : image)=>{
+            productBeforeDelete.images.forEach((item)=>{
                 arrayOfImagesUrl.push(item.imageUrl);
                 arrayOfThumbnailsUrl.push(item.thumbnailUrl);
             })
