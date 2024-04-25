@@ -5,7 +5,6 @@ const storage = multer.memoryStorage()
 const upload = multer({
     storage,
 })
-
 const router = express.Router()
 
 import * as productsRouter from "../controllers/productsController"
@@ -17,7 +16,7 @@ import { validateCreateProduct } from '../middlewares/validationsFunctions';
 router.get("/:productId",pagination,productsRouter.getProductById)
 router.get("/",pagination,productsRouter.getAllProducts)
 router.get("/search/:text",productsRouter.searchForProducts)
-router.post("/:userId",validateCreateProduct,authenticateAdmin, upload.single('image'),productsRouter.postNewProduct)
+router.post("/:userId",authenticateAdmin, upload.single('image'),validateCreateProduct,productsRouter.postNewProduct)
 router.post("/:productId/:userId",authenticateAdmin, upload.any(),productsRouter.appendImagesToProduct)
 router.delete("/:productId/:userId",authenticateAdmin,productsRouter.deleteProduct)
 export default router;

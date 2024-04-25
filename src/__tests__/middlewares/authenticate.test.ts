@@ -4,6 +4,7 @@ import {Request,Response} from "express"
 import { authenticateAdmin, authenticateUser } from "../../middlewares/authenticate"
 import testData from "../assets/testData/testData.json"
 import dotenv from "dotenv";
+import { createResponseNext } from "../utils/helperTestFunctions.test";
 
 dotenv.config();
 describe("Authentication Middlewares",()=>{
@@ -13,10 +14,10 @@ describe("Authentication Middlewares",()=>{
     const correctNotExpiredAdminTokenThatDoesNotExistInDB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ik1vaGFtbWFkS2hhZGVycjE5OTlAZ21haWwuY29tIiwiaWQiOiI2NWU3ODJlZDM2OGMyMmUzNTQyMmY0YWQiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTgyNjIzOTAyMn0.LaDiu-G1uME_DJiCFRqThJXWoL47emlnUfQi2dfD7Lc"
     const notAdminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZWY1ODkxMDgyYjZhMDY5OGQ1Y2VkOCIsImVtYWlsIjoiTmljb2xhczYxQHlhaG9vLmNvbSIsImlhdCI6MTcxMzYyMDcxMywiZXhwIjoxNzE2MjEyNzEzfQ.j1mSUu8hcA376W-S0HZ3G5-bx1uMts_RmJCzAKdjtzY"
     const expiredNormalUserToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IlRoYWRkZXVzLkxpbmQ1QGdtYWlsLmNvbSIsImlkIjoiNjVlZjU4OTEwODJiNmEwNjk4ZDVjZWU5IiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MjYyMzkwMjJ9.1yEIwBz5DjdQDw6qu3FbModHU_nGEOLzjyaMVijuNBg"
+    
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
-        
     })
 
     afterAll(async()=>{
@@ -25,12 +26,7 @@ describe("Authentication Middlewares",()=>{
     describe("Authenticate Admin",()=>{
         
         it("Should authenticate admin pass the middle ware and set user inside request",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body: {},
                 headers: {
@@ -47,12 +43,7 @@ describe("Authentication Middlewares",()=>{
         })
 
         it("Should return an error with status 500 from sendStatus function when token is malformed",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body: {},
                 headers: {
@@ -67,12 +58,7 @@ describe("Authentication Middlewares",()=>{
         })
 
         it("Should return an error with status 500 from sendStatus function when token is expired",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body: {},
                 headers: {
@@ -88,12 +74,7 @@ describe("Authentication Middlewares",()=>{
 
 
         it("Should return an error with status 401 with status function and send error message when token does not exist",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body: {},
                 headers: {
@@ -108,12 +89,7 @@ describe("Authentication Middlewares",()=>{
         })
 
         it("Should return an error with status 401 with sendStatus function when user is not admin",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body: {},
                 headers: {
@@ -128,12 +104,7 @@ describe("Authentication Middlewares",()=>{
         })
 
         it("Should return an error with status 401 with sendStatus function when token is correct and does not exist in DB",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body: {},
                 headers: {
@@ -148,12 +119,7 @@ describe("Authentication Middlewares",()=>{
         })
 
         it("Should return an error with status 401 with sendStatus function when user is not found",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body: {},
                 headers: {
@@ -171,12 +137,7 @@ describe("Authentication Middlewares",()=>{
     describe("Authenticate User",()=>{
         
         it("Should return error with status code 401 and error message using status function",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{},
                 headers: {
@@ -194,12 +155,7 @@ describe("Authentication Middlewares",()=>{
 
 
         it("Should return error with status code 500 using sendStatus when token is expired",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{},
                 headers: {
@@ -215,12 +171,7 @@ describe("Authentication Middlewares",()=>{
         })
 
         it("Should return error with status code 500 using sendStatus when token is malformed",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{},
                 headers: {
@@ -236,12 +187,7 @@ describe("Authentication Middlewares",()=>{
         })
 
         it("Should pass successfully when token is for normal user and return user in request and not call json or status or sendStatus functions",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{},
                 headers: {
@@ -257,12 +203,7 @@ describe("Authentication Middlewares",()=>{
         })
 
         it("Should pass successfully when token is for an admin and return user in request and not call json or status or sendStatus functions",async()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn(),
-                sendStatus:jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{},
                 headers: {
