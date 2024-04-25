@@ -2,22 +2,18 @@ import { Request, Response } from "express";
 import Order from "../models/order";
 import User from "../models/user";
 import Product from "../models/product";
-import mongoose, { startSession } from "mongoose";
+import mongoose from "mongoose";
 import Invoice from "../models/Invoice";
-import { ObjectId } from "mongodb";
 import { IUser } from "../@types/types";
 import StripeUtils from "../utils/StripeUtils";
-import Stripe from "stripe";
 import { collectInvoiceData } from "../utils/HelperFunctions";
 
 export const getAllOrders = async(req:Request,res:Response)=>{
     try{
         const { limit,skip,page} = req.pagination;
-        const userId = req.params.userId
+        const userId = req.user._id;
         const status = req.query.status;
-        if(!status){
-            return res.status(400).json({error:"Status is required"});
-        }
+        
         const match = {status:status,userId:userId};
         const orders = await Order.find(match).sort({createdAt:-1}).skip(skip).limit(limit)
         const count = await Order.find(match).countDocuments()
@@ -133,12 +129,10 @@ export const deleteOrder = async (req:Request,res:Response) => {
 
 export const createPaymentIntent = async(req:Request,res:Response)=>{
     try{
-        const {orderId,customerId} = req.body;
+        const {orderId} = req.body;
         const user = req.user;
-        if(!customerId){
-            return res.status(400).json({error:"Missing customer"});
-        }
         const order = await Order.findOne({_id:orderId});
+        const customerId = user._id;
         if(!order){
             return res.status(400).json({error:"Order was not found"})
         }
@@ -166,11 +160,7 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
     try{
         ;(await transaction).startTransaction();
         const user = req.user;
-        const {orderId,customerId,address} = req.body;
-         
-        if(!address || (address && (!address.city || !address.state || !address.country || !address.streetAddress || !address.mobileNumber || !address.fullName))){
-            return res.status(400).json({error:"Address is required"});
-        }
+        const {orderId,address} = req.body;
         
         const order = await Order.findOneAndUpdate(
             {_id:orderId,userId:user._id},
@@ -180,7 +170,7 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
             (await transaction).abortTransaction();
             return res.status(400).json({error:"Order was not found"})
         }
-
+        const customerId = user._id;
         const stripe = StripeUtils.createStripe();
         const customers = await StripeUtils.searchCustomer(customerId,stripe);
 

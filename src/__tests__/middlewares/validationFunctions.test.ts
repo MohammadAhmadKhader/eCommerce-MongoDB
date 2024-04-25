@@ -1,6 +1,7 @@
-import { validateAddToWishList, validateAddingToCart, validateChangeCartItemQuantityByOne, validateCreatingAddress, validateDeleteUserReview, validateDeletingFromCart, validateEditUserReview, validateForgotPassword, validateRemoveFromWishlist, validateResetPasswordViaCode, validateSendingMessage, validateUserSignIn } from '../../middlewares/validationsFunctions';
-import { Request, Response } from 'express';
+import { validateAddToWishList, validateAddingToCart, validateChangeCartItemQuantityByOne, validateCheckOrder, validateCreatingAddress, validateDeleteUserReview, validateDeletingFromCart, validateEditUserReview, validateForgotPassword, validateOrderId, validateOrdersStatus, validateRemoveFromWishlist, validateResetPasswordViaCode, validateSendingMessage, validateUserSignIn } from '../../middlewares/validationsFunctions';
+import { Request } from 'express';
 import { validateUserRegistration,validateUserChangePassword, validateUserReview, validateCreateProduct, validateUpdatingAddress } from '../../middlewares/validationsFunctions';
+import { createResponseNext } from '../utils/helperTestFunctions.test';
 
 describe("Validation Middlewares",()=>{
     const stringWith25Char = "2i3n8sLqAe7z0m9c6R4s2W1t8";
@@ -41,11 +42,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing user registration validator middleware",()=>{ 
         it("Should return an error that all given data is empty",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext() 
             const req = {
                 body:{
                     firstName:"",
@@ -65,11 +62,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return call next function with minimum length on all parameters",()=>{ 
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     firstName:stringWith4Char,
@@ -84,11 +77,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return call next function with max length on all parameters",()=>{ 
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     firstName:stringWith32Char,
@@ -103,11 +92,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that all given data length is less than the required",()=>{ 
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     firstName:stringWith3Char,
@@ -128,11 +113,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that all given data length is more than the required",()=>{ 
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     firstName:stringWith33Char,
@@ -158,11 +139,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing user change password middleware",()=>{
         it("Should return error with oldPassword and newPassword are empty",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     oldPassword:"",
@@ -181,11 +158,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return error with all data less than the minimum length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     oldPassword:stringWith5Char,
@@ -203,11 +176,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return error with all data more than the maximum length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     oldPassword:stringWith25Char,
@@ -225,11 +194,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return error with not matching passwords",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     oldPassword:stringWith6Char,
@@ -246,11 +211,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass the function and not call the json or status",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     oldPassword:stringWith6Char,
@@ -267,11 +228,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing user sign in middleware",()=>{
         it("Should return an error when all fields are empty",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     
@@ -286,11 +243,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error with when all fields are less than the minimum length allowed or when email is invalid",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     email:emailWith5Char,
@@ -307,11 +260,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error with when all fields are more than maximum length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     email:emailWith65Char,
@@ -328,11 +277,7 @@ describe("Validation Middlewares",()=>{
 
 
         it("Should pass successfully when email and password set to minimum allowed",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     email:emailWith6Char,
@@ -345,11 +290,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass successfully when email and password set to maximum allowed",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     email:emailWith64Char,
@@ -364,11 +305,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing user validateResetPasswordViaCode middleware",()=>{
         it("Should return an error when all fields are empty",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     
@@ -383,11 +320,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when passwords are not matching",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     newPassword:stringWith6Char,
@@ -402,11 +335,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when passwords are less than 6 characters",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     newPassword:stringWith5Char,
@@ -421,11 +350,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when passwords are more than 24 characters",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     newPassword:stringWith25Char,
@@ -440,11 +365,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass successfully when passwords are set to maximum allowed",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     newPassword:stringWith24Char,
@@ -457,11 +378,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass successfully when passwords are set to minimum allowed allowed",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     newPassword:stringWith6Char,
@@ -476,11 +393,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing user validateForgotPassword middleware",()=>{
         it("Should return an error when email is missing",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     
@@ -494,11 +407,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when email is less than minimum or invalid",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     email:emailWith5Char,
@@ -513,11 +422,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when email is more than maximum",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     email:emailWith65Char,
@@ -531,11 +436,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass successfully when email set to max allowed (64 characters)",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     email:emailWith64Char,
@@ -548,11 +449,7 @@ describe("Validation Middlewares",()=>{
 
 
         it("Should pass successfully when email set to min allowed (6 characters)",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     email:emailWith6Char,
@@ -566,11 +463,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing user add review to product middle ware",()=>{
         it("Should return an error with all data empty",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     rating:"",
@@ -587,11 +480,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error with comment less than 4 characters",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     rating:1,
@@ -606,11 +495,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error with comment more than 256 characters",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     rating:1,
@@ -625,11 +510,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should not call json and not call status and test pass with comment 4 char",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     rating:1,
@@ -643,11 +524,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should not call json and not call status and test pass with comment 256 characters",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     rating:1,
@@ -663,11 +540,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing creating address middleware",()=>{
         it("Should return error with all data is required",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     
@@ -686,11 +559,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return error with all data empty",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:"",
@@ -714,11 +583,7 @@ describe("Validation Middlewares",()=>{
 
 
         it("Should return error with all data less than the minimum length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith3Char,
@@ -742,11 +607,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return error with all data more than the maximum length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith33Char,
@@ -770,11 +631,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass with all parameters on max length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith32Char,
@@ -792,11 +649,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass with all parameters on min length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith4Char,
@@ -816,11 +669,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing updating address middleware",()=>{
         it("Should return error with all data is required",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     
@@ -832,11 +681,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return error with all data empty",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:"",
@@ -861,11 +706,7 @@ describe("Validation Middlewares",()=>{
 
 
         it("Should return error with all data less than the minimum length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith3Char,
@@ -889,11 +730,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return error with all data more than the maximum length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith33Char,
@@ -917,11 +754,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass with all parameters on max length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith32Char,
@@ -939,11 +772,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass with all parameters on min length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith4Char,
@@ -961,11 +790,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass when fullname is not set",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     city:stringWith3Char,
@@ -982,11 +807,7 @@ describe("Validation Middlewares",()=>{
         })
         
         it("Should pass when pinCode is not set",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith4Char,
@@ -1003,11 +824,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass when mobileNumber is not set",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith4Char,
@@ -1024,11 +841,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass when state is not set",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith4Char,
@@ -1045,11 +858,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass when streetAddress is not set",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith4Char,
@@ -1068,11 +877,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing creating product middleware",()=>{
         it("Should return an error with all fields are required",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     
@@ -1090,11 +895,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error with all fields below minimum length or number or when brand is not set to the valid options",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     name:stringWith2Char,
@@ -1122,11 +923,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error with all fields above length or number or when brand is not set to the valid options",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     name:stringWith101Char,
@@ -1151,11 +948,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass when all the parameters are set to the maximum allowed and brand is set to allowed strings",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     name:stringWith100Char,
@@ -1174,11 +967,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass when all the parameters are set to the minimum allowed and brand is set to allowed strings",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     name:stringWith3Char,
@@ -1197,11 +986,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when finalPrice is set and offer more than 0 and price is not",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     name:stringWith32Char,
@@ -1218,11 +1003,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when quantity is not an integer",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     name:stringWith32Char,
@@ -1240,11 +1021,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when categoryId is not hex type",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     name:stringWith32Char,
@@ -1265,11 +1042,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing sending message middleware",()=>{
         it("Should return an error that all fields ar empty",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+           const { next,res } = createResponseNext()
             const req = {
                 body:{
                     
@@ -1284,11 +1057,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that all fields are less than the minimum length allowed and invalid email",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith3Char,
@@ -1310,11 +1079,7 @@ describe("Validation Middlewares",()=>{
             
         })
         it("Should return an error that all fields are more than the maximum length allowed and invalid email",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext()
                 const req = {
                     body:{
                         fullName:stringWith33Char,
@@ -1334,11 +1099,7 @@ describe("Validation Middlewares",()=>{
          })
 
         it("Should pass with maximum length for all fields",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith32Char,
@@ -1354,11 +1115,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass with minimum length for all fields",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     fullName:stringWith4Char,
@@ -1377,11 +1134,7 @@ describe("Validation Middlewares",()=>{
     describe("Testing cart Middlewares",()=>{
         describe("Testing validatAddingToCart middleware",()=>{
             it("Should return an error that all fields are empty",()=>{
-                    const res = {
-                        status: jest.fn().mockReturnThis(),
-                        json: jest.fn()
-                    } as unknown as Response;
-                    const next = jest.fn(); 
+                    const { next,res } = createResponseNext()
                     const req = {
                         body:{
 
@@ -1396,11 +1149,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should return an error when quantity is not integer",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext()
                 const req = {
                     body:{
                         productId:hexWith24Char,
@@ -1415,11 +1164,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should return an error when quantity is minus",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext() 
                 const req = {
                     body:{
                         productId:hexWith24Char,
@@ -1434,11 +1179,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should return an error when productId is not hex 24 length",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext() 
                 const req = {
                     body:{
                         productId:hexWith25Char,
@@ -1453,11 +1194,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should pass successfully when quantity is 1 and productId is hex 24 length",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext() 
                 const req = {
                     body:{
                         productId:hexWith24Char,
@@ -1470,11 +1207,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should pass successfully when quantity is more than 1 and positive and productId is hex 24 length",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext() 
                 const req = {
                     body:{
                         productId:hexWith24Char,
@@ -1489,11 +1222,7 @@ describe("Validation Middlewares",()=>{
         
         describe("Testing validateChangeCartItemQuantityByOne middleware",()=>{
             it("Should return an error that all fields are empty",()=>{
-                    const res = {
-                        status: jest.fn().mockReturnThis(),
-                        json: jest.fn()
-                    } as unknown as Response;
-                    const next = jest.fn(); 
+                    const { next,res } = createResponseNext()
                     const req = {
                         body:{
 
@@ -1509,11 +1238,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should return an error when operation is not +1 or -1",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext() 
                 const req = {
                     body:{
                         productId:hexWith24Char,
@@ -1529,11 +1254,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should pass successfully when productId cartItemId are hex 24 length and operation is +1",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext() 
                 const req = {
                     body:{
                         productId:hexWith24Char,
@@ -1547,11 +1268,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should pass successfully when productId cartItemId are hex 24 length and operation is -1",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext() 
                 const req = {
                     body:{
                         productId:hexWith24Char,
@@ -1567,11 +1284,7 @@ describe("Validation Middlewares",()=>{
 
         describe("Testing validateDeletingFromCart middleware",()=>{
             it("Should return an error that all fields are empty",()=>{
-                    const res = {
-                        status: jest.fn().mockReturnThis(),
-                        json: jest.fn()
-                    } as unknown as Response;
-                    const next = jest.fn(); 
+                    const { next,res } = createResponseNext()
                     const req = {
                         body:{
 
@@ -1585,11 +1298,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should return an error when cartItem Id is not 24 length",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext()
                 const req = {
                     body:{
                         cartItemId:hexWith25Char, 
@@ -1603,11 +1312,7 @@ describe("Validation Middlewares",()=>{
             })
 
             it("Should pass successfully when cartItemId is hex 24 length",()=>{
-                const res = {
-                    status: jest.fn().mockReturnThis(),
-                    json: jest.fn()
-                } as unknown as Response;
-                const next = jest.fn(); 
+                const { next,res } = createResponseNext()
                 const req = {
                     body:{
                         cartItemId:hexWith24Char,
@@ -1622,11 +1327,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing validateAddToWishList middleware",()=>{
         it("Should return an error that productId is required",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
 
@@ -1640,11 +1341,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that when productId is length 24 and not hex",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     productId:stringWith24Char
@@ -1658,11 +1355,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that when productId is not string",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     productId:[]
@@ -1676,11 +1369,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that when productId is length is not 24",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     productId:hexWith25Char
@@ -1694,11 +1383,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass successfully when productId is hex 24 length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     productId:hexWith24Char
@@ -1712,11 +1397,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing validateRemoveFromWishlist middleware",()=>{
         it("Should return an error that wishlistItemtId is required",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
 
@@ -1730,11 +1411,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that when wishlistItemId is length 24 and not hex",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     wishlistItemId:stringWith24Char
@@ -1748,11 +1425,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that when wishlistItemId is not string",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     wishlistItemId:[]
@@ -1766,11 +1439,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that when wishlistItemId is length is not 24",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     wishlistItemId:hexWith25Char
@@ -1784,11 +1453,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass successfully when wishlistItemId is hex 24 length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     wishlistItemId:hexWith24Char
@@ -1802,11 +1467,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing validateEditUserReview middleware",()=>{
         it("Should return an error that all fields are equired",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext() 
             const req = {
                 body:{
 
@@ -1822,11 +1483,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when rating is invalid number",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     rating:1.5,
@@ -1842,11 +1499,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when rating is invalid number",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     rating:1,
@@ -1862,11 +1515,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error when review length is not 24",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext() 
             const req = {
                 body:{
                     rating:1,
@@ -1882,11 +1531,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass successfully when all parameters meet the conditions",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     rating:1,
@@ -1902,11 +1547,7 @@ describe("Validation Middlewares",()=>{
 
     describe("Testing validateDeleteUserReview middleware",()=>{
         it("Should return an error that all fields are equired",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
 
@@ -1921,11 +1562,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that productId and reviewId must 24 length",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     productId:hexWith25Char,
@@ -1941,11 +1578,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should return an error that productId and reviewId must be hex type",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     productId:stringWith24Char,
@@ -1961,11 +1594,7 @@ describe("Validation Middlewares",()=>{
         })
 
         it("Should pass successfully when all parameters meet the conditions",()=>{
-            const res = {
-                status: jest.fn().mockReturnThis(),
-                json: jest.fn()
-            } as unknown as Response;
-            const next = jest.fn(); 
+            const { next,res } = createResponseNext()
             const req = {
                 body:{
                     productId:hexWith24Char,
@@ -1973,6 +1602,226 @@ describe("Validation Middlewares",()=>{
                 }
             } as Request;
             validateDeleteUserReview(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("Testing validateCheckOrder middleware",()=>{
+        const correctAddress={
+            city:"city",
+            state:"state",
+            streetAddress:"streetAddress 101",
+            pinCode:"2341",
+            fullName:"fullName",
+            mobileNumber:"059279103213"
+        }
+        it("Should return an error that all fields are equired",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    
+                }
+            } as Request;
+            validateCheckOrder(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "orderId is required",
+                "address is required",
+            ]})
+        })
+
+        it("Should return an error that orderId must 24 length",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:hexWith25Char,
+                    address:correctAddress
+                }
+            } as Request;
+            validateCheckOrder(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "orderId length must be 24 characters long",
+            ]})
+        })
+
+        it("Should return an error that orderId must be hex type",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:stringWith24Char,
+                    address:correctAddress
+                }
+            } as Request;
+            validateCheckOrder(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "orderId must only contain hexadecimal characters",
+            ]})
+        })
+
+        it("Should return an error when address values are all missing (empty address object)",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:hexWith24Char,
+                    address:{}
+                }
+            } as Request;
+            validateCheckOrder(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "address.fullName is required",
+                "address.streetAddress is required",
+                "address.city is required",
+                "address.state is required",
+                "address.mobileNumber is required",
+                "address.pinCode is required",
+            ]})
+        })
+
+        it("Should return an error when address only one parameter is used inside the object",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:hexWith24Char,
+                    address:{fullName:"fullName"}
+                }
+            } as Request;
+            validateCheckOrder(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "address.streetAddress is required",
+                "address.city is required",
+                "address.state is required",
+                "address.mobileNumber is required",
+                "address.pinCode is required",
+            ]})
+        })
+
+        it("Should allow pinCode to be set to empty string and pass successfully when all the address is correct",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:hexWith24Char,
+                    address:{...correctAddress,pinCode:""}
+                }
+            } as Request;
+            validateCheckOrder(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+
+        it("Should pass successfully when all parameters meet the conditions",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:hexWith24Char,
+                    address:correctAddress
+                }
+            } as Request;
+            validateCheckOrder(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("Testing validateOrderId middleware",()=>{
+        it("Should return error that orderId is required",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    
+                }
+            } as Request;
+            validateOrderId(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "orderId is required",
+            ]})
+        })
+
+        it("Should return error that orderId type must be hex",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:stringWith24Char
+                }
+            } as Request;
+            validateOrderId(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "orderId must only contain hexadecimal characters",
+            ]})
+        })
+
+        it("Should return error that orderId must be 24 length",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:hexWith25Char
+                }
+            } as Request;
+            validateOrderId(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "orderId length must be 24 characters long",
+            ]})
+        })
+
+        it("Should pass successfully when orderId is hex and 24 length",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    orderId:hexWith24Char,
+                }
+            } as Request;
+            validateOrderId(req,res,next);
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("Testing validateOrdersStatus",()=>{
+        it("Should return error that orderId is required",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                query:{
+                    
+                }
+            } as unknown as Request;
+            validateOrdersStatus(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "status is required",
+            ]})
+        })
+
+        it("Should return error that orderId type must be hex",()=>{
+            const { next,res } = createResponseNext();
+            const wrongStatus = "Wrong Status"
+            const req = {
+                query: {
+                    status: wrongStatus
+                }
+            } as unknown as Request;
+            validateOrdersStatus(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "status must be one of [Completed, Processing, Cancelled, Placed]",
+            ]})
+        })
+
+        it("Should pass successfully when order status is correct",()=>{
+            const { next,res } = createResponseNext();
+            const correctStatus = "Placed"
+            const req = {
+                query:{
+                    status:correctStatus,
+                }
+            } as unknown as Request;
+            validateOrdersStatus(req,res,next)
             expect(res.status).not.toHaveBeenCalled();
             expect(res.json).not.toHaveBeenCalled()
         })

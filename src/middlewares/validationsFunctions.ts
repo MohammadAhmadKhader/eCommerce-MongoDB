@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { addToCartSchema, addToWishlistSchema, changeCartItemQuantityByOneSchema, creatingAddressSchema, creatingProductValidationSchema, deleteFromCartSchema, deleteUserReviewSchema, editUserReviewSchema, forgotPasswordSchema, removeFromWishlistSchema, resetPasswordViaCodeSchema, reviewSchema, sendingMessageSchema, updatingAddressSchema, userChangePasswordSchema, userRegistrationSchema, userSignInSchema } from "./validationsSchemas";
+import { addToCartSchema, addToWishlistSchema, changeCartItemQuantityByOneSchema, createOrderSchema, orderIdSchema, creatingAddressSchema, creatingProductValidationSchema, deleteFromCartSchema, deleteUserReviewSchema, editUserReviewSchema, forgotPasswordSchema, removeFromWishlistSchema, resetPasswordViaCodeSchema, reviewSchema, sendingMessageSchema, updatingAddressSchema, userChangePasswordSchema, userRegistrationSchema, userSignInSchema, ordersStatusSchema } from "./validationsSchemas";
 
 export const validateUserRegistration = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = userRegistrationSchema.validate({
@@ -244,6 +244,43 @@ export const validateDeleteUserReview = (req:Request,res:Response,next:NextFunct
     const {error} = deleteUserReviewSchema.validate({
         productId:req.body.productId,
         reviewId:req.body.reviewId
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateCheckOrder = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = createOrderSchema.validate({
+        orderId:req.body.orderId,
+        address:req.body.address
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateOrderId = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = orderIdSchema.validate({
+        orderId:req.body.orderId
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateOrdersStatus = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = ordersStatusSchema.validate({
+        status:req.query.status
     },{abortEarly:false})
 
     if(error){

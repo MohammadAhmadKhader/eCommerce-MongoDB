@@ -15,7 +15,7 @@ describe("Products",()=>{
     const adminUserId= testData.adminUserId;
     const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
     const imagePath = "./src/__tests__/assets/images/testImage.jpg"
-    // 
+     
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST); 
@@ -251,7 +251,7 @@ describe("Products",()=>{
 
             const {body,statusCode} = await supertest(app).post(`/api/products/${adminUserId}`)
             .field("name",productName).field("categoryId",categoryId).field("brand",productBrand)
-            .field("price",200).field("description",productDescription).field("offer",0)
+            .field("price",200).field("description",productDescription)
             .attach("image",imagePath).set('Authorization', adminUserToken);
             
             console.log(JSON.stringify(body))
