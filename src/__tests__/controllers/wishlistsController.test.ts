@@ -7,21 +7,24 @@ import User from '../../models/user';
 import testData from "../assets/testData/testData.json"
 import { expectPopulatedWishlistItem } from "../utils/wishlist.test";
 import { IWishListItemPopulated } from "../../@types/types";
+import { createUserTokenAndCache } from "../utils/helperTestFunctions.test";
 const app = createServer()
 
 describe("Wishlists",()=>{
-    const userId = "6627c6df40da1283c9e65151";
-    const userToken = testData.userTokenTestingWishlist;
-    const adminUserToken = testData.adminUserToken;
+    const userId = testData.userIdTestingWishlist;
     const adminUserId = testData.adminUserId;
-    const userTokenWithEmptyWishlist = testData.userTokenWithEmptyWishlist;
+    let userTokenNotEmptyWishlist : string;
+    let adminUserToken : string;
+    let userTokenWithEmptyWishlist: string;
     const userIdWithEmptyWishlist = testData.userIdWithEmptyWishlist;
-    
     const productIdForDeletion = "65ec9e8466da2465cf82ec3a";
     const productIdForPosting = "65ecac2fdeee9c7ef42ffe65";
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
+        userTokenNotEmptyWishlist = await createUserTokenAndCache(userId) as string;
+        adminUserToken = await createUserTokenAndCache(adminUserId) as string;
+        userTokenWithEmptyWishlist = await createUserTokenAndCache(userIdWithEmptyWishlist) as string;
     })
 
     afterAll(async()=>{
@@ -50,7 +53,7 @@ describe("Wishlists",()=>{
     describe("Testing adding wishlist item",()=>{
         it("Should add wishlist item (productId) to the user wishlist",async()=>{
             let isWishListHasBeenAdded = false;
-            const {body,statusCode} = await supertest(app).post("/api/wishlists").set("Authorization",userToken).send({
+            const {body,statusCode} = await supertest(app).post("/api/wishlists").set("Authorization",userTokenNotEmptyWishlist).send({
                 productId:productIdForPosting
             });
             expect(statusCode).toBe(201);
@@ -108,7 +111,7 @@ describe("Wishlists",()=>{
             }
         })
         it("Should remove wishlist item (productId) from user wishlist",async()=>{
-            const {body,statusCode} = await supertest(app).delete("/api/wishlists").set("Authorization",userToken).send({
+            const {body,statusCode} = await supertest(app).delete("/api/wishlists").set("Authorization",userTokenNotEmptyWishlist).send({
                 wishlistItemId:wishlistItemId
             });
             console.log(JSON.stringify(body))

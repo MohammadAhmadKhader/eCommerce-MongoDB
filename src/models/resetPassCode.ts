@@ -1,6 +1,7 @@
 import mongoose,{Schema} from "mongoose";
+import { IResetPassCode } from "../@types/types";
 
-const resetPassCode = new Schema({
+const resetPassCode: Schema<IResetPassCode> = new Schema({
     userId:Schema.Types.ObjectId,
     code:String,
     expiredAt:{

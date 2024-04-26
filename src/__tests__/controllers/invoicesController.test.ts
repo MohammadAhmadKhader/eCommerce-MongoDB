@@ -3,12 +3,16 @@ import createServer from "../../utils/Server";
 import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
+import { createUserTokenAndCache } from "../utils/helperTestFunctions.test";
 const app = createServer()
 
 describe("Invoices",()=>{
+    const userId = testData.adminUserId;
+    let userToken :string;
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
+        userToken = await createUserTokenAndCache(userId) as string;
     });
 
     afterAll(async()=>{
@@ -19,8 +23,6 @@ describe("Invoices",()=>{
         const orderIdWithNoInvoice = "65fbdcbf780079d147b4f0a0";
         const orderIdWithInvoiceIncludingOneItem = "66069536eb1f8106979af31e";
         const orderIdWithInvoiceIncludingManyItems="6611883491405a6bd5beecd9"
-        const userToken = testData.adminUserToken;
-        const userId = testData.adminUserId;
         
         it("Should get the invoice by order Id with one single item",async()=>{
             const {body,statusCode} = await supertest(app).get(`/api/invoices/${orderIdWithInvoiceIncludingOneItem}`).set("Authorization",userToken);

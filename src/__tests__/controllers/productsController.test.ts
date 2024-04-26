@@ -1,24 +1,24 @@
 import { image ,IProduct} from '../../@types/types';
-import { setProductTestData, getProductTestData, getAdminUserTokenTestData, getAdminUserIdTestData, getCategoryIdTestData } from '../../utils/HelperFunctions';
 import supertest from "supertest";
 import createServer from "../../utils/Server";
 import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
-import { expectId } from '../utils/helperTestFunctions.test';
+import { createProduct, createUserTokenAndCache, expectId } from '../utils/helperTestFunctions.test';
+import { ObjectId } from 'mongoose';
 const app = createServer()
 
 describe("Products",()=>{
-    const adminUserToken = testData.adminUserToken;
-    const categoryId= testData.categoryIdForTesting;
     const adminUserId= testData.adminUserId;
-    const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
+    let adminUserToken :string;
+    const categoryId= testData.categoryIdForTesting;
     const imagePath = "./src/__tests__/assets/images/testImage.jpg"
      
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
-        await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST); 
+        await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
+        adminUserToken = await createUserTokenAndCache(adminUserId) as string;
     })
 
     afterAll(async()=>{
@@ -67,7 +67,7 @@ describe("Products",()=>{
         })
     }) 
     
-    describe("get All products route",()=>{
+    describe("get all products route",()=>{
         it("Should return products with page = 1 & limit = 9",async()=>{
             const {body,statusCode} = await supertest(app).get("/api/products?page=1&limit=9");
             expect(statusCode).toBe(200)
@@ -254,7 +254,6 @@ describe("Products",()=>{
             .field("price",200).field("description",productDescription)
             .attach("image",imagePath).set('Authorization', adminUserToken);
             
-            console.log(JSON.stringify(body))
             expect(statusCode).toBe(201);
             expect(body.message).toBe("success");
             expect(body.product.name).toBe(productName);
@@ -267,7 +266,6 @@ describe("Products",()=>{
             expect(body.product.images).toHaveLength(1);
             expect(typeof body.product.images[0].imageUrl).toBe("string")
             expect(typeof body.product.images[0].thumbnailUrl).toBe("string");
-            setProductTestData(testDataFilePath,body.product._id,"productIdForDelete")
         })
     })
 
@@ -288,11 +286,13 @@ describe("Products",()=>{
     })
 
     describe("Delete Product Controller",()=>{
+        let productIdForDelete: ObjectId;
+        let productBeforeDelete : IProduct;
+        beforeAll(async()=>{
+            productBeforeDelete = await createProduct() as IProduct;
+            productIdForDelete = productBeforeDelete._id;
+        })
         it("Should delete product and return status code 200",async()=>{
-            const productIdForDelete  = await getProductTestData(testDataFilePath,"productIdForDelete");
-            const {body : bodyOfProductBeforeDelete} = await supertest(app).get(`/api/products/${productIdForDelete}`)
-            const productBeforeDelete : IProduct = bodyOfProductBeforeDelete.product;
-
             const arrayOfImagesUrl : any = [];
             const arrayOfThumbnailsUrl : any = [];
 
@@ -302,7 +302,7 @@ describe("Products",()=>{
             })
 
             const {body,statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}/${adminUserId}`)
-            .set('Authorization', adminUserToken as string);
+            .set('Authorization', adminUserToken);
             expect(statusCode).toBe(200);
             expect(body.message).toBe("success");
             expect(body.ArrOfImagesThumbnailToDelete).toStrictEqual(arrayOfThumbnailsUrl);
@@ -313,14 +313,14 @@ describe("Products",()=>{
         it("should return status 500 if product Id was not proper invalid _id",async()=>{
             const productIdForDelete  = "randomString"
             const {statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}/${adminUserId}`)
-            .set('Authorization', adminUserToken as string);
+            .set('Authorization', adminUserToken);
             expect(statusCode).toBe(500);
         })
 
         it("should return status 400 and body = {error : product was not found} if product was not found",async()=>{
             const productIdForDelete  = "68ecde9d50cbcdf3920a2c2b"
             const {body,statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}/${adminUserId}`)
-            .set('Authorization', adminUserToken as string);
+            .set('Authorization', adminUserToken);
             expect(statusCode).toBe(400);
             expect(body).toStrictEqual({error : "product was not found"})
         })

@@ -1,26 +1,23 @@
-import { setTestData } from '../../utils/HelperFunctions';
 import supertest from "supertest";
 import createServer from "../../utils/Server";
 import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import { faker } from '@faker-js/faker';
 import testData from "../assets/testData/testData.json"
-import { expectId } from '../utils/helperTestFunctions.test';
+import { createAddressAndReturnId, createUserTokenAndCache, expectId, popUserAddress } from '../utils/helperTestFunctions.test';
 const app = createServer();
 
 
 describe("Addresses",()=>{
     const adminUserId = testData.adminUserId;
-    const adminUserToken = testData.adminUserToken;
+    let adminUserToken:string ;
     const addressIdForUpdate = testData.addressIdForUpdate;
-    const addressIdForDelete = testData.addressIdForDelete;
     const randomAddressId = testData.randomAddressId;
-    const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
     const userId = adminUserId;
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
-        
+        adminUserToken = await createUserTokenAndCache(adminUserId) as string;
     })
 
     afterAll(async()=>{
@@ -44,7 +41,6 @@ describe("Addresses",()=>{
             const createdAddress = body.user.addresses[body.user.addresses.length - 1];
             expect(createdAddress).toMatchObject(newAddress);
             expectId(createdAddress._id);
-            setTestData(testDataFilePath,body.user.addresses[body.user.addresses.length - 1]._id,"addressIdForDelete");
         })
     })
 
@@ -74,20 +70,37 @@ describe("Addresses",()=>{
     })
     
     describe("Delete an address",()=>{
+        let addressIdForDelete: string;
+        const newAddressToDelete = {
+            fullName:"fullName",
+            streetAddress:"streetAddress 1012",
+            pinCode:"123",
+            city:"city",
+            state:"State"
+        }
+        beforeAll(async()=>{
+            addressIdForDelete = await createAddressAndReturnId(adminUserId,newAddressToDelete) as string;
+        })
         it("Should return an error with status 400 that address was not found",async()=>{
-            const {body,statusCode} = await supertest(app).delete(`/api/addresses`).send({userId,addressId:randomAddressId}).set("Authorization",adminUserToken);
+            const {body,statusCode} = await supertest(app).delete(`/api/addresses`).send({userId,addressId:randomAddressId})
+            .set("Authorization",adminUserToken);
             expect(statusCode).toBe(400)
             expect(body.user).toBeUndefined()
             expect(body).toStrictEqual({error:"Address does not exist"})
         })
 
         it("Should delete an address",async()=>{
-            const {body,statusCode} = await supertest(app).delete(`/api/addresses`).send({userId,addressId:addressIdForDelete}).set("Authorization",adminUserToken);
+            const {body,statusCode} = await supertest(app).delete(`/api/addresses`).send({userId,addressId:addressIdForDelete})
+            .set("Authorization",adminUserToken);
             expect(statusCode).toBe(202)
             expect(body.message).toBe("success");
             expect(body.user.password).toBeUndefined()
             const updatedAddress = body.user.addresses.filter((address : any)=>address._id == addressIdForDelete);
             expect(updatedAddress).toHaveLength(0);
+        })
+
+        afterAll(async()=>{
+            await popUserAddress(userId,1)
         })
     })
 })

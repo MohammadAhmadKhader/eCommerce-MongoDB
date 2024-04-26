@@ -7,4 +7,5 @@ module.exports = {
   forceExit:true,
   testTimeout:30000,
   detectOpenHandles:true,
+  testPathIgnorePatterns:["./src/__tests__/utils"],
 };

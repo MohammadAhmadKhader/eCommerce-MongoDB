@@ -4,20 +4,24 @@ import {Request,Response} from "express"
 import { authenticateAdmin, authenticateUser } from "../../middlewares/authenticate"
 import testData from "../assets/testData/testData.json"
 import dotenv from "dotenv";
-import { createResponseNext } from "../utils/helperTestFunctions.test";
+import { createResponseNext, createUserTokenAndCache } from "../utils/helperTestFunctions.test";
 
 dotenv.config();
 describe("Authentication Middlewares",()=>{
     const userTokenWithNotExistingUser = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImV4bWFwbGVAZ21haWwuY29tIiwiaWQiOiI2NWVmNTI5MTE4MmI2YTA2OThjMmNlZDMiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTgxNjIzOTAyMn0.Couqrbu3bCopHwgUDhXUyiEBlRGmOurLf-jZLdifB0w"
-    const expiredAdminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ik1vaGFtbWFkS2hhZGVycjE5OTlAZ21haWwuY29tIiwiaWQiOiI2NWU3ODJlZDM2OGMyMmUzNTQyMmY0YWQiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUyNjIzOTAyMn0.AOao3GNwQi3ocHZQ-tUsBBgQOx33Pj3YM4VGhOkgCJ8"
-    const userToken = testData.adminUserToken;
+    const expiredAdminToken = testData.expiredAdminToken;
     const correctNotExpiredAdminTokenThatDoesNotExistInDB = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ik1vaGFtbWFkS2hhZGVycjE5OTlAZ21haWwuY29tIiwiaWQiOiI2NWU3ODJlZDM2OGMyMmUzNTQyMmY0YWQiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTgyNjIzOTAyMn0.LaDiu-G1uME_DJiCFRqThJXWoL47emlnUfQi2dfD7Lc"
-    const notAdminToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZWY1ODkxMDgyYjZhMDY5OGQ1Y2VkOCIsImVtYWlsIjoiTmljb2xhczYxQHlhaG9vLmNvbSIsImlhdCI6MTcxMzYyMDcxMywiZXhwIjoxNzE2MjEyNzEzfQ.j1mSUu8hcA376W-S0HZ3G5-bx1uMts_RmJCzAKdjtzY"
-    const expiredNormalUserToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IlRoYWRkZXVzLkxpbmQ1QGdtYWlsLmNvbSIsImlkIjoiNjVlZjU4OTEwODJiNmEwNjk4ZDVjZWU5IiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MjYyMzkwMjJ9.1yEIwBz5DjdQDw6qu3FbModHU_nGEOLzjyaMVijuNBg"
+    const expiredNormalUserToken = testData.expiredNormalUserToken;
+    let notAdminToken : string;let userToken : string;
+    
+    const userId = testData.adminUserId;
+    let normalUserId = testData.normalUserId;
     
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
+        userToken = await createUserTokenAndCache(userId) as string;
+        notAdminToken = await createUserTokenAndCache(normalUserId) as string;
     })
 
     afterAll(async()=>{

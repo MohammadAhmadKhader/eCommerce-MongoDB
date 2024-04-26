@@ -5,19 +5,20 @@ import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
 import User from '../../models/user';
 import { ObjectId } from 'mongodb';
+import { createManyCartItemsByUserId, createUserTokenAndCache } from "../utils/helperTestFunctions.test";
 const app = createServer()
 
 describe("Carts",()=>{
     const adminUserId = testData.adminUserId;
-    const adminUserToken = testData.adminUserToken;
+    let adminUserToken :string;
     const productIdToAddToCartHighQuantity = testData.productIdToAddToCartHighQuantity;
     const productIdToAddToCart0Quantity = testData.productIdToAddToCart0Quantity;
-    const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
     const userId = adminUserId;
-    const userIdWithEmptyCart = "65ef5890082b6a0698d5cecd"
+    const userIdWithEmptyCart = testData.userIdWithEmptyCart;
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
+        adminUserToken = await createUserTokenAndCache(adminUserId) as string;
     })
 
     afterAll(async()=>{
@@ -82,8 +83,11 @@ describe("Carts",()=>{
     })
 
     describe("delete from cart",()=>{
-        const userIdToUseForDelete = "65ef5891082b6a0698d5cef1";
-        const userTokenForTestUserForDeleteFromCart = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZWY1ODkxMDgyYjZhMDY5OGQ1Y2VmMSIsImVtYWlsIjoiTWFyZ290X0dyZWVuZmVsZGVyQHlhaG9vLmNvbSIsImlhdCI6MTcxMzgxNTEzMCwiZXhwIjoxNzE2NDA3MTMwfQ.5V1jThUwGPAkq_ceCbbjXzA4HD-_sKlv4YEiB9ywyYs"
+        const userIdToUseForDelete = testData.userIdToUseForDeleteFromCart;
+        let userTokenForTestUserForDeleteFromCart:string;
+        beforeAll(async()=>{
+            userTokenForTestUserForDeleteFromCart = await createUserTokenAndCache(userIdToUseForDelete) as string;
+        })
         describe("Should create a product for deletion and then re-delete it",()=>{
             let cartItemId : string;
             beforeAll(async()=>{
@@ -214,29 +218,19 @@ describe("Carts",()=>{
     })
 
     describe("clear cart",()=>{
-        const testUserId = "65ef5891082b6a0698d5ced8";
-        const testUserToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZWY1ODkxMDgyYjZhMDY5OGQ1Y2VkOCIsImVtYWlsIjoiTmljb2xhczYxQHlhaG9vLmNvbSIsImlhdCI6MTcxMzYyMDcxMywiZXhwIjoxNzE2MjEyNzEzfQ.j1mSUu8hcA376W-S0HZ3G5-bx1uMts_RmJCzAKdjtzY"
+        const userIdToClearCart = testData.userIdToClearCart;
+        let userTokenToClearCart : string;
         const productId_1 = "65ecc30afe69fb23c47e5194";
         const productId_2 = "65ecc427fe69fb23c47e51b5";
         beforeAll(async()=>{
-            const {body :body_1} = await supertest(app).post("/api/carts").send({
-                    productId:productId_1,
-                    quantity:1
-            }).set("Authorization",testUserToken);
-            const {body :body_2} = await supertest(app).post("/api/carts").send({
-                productId:productId_2,
-                userId:testUserId,
-                quantity:1
-            }).set("Authorization",testUserToken);
-            if(body_1.message != "success" || body_2.message != "success"){
-                throw Error("Error during adding cartItems for testing on clear cart endpoint");
-            }
+            userTokenToClearCart = await createUserTokenAndCache(userIdToClearCart) as string;
+            await createManyCartItemsByUserId(userId,[{productId:productId_1,quantity:1},{productId:productId_2,quantity:1}])
         })
         it("Should return user with empty cart and message equal to success and status code 201",async()=>{
             const testUserFindOneAndUpdate = jest.spyOn(User,"findOneAndUpdate");
             try{
-                const {body,statusCode} = await supertest(app).delete("/api/carts/clearCart").set("Authorization",testUserToken);
-                
+                const {body,statusCode} = await supertest(app).delete("/api/carts/clearCart")
+                .set("Authorization",userTokenToClearCart);
                 expect(statusCode).toBe(201);
                 expect(body.message).toBe("success");
                 expect(body.user.cart).toStrictEqual([]);

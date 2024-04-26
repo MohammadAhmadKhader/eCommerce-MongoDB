@@ -5,19 +5,21 @@ import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import "../../config/cloudinary";
 import testData from "../assets/testData/testData.json"
 import { expectOrder } from "../utils/orderUtils.test";
-import Order from "../../models/order";
-import User from "../../models/user";
 import Stripe from "stripe";
 import { expectInvoice } from "../utils/invoiceUtils.test";
+import { createManyCartItemsByUserId, createUserTokenAndCache, resetOrderStatus } from "../utils/helperTestFunctions.test";
+import { expectUser } from "../utils/userUtils.test";
 
 const app = createServer()
 
 describe("Orders",()=>{
-    const userToken = testData.adminUserToken;
     const userId = testData.adminUserId;
+    let userToken :string;
+    
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
+        userToken = await createUserTokenAndCache(userId) as string;
     })
 
     afterAll(async()=>{
@@ -77,44 +79,24 @@ describe("Orders",()=>{
     })
 
     describe("Create order controller",()=>{
-        const userIdCreateOrder = "66281215458fa1e46cb82895";
-        const userTokenCreateOrder = testData.userTokenCreateOrder;
+        const userIdCreateOrder = testData.userIdCreateOrder;
+        const userIdDeleteWithWrongQtyCartItem = testData.userIdDeleteWithWrongQtyCartItem;
+        let userTokenCreateOrder : string;
+        let userTokenDeleteWithWrongQtyCartItem: string;
+        let userTokenDeleteFromEmptyCart :string;
         const firstProductId = "65ec9e8466da2465cf82ec3a";
         const secondProductId = "65eca2cb11fbd4de442b6578";
-        const userIdDeleteFromEmptyCart = "66280ee2a84d8beed049c6d3";
-        const userTokenDeleteFromEmptyCart = testData.userTokenDeleteFromEmptyCart;
+        const userIdDeleteFromEmptyCart = testData.userIdDeleteFromEmptyCart;
+        
         describe("Creating cart items then creating order from them",()=>{
             beforeAll(async()=>{
-                try{
-                    const updateUserCreateOrder = await User.updateOne({
-                        _id:userIdCreateOrder
-                    },{
-                        $push:{
-                            cart:{
-                                $each:[
-                                    {
-                                        productId:firstProductId,
-                                        quantity:1
-                                    },{
-                                        productId:secondProductId,
-                                        quantity:1
-                                    }
-                                ]
-                            }
-                        }
-                    });
-                    
-                    if(updateUserCreateOrder.modifiedCount !== 1){
-                        throw "error during updating user to create order"
-                    }
-                }catch(error){
-                    throw error
-                }
+                await createManyCartItemsByUserId(userIdCreateOrder,[{productId:firstProductId,quantity:1},{productId:secondProductId,quantity:1}]);
+                userTokenCreateOrder = await createUserTokenAndCache(userIdCreateOrder) as string;
+                userTokenDeleteWithWrongQtyCartItem = await createUserTokenAndCache(userIdDeleteWithWrongQtyCartItem) as string;
+                userTokenDeleteFromEmptyCart = await createUserTokenAndCache(userIdDeleteFromEmptyCart) as string;
             })
-            
+    
             const productIdWithQuantity120 = "65ecdc4b50cbedf3920a2ba6";
-            const userIdDeleteWithWrongQtyCartItem = "662874ae4a05c5ee47438b0a";
-            const userTokenDeleteWithWrongQtyCartItem = testData.userTokenDeleteWithWrongQtyCartItem
             it("Should throw error with because cartItem has more quantity than the product itself and error with status code 500",async()=>{
                 const {body,statusCode} = await supertest(app).post("/api/orders").set("Authorization",userTokenDeleteWithWrongQtyCartItem);
                 expect(statusCode).toBe(500);
@@ -127,8 +109,7 @@ describe("Orders",()=>{
                 expect(statusCode).toBe(201);
                 expect(body.message).toBe("success");
                 expectOrder(body.order);
-                //* Add expect User here
-
+                expectUser(body.user);
             })
         })
 
@@ -140,10 +121,13 @@ describe("Orders",()=>{
     })
 
     describe("Deleting an order",()=>{
+        const userIdDeleteOrder = testData.userIdDeleteOrder;
+        let userTokenDeleteOrder:string;
+        beforeAll(async()=>{
+            userTokenDeleteOrder = await createUserTokenAndCache(userIdDeleteOrder) as string;
+        })
         const orderId = "662873a7a413f16adec3c906";
         const orderPreviousState = "Placed";
-        const userIdDeleteOrder = "66281215458fa1e46cb82895";
-        const userTokenDeleteOrder = testData.userTokenDeleteOrder;
 
         it("Should delete an order and return status code 204",async()=>{
             const {statusCode} = await supertest(app).delete(`/api/orders`).send({
@@ -153,28 +137,18 @@ describe("Orders",()=>{
             expect(statusCode).toBe(204);
         })
 
-        // After order was set to Cancelled, re-set it to its previous status
         afterAll(async()=>{
-            try{
-                const resetOrderStatus = await Order.updateOne({
-                    _id:orderId
-                },{
-                    status:orderPreviousState
-                })
-
-                if(resetOrderStatus.modifiedCount == 0){
-                    throw "order was not reset";
-                }
-            }catch(error){
-                throw error;
-            }   
+            await resetOrderStatus(orderId,orderPreviousState)  
         })
     })
 
     describe("Creating payment Intent",()=>{
         const orderId = "65f2d1e2bdc716413685b67a";
-        const userIdPaymentIntent = testData.adminUserId
-        const userTokenPaymentIntent = testData.adminUserToken;
+        const userIdPaymentIntent = testData.adminUserId;
+        let userTokenPaymentIntent : string;
+        beforeAll(async()=>{
+            userTokenPaymentIntent = await createUserTokenAndCache(userIdPaymentIntent) as string;
+        })
         it("Should create payment intent",async()=>{
             const {body,statusCode} = await supertest(app).post(`/api/orders/stripe/createPaymentIntent`).send({
                 orderId:orderId,
@@ -192,37 +166,32 @@ describe("Orders",()=>{
         const orderId = "65f2d1e2bdc716413685b67a";
         const orderInitialStatus = "Processing";
         const userIdCheckingOrder = testData.adminUserId
-        const userTokenPaymentIntent = testData.adminUserToken
+        let userTokenPaymentIntent : string;
         const address = {
             fullName:"fullName",
             city:"city",
             state:"state",
-            country:"country",
             streetAddress:"streetAddress 101",
             mobileNumber:"0592892381391",
         }
+        beforeAll(async()=>{
+            userTokenPaymentIntent = await createUserTokenAndCache(userIdCheckingOrder) as string;
+        })
         
         it("Should check order and set it to completed and return order and created invoice with its items with status code 200",async()=>{
             const {body,statusCode} = await supertest(app).post(`/api/orders/stripe/OrderCheckingOut`).send({
                 orderId:orderId,
-                customerId:userIdCheckingOrder,
                 address:address
             })
             .set("Authorization",userTokenPaymentIntent);
-            expect(statusCode).toBe(200)
+
+            expect(statusCode).toBe(200);
             expectOrder(body.order,"Completed");
             expectInvoice(body.invoice);
         })
 
         afterAll(async()=>{
-            try{
-                const resetOrder = await Order.updateOne({_id:orderId},{status:orderInitialStatus})
-                if(resetOrder.modifiedCount == 0){
-                    throw "Order was not reset to initial state";
-                }
-            }catch(error){
-                throw error;
-            }
+            await resetOrderStatus(orderId,orderInitialStatus)
         })
     })
 })

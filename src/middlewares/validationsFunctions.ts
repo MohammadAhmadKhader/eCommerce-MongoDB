@@ -103,7 +103,7 @@ export const validateCreateProduct = (req:Request,res:Response,next:NextFunction
     },{abortEarly:false})
     
     if(error){
-        console.log(error)
+        //console.log(error)
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         return res.status(400).json({error:errorMessage});
     }

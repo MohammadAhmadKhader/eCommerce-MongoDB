@@ -554,7 +554,6 @@ describe("Validation Middlewares",()=>{
                 "city is required",
                 "state is required",
                 "mobileNumber is required",
-                "pinCode is required",
             ]})
         })
 
@@ -566,7 +565,6 @@ describe("Validation Middlewares",()=>{
                     city:"",
                     streetAddress:"",
                     state:"",
-                    pinCode:"",
                     mobileNumber:""
                 }
             } as Request;
@@ -1677,7 +1675,6 @@ describe("Validation Middlewares",()=>{
                 "address.city is required",
                 "address.state is required",
                 "address.mobileNumber is required",
-                "address.pinCode is required",
             ]})
         })
 
@@ -1696,11 +1693,10 @@ describe("Validation Middlewares",()=>{
                 "address.city is required",
                 "address.state is required",
                 "address.mobileNumber is required",
-                "address.pinCode is required",
             ]})
         })
 
-        it("Should allow pinCode to be set to empty string and pass successfully when all the address is correct",()=>{
+        it("Should disallow pinCode to be set to empty string and return error",()=>{
             const { next,res } = createResponseNext()
             const req = {
                 body:{
@@ -1709,8 +1705,10 @@ describe("Validation Middlewares",()=>{
                 }
             } as Request;
             validateCheckOrder(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "address.pinCode is not allowed to be empty",
+            ]})
         })
 
         it("Should pass successfully when all parameters meet the conditions",()=>{

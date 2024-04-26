@@ -35,7 +35,6 @@ async function UploadOneFromBase64(ImageAsBase64:string,Folder : string,width=14
         transformation: [{ width: width, height: height, crop: "fit" }],
     })
     
-    console.log(secure_url)
     return secure_url;
 }
 
