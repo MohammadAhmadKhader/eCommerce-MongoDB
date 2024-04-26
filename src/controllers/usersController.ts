@@ -150,7 +150,7 @@ export const changePassword = async (req:Request,res:Response)=>{
 export const changeUserInformation = async(req:Request,res:Response)=>{
     try{
         const userId = req.params.userId;
-        const {email,firstName,lastName,mobileNumber,birthdate,userImg : deleteUserImage} = req.body;
+        const {email,firstName,lastName,mobileNumber,birthdate,userImg : deleteUserImage} = req.query;
         const userImageAsBinary = req.file;
 
         const user = await User.findOneAndUpdate(
@@ -160,7 +160,7 @@ export const changeUserInformation = async(req:Request,res:Response)=>{
                 firstName,
                 lastName,
                 mobileNumber,
-                birthdate,
+                birthdate:birthdate,
                 userImg: userImageAsBinary ? await CloudinaryUtils.UploadOne(userImageAsBinary as IMulterFile,process.env.UsersImages as string,400,400) : deleteUserImage == "deleteImg" ? null : undefined
             },{
                 new:true,select:"-password -__v"

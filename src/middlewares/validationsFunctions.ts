@@ -1,5 +1,12 @@
 import { NextFunction, Request, Response } from "express";
-import { addToCartSchema, addToWishlistSchema, changeCartItemQuantityByOneSchema, createOrderSchema, orderIdSchema, creatingAddressSchema, creatingProductValidationSchema, deleteFromCartSchema, deleteUserReviewSchema, editUserReviewSchema, forgotPasswordSchema, removeFromWishlistSchema, resetPasswordViaCodeSchema, reviewSchema, sendingMessageSchema, updatingAddressSchema, userChangePasswordSchema, userRegistrationSchema, userSignInSchema, ordersStatusSchema } from "./validationsSchemas";
+import { addToCartSchema, addToWishlistSchema, changeCartItemQuantityByOneSchema, createOrderSchema,
+     orderIdSchema, creatingAddressSchema, createProductSchema, deleteFromCartSchema, deleteUserReviewSchema, 
+     editUserReviewSchema, forgotPasswordSchema, removeFromWishlistSchema, resetPasswordViaCodeSchema, reviewSchema, 
+     sendingMessageSchema, updatingAddressSchema, userChangePasswordSchema, userRegistrationSchema, userSignInSchema, 
+     ordersStatusSchema, 
+     appendImagesToProductSchema,
+     userChangeInformationSchema} from "./validationsSchemas";
+import Joi from "joi";
 
 export const validateUserRegistration = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = userRegistrationSchema.validate({
@@ -91,7 +98,7 @@ export const validateUpdatingAddress = (req:Request,res:Response,next:NextFuncti
 }
 
 export const validateCreateProduct = (req:Request,res:Response,next:NextFunction)=>{
-    const {error} = creatingProductValidationSchema.validate({
+    const {error} = createProductSchema.validate({
         name:req.body.name,
         description:req.body.description,
         categoryId:req.body.categoryId,
@@ -105,6 +112,7 @@ export const validateCreateProduct = (req:Request,res:Response,next:NextFunction
     if(error){
         //console.log(error)
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        req.validationError = errorMessage;
         return res.status(400).json({error:errorMessage});
     }
     return next()
@@ -285,6 +293,36 @@ export const validateOrdersStatus = (req:Request,res:Response,next:NextFunction)
 
     if(error){
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateAppendImagesToProduct = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = appendImagesToProductSchema.validate({
+        images:req.files
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        req.validationError = errorMessage;
+        return res.status(400).json({error:errorMessage});
+    }
+    return next()
+}
+
+export const validateUserChangeInformation = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = userChangeInformationSchema.validate({
+        firstName:req.query.firstName,
+        lastName:req.query.lastName,
+        email:req.query.email,
+        mobileNumber:req.query.mobileNumber,
+        birthdate:req.query.birthdate,
+    },{abortEarly:false})
+
+    if(error){
+        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
+        req.validationError = errorMessage;
         return res.status(400).json({error:errorMessage});
     }
     return next()
