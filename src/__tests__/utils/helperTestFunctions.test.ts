@@ -233,3 +233,13 @@ export async function createResetCode(userId : string){
         console.error(error)
     }
 }
+
+export async function popProductImages(productId : string){
+    try{
+        await Product.findOneAndUpdate({_id:productId},{
+            $pop:{images:1}
+        },{multi:true})
+    }catch(error){
+        console.error(error)
+    }
+}

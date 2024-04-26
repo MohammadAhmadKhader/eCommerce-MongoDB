@@ -7,5 +7,6 @@ declare namespace Express {
           page: number;
         };
         user:IUser;
+        validationError:any;
     }
 }

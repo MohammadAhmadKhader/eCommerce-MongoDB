@@ -175,7 +175,7 @@ describe("Orders",()=>{
             mobileNumber:"0592892381391",
         }
         beforeAll(async()=>{
-            userTokenPaymentIntent = await createUserTokenAndCache(userIdCheckingOrder) as string;
+            userTokenPaymentIntent = await createUserTokenAndCache(userIdCheckingOrder) as unknown as string;
         })
         
         it("Should check order and set it to completed and return order and created invoice with its items with status code 200",async()=>{

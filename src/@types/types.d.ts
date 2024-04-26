@@ -186,3 +186,15 @@ export interface IResetPassCode {
     code:string | undefined;
     expiredAt:Date;
 }
+
+export interface IAuthenticateMiddleware {
+    (req: Request, res: Response, next: NextFunction) : Promise<void | Response<any, Record<string, any>>>
+}
+
+export interface IUserChangeInformation {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    mobileNumber?: string;
+    birthdate?: string;
+}

@@ -1,4 +1,4 @@
-import { validateAddToWishList, validateAddingToCart, validateChangeCartItemQuantityByOne, validateCheckOrder, validateCreatingAddress, validateDeleteUserReview, validateDeletingFromCart, validateEditUserReview, validateForgotPassword, validateOrderId, validateOrdersStatus, validateRemoveFromWishlist, validateResetPasswordViaCode, validateSendingMessage, validateUserSignIn } from '../../middlewares/validationsFunctions';
+import { validateAddToWishList, validateAddingToCart, validateChangeCartItemQuantityByOne, validateCheckOrder, validateCreatingAddress, validateDeleteUserReview, validateDeletingFromCart, validateEditUserReview, validateForgotPassword, validateOrderId, validateOrdersStatus, validateRemoveFromWishlist, validateResetPasswordViaCode, validateSendingMessage, validateUserChangeInformation, validateUserSignIn } from '../../middlewares/validationsFunctions';
 import { Request } from 'express';
 import { validateUserRegistration,validateUserChangePassword, validateUserReview, validateCreateProduct, validateUpdatingAddress } from '../../middlewares/validationsFunctions';
 import { createResponseNext } from '../utils/helperTestFunctions.test';
@@ -1781,7 +1781,7 @@ describe("Validation Middlewares",()=>{
         })
     })
 
-    describe("Testing validateOrdersStatus",()=>{
+    describe("Testing validateOrdersStatus middleware",()=>{
         it("Should return error that orderId is required",()=>{
             const { next,res } = createResponseNext()
             const req = {
@@ -1822,6 +1822,100 @@ describe("Validation Middlewares",()=>{
             validateOrdersStatus(req,res,next)
             expect(res.status).not.toHaveBeenCalled();
             expect(res.json).not.toHaveBeenCalled()
+        })
+    })
+
+    describe("Testing validateUserChangeInformation middleware",()=>{
+        const oneYear = 1000 * 60 * 60 * 24 * 365
+        const oneDay = 1000 * 60 * 60 * 24
+        const fiveYearsAndOneDay = (oneYear * 5) + oneDay;
+        const eigthyYearsMinusOneDay = (oneYear * 80) - oneDay;
+        it("Should return error that all fields are required",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                query:{
+                    
+                }
+            } as unknown as Request;
+            validateUserChangeInformation(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "value failed custom validation because : At least one of the following fields is required: firstName, lastName, email, mobileNumber, birthdate",
+            ]})
+        })
+
+        it("Should pass successfully when all arguments set to minimum values",()=>{
+            const { next,res } = createResponseNext();
+            const req = {
+                query: {
+                    firstName:stringWith4Char,
+                    lastName:stringWith4Char,
+                    email:emailWith6Char,
+                    birthdate:Date.now() - fiveYearsAndOneDay,
+                    mobileNumber:stringWith6Char
+                }
+            } as unknown as Request;
+            validateUserChangeInformation(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+
+        it("Should pass successfully when all arguments set to maximum values",()=>{
+            const { next,res } = createResponseNext();
+            const req = {
+                query: {
+                    firstName:stringWith32Char,
+                    lastName:stringWith32Char,
+                    email:emailWith64Char,
+                    birthdate:Date.now() - eigthyYearsMinusOneDay,
+                    mobileNumber:stringWith15Char
+                }
+            } as unknown as Request;
+            validateUserChangeInformation(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+
+        it("Should return an error when values set to more than maximum",()=>{
+            const { next,res } = createResponseNext();
+            const req = {
+                query: {
+                    firstName:stringWith33Char,
+                    lastName:stringWith33Char,
+                    email:emailWith65Char,
+                    birthdate:Date.now() - (eigthyYearsMinusOneDay + oneDay),
+                    mobileNumber:stringWith16Char
+                }
+            } as unknown as Request;
+            validateUserChangeInformation(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "firstName length must be less than or equal to 32 characters long",
+                "lastName length must be less than or equal to 32 characters long",
+                "email length must be less than or equal to 64 characters long",
+                "mobileNumber length must be less than or equal to 15 characters long",
+            ]})
+        })
+
+        it("Should return an error when values set to less than minimum or when email is invalid",()=>{
+            const { next,res } = createResponseNext();
+            const req = {
+                query: {
+                    fullName:stringWith3Char,
+                    lastName:stringWith3Char,
+                    email:emailWith5Char,
+                    birthdate:Date.now() - (eigthyYearsMinusOneDay + oneDay),
+                    mobileNumber:stringWith5Char
+                }
+            } as unknown as Request;
+            validateUserChangeInformation(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "lastName length must be at least 4 characters long",
+                "email must be a valid email",
+                "email length must be at least 6 characters long",
+                "mobileNumber length must be at least 6 characters long",
+            ]})
         })
     })
 })

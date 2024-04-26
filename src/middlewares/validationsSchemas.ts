@@ -1,4 +1,5 @@
 import Joi from "joi"
+import { IUserChangeInformation } from "../@types/types"
 
 export const userRegistrationSchema = Joi.object({
     firstName:Joi.string().alphanum().min(4).max(32).required(),
@@ -50,7 +51,7 @@ export const updatingAddressSchema = Joi.object({
     ).optional()
 })
 
-export const creatingProductValidationSchema = Joi.object({
+export const createProductSchema = Joi.object({
     name:Joi.string().min(3).max(100).required(),
     description:Joi.string().min(10).max(1024).required(),
     categoryId:Joi.string().hex().length(24).required(),
@@ -134,3 +135,33 @@ export const orderIdSchema = Joi.object({
 export const ordersStatusSchema = Joi.object({
     status:Joi.string().valid("Completed","Processing","Cancelled","Placed").required(),
 })
+
+export const appendImagesToProductSchema = Joi.object({
+    images:Joi.array().min(1).max(9).required(),
+})
+
+const atLeastOneFieldRequired = (value : IUserChangeInformation, helpers : Joi.CustomHelpers<IUserChangeInformation>) => {
+    const { firstName, lastName, email, mobileNumber, birthdate } = value;
+    const detailedErrorMessage = `: At least one of the following fields is required: 'firstName', 'lastName', 'email', 'mobileNumber', 'birthdate'`;
+    if (!firstName && !lastName && !email && !mobileNumber && !birthdate) {
+        throw new Error(detailedErrorMessage)
+    }
+};
+
+export const userChangeInformationSchema = Joi.object({
+    firstName:Joi.alternatives().try(
+        Joi.string().alphanum().min(4).max(32).required(),
+    ).optional(), 
+    lastName:Joi.alternatives().try(
+        Joi.string().alphanum().min(4).max(32).required(),
+    ).optional(),
+    email:Joi.alternatives().try(
+        Joi.string().email().min(6).max(64).required(),
+    ).optional(),
+    mobileNumber:Joi.alternatives().try(
+        Joi.string().min(6).max(15),
+    ).optional(),
+    birthdate:Joi.alternatives().try(
+        Joi.date().max(new Date(Date.now() - 157680000000 /**before 5 years */)).min(new Date(Date.now() - 2522880000000/**before 80 years */)).allow("")
+    ).optional(),
+}).custom(atLeastOneFieldRequired,"atLeastOneFieldRequired")

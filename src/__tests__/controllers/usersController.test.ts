@@ -226,19 +226,16 @@ describe("Users",()=>{
             userTokenToUpdateBeforeOneWeekIsFinished = await createUserTokenAndCache(userIdToUpdateBeforeOneWeekIsFinished) as string;
             
         })
-        const userFirstName = faker.person.firstName();
-        const userLastName = faker.person.lastName();
+        const userFirstName = "Testfirstname";
+        const userLastName = "Testlastname";
         it("Should return success message and status code 200 and user after update without updating image",async()=>{
             const userEmail = faker.internet.email();
             const mobileNumber = "0592718312812";
             const birthdate = faker.date.birthdate();
 
-            const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithoutImg}`)
-            .field("firstName",userFirstName).field("lastName",userLastName)
-            .field("email",userEmail).field("mobileNumber",mobileNumber)
-            .field("birthdate",birthdate.toJSON())
+            const {body,statusCode} = await supertest(app)
+            .put(`/api/users/${userIdToUpdateWithImg}?firstName=${userFirstName}&lastName=${userLastName}&email=${userEmail}&mobileNumber=${mobileNumber}&birthdate=${birthdate.toJSON()}`)
             .set("authorization",userTokenToUpdateWithoutImg);
-
             expect(statusCode).toBe(200);
             expect(body.message).toBe("success");
             expectUser(body.user);
@@ -249,12 +246,11 @@ describe("Users",()=>{
             try{
                 const userEmail = faker.internet.email();
                 const mobileNumber = "0592718312812";
-                const birthdate = faker.date.birthdate();
+                const birthdate = faker.date.birthdate({min:18,max:40});
 
-                const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}`)
-                .field("firstName",userFirstName).field("lastName",userLastName)
-                .field("email",userEmail).field("mobileNumber",mobileNumber)
-                .field("birthdate",birthdate.toJSON()).attach("userImg",imagePath)
+                const {body,statusCode} = await supertest(app)
+                .put(`/api/users/${userIdToUpdateWithImg}?firstName=${userFirstName}&lastName=${userLastName}&email=${userEmail}&mobileNumber=${mobileNumber}&birthdate=${birthdate.toJSON()}`)
+                .attach("userImg",imagePath)
                 .set("authorization",userTokenToUpdateWithImg);
                 
                 expect(statusCode).toBe(200);
@@ -269,8 +265,7 @@ describe("Users",()=>{
         })
 
         it("Should return an error with 400 status code when a normal user try to update once in same week",async()=>{
-            const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}`)
-            .field("firstName",userFirstName).field("lastName",userLastName)
+            const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}?firstName=${userFirstName}&lastName=${userLastName}`)
             .set("authorization",userTokenToUpdateBeforeOneWeekIsFinished);
             expect(statusCode).toBe(400)
             expect(body).toStrictEqual({

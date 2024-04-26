@@ -5,8 +5,9 @@ import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
-import { createProduct, createUserTokenAndCache, expectId } from '../utils/helperTestFunctions.test';
+import { createProduct, createUserTokenAndCache, popProductImages } from '../utils/helperTestFunctions.test';
 import { ObjectId } from 'mongoose';
+import { expectProductReview } from '../utils/productUtils.test';
 const app = createServer()
 
 describe("Products",()=>{
@@ -26,7 +27,6 @@ describe("Products",()=>{
     })
     
     describe("get product by id controller",()=>{
-        const expectedRatingValues = [1,2,3,4,5];
         it("should return product with comments and average ratings", async ()=>{
             const productId = "65ecde9d50cbedf3920a2c2b"
             const {body,statusCode} = await supertest(app).get(`/api/products/${productId}`);
@@ -35,12 +35,7 @@ describe("Products",()=>{
 
             if(body.product.reviews.length > 0){
                 body.product.reviews.forEach((rev : any)=>{
-                    expect(rev.comment).toEqual(expect.any(String));
-                    expect(expectedRatingValues).toContain(rev.rating);
-                    expect(rev.user._id).toEqual(expect.any(String));
-                    expect(rev.user._id.length).toBe(24);
-                    expect(rev.user.role).toMatch(/user|admin/);
-                    expect(rev.user.userImg).toEqual(expect.any(String));
+                    expectProductReview(rev)
                 })
             }
 
@@ -48,7 +43,6 @@ describe("Products",()=>{
                 expect(item.imageUrl).toEqual(expect.any(String));
                 expect(item.thumbnailUrl).toEqual(expect.any(String));
             })
-            
         })
 
         it("Should return an Error 500 when the ODM does not accept the Id",async()=>{
@@ -253,7 +247,7 @@ describe("Products",()=>{
             .field("name",productName).field("categoryId",categoryId).field("brand",productBrand)
             .field("price",200).field("description",productDescription)
             .attach("image",imagePath).set('Authorization', adminUserToken);
-            
+            console.log(JSON.stringify(body))
             expect(statusCode).toBe(201);
             expect(body.message).toBe("success");
             expect(body.product.name).toBe(productName);
@@ -270,19 +264,20 @@ describe("Products",()=>{
     })
 
     describe("Append Images to Product",()=>{
+        const productIdForUpdate = testData.productsRoute.productIdForUpdate;
         it("Should append images to product",async()=>{
-            const productIdForUpdate = testData.productsRoute.productIdForUpdate;
-            expectId(productIdForUpdate)
             const {body,statusCode} = await supertest(app).post(`/api/products/${productIdForUpdate}/${adminUserId}`)
             .set('Authorization', adminUserToken)
             .attach("images",imagePath)
             .attach("images",imagePath)
-            .attach("images",imagePath)
-            .attach("images",imagePath);
             expect(statusCode).toBe(200);
             expect(body).toStrictEqual({message:"success"})
         })
         
+        afterAll(async()=>{
+            await popProductImages(productIdForUpdate);
+            await popProductImages(productIdForUpdate);
+        })
     })
 
     describe("Delete Product Controller",()=>{
