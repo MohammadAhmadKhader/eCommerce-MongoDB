@@ -27,8 +27,6 @@ describe("Categories",()=>{
                 expect(category._id.length).toBe(24); 
             })
         })
-
-        
     })
 
 })

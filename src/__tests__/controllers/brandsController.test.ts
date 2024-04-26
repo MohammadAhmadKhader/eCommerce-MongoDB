@@ -1,22 +1,21 @@
-import {  getAdminUserTokenTestData, getAdminUserIdTestData, getCategoryIdTestData } from '../../utils/HelperFunctions';
 import supertest from "supertest";
 import { v4 as uuid } from 'uuid';
 import createServer from "../../utils/Server";
 import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
+import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
+import { createUserTokenAndCache } from "../utils/helperTestFunctions.test";
 const app = createServer()
 
 describe("Brands",()=>{
-    const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
     const imagePath = "./src/__tests__/assets/images/testImage.jpg"
-    let adminUserId : string;
+    const adminUserId = testData.adminUserId;
     let adminUserToken: string;
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
-        adminUserId = await getAdminUserIdTestData(testDataFilePath) as string;
-        adminUserToken = await getAdminUserTokenTestData(testDataFilePath) as string;
+        adminUserToken = await createUserTokenAndCache(adminUserId) as string;
     })
 
     afterAll(async()=>{
@@ -24,7 +23,6 @@ describe("Brands",()=>{
     })
 
     describe("get All brands",()=>{
-
         it("Should return all brands",async()=>{
             const {body,statusCode} = await supertest(app).get(`/api/brands`);
             expect(statusCode).toBe(200)

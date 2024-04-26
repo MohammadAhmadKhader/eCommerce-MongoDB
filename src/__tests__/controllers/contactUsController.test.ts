@@ -22,7 +22,7 @@ describe("Contact Us",()=>{
             try{
                 const email = faker.internet.email();
                 const message = faker.word.words({count:{min:10,max:20}});
-                const subject = faker.word.words({count:{min:2,max:5}})
+                const subject = faker.word.words({count:{min:2,max:3}})
                 const fullName = faker.person.fullName();
 
                 const {body,statusCode} = await supertest(app).post("/api/contactUs").send({

@@ -164,7 +164,8 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
         
         const order = await Order.findOneAndUpdate(
             {_id:orderId,userId:user._id},
-            {$set:{address:address,status:"Completed",isPaid:true}}
+            {$set:{address:address,status:"Completed",isPaid:true}},
+            {new:true}
         );
         if(!order){
             (await transaction).abortTransaction();

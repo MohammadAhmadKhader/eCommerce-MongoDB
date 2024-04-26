@@ -4,8 +4,8 @@ import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import "../../config/cloudinary";
 import testData from "../assets/testData/testData.json";
-import Product from '../../models/product';
 import {  faker } from '@faker-js/faker';
+import { createUserTokenAndCache, insertUserReview, pullUserReview } from "../utils/helperTestFunctions.test";
 
 const app = createServer()
 const expectReview = (review : any,userId:string)=>{
@@ -21,15 +21,17 @@ const expectReview = (review : any,userId:string)=>{
     expect(review._id.length).toBe(24);
 }
 describe("Reviews",()=>{
-    const userToken = testData.adminUserToken;
     const userId = testData.adminUserId;
     const userIdWithNoReviews = testData.userIdWithNoReviews;
-    const userTokenWithNoReviews = testData.userTokenWithNoReviews;
     const productIdToUserForAddingReview = testData.productIdForAddingReviews;
+    let userToken : string;
+    let userTokenWithNoReviews : string;
     
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
+        userToken = await createUserTokenAndCache(userId) as string;
+        userTokenWithNoReviews = await createUserTokenAndCache(userIdWithNoReviews) as string;
     })
 
     afterAll(async()=>{
@@ -53,51 +55,62 @@ describe("Reviews",()=>{
     });
 
     describe("Testing adding review",()=>{
-        const userTokenToAddingReview = testData.userTokenForAddingReviews;
-        const userIdToRemoveItsCommentAfterInsertion = "662790d41c55d25573d084b2";
-        // its the userId for the token above
-        it("Should add reviews successfully and return message is success",async()=>{
-            const {body,statusCode} = await supertest(app).post(`/api/reviews`)
-            .set("Authorization",userTokenToAddingReview).send({
-                productId:productIdToUserForAddingReview,
-                comment:faker.word.words({count:{min:1,max:5}}),
-                rating:faker.number.int({min:1,max:5}),
+        let userTokenToAddingReview : string;
+        const userIdToRemoveItsCommentAfterInsertion = testData.userIdToRemoveItsCommentAfterInsertion;
+        describe("fetch and renew user's token and use it to add review",()=>{
+            beforeAll(async()=>{
+                userTokenToAddingReview = await createUserTokenAndCache(userIdToRemoveItsCommentAfterInsertion) as string;
             })
-            
-            expect(statusCode).toBe(201);
-            expect(body).toStrictEqual({message:"success"});
-        });
 
-        // Trying to add a review to a product that already reviewed by the user
-        it("Should return an error with status code 400 and message with user already reviews this product",async()=>{
-            const reviewedUserToken = testData.userTokenForAddingReviewsWithUserAlreadyReviewed;
-            const {body,statusCode} = await supertest(app).post(`/api/reviews`)
-            .set("Authorization",reviewedUserToken).send({
-                productId:productIdToUserForAddingReview,
-                comment:faker.word.words({count:{min:2,max:3}}),
-                rating:faker.number.int({min:1,max:5}),
+            it("Should add reviews successfully and return message is success",async()=>{
+                const {body,statusCode} = await supertest(app).post(`/api/reviews`)
+                .set("Authorization",userTokenToAddingReview).send({
+                    productId:productIdToUserForAddingReview,
+                    comment:faker.word.words({count:{min:1,max:5}}),
+                    rating:faker.number.int({min:1,max:5}),
+                })
+                console.log(JSON.stringify(body))
+                expect(statusCode).toBe(201);
+                expect(body).toStrictEqual({message:"success"});
+            });
+
+            afterAll(async()=>{
+                await pullUserReview(userIdToRemoveItsCommentAfterInsertion,productIdToUserForAddingReview)
             })
-            expect(statusCode).toBe(400);
-            expect(body).toStrictEqual({error:"user has already reviews this product"});
         })
-        afterAll(async()=>{
-            try{
-                await Product.findOneAndUpdate(
-                    {_id:productIdToUserForAddingReview},
-                    { $pull: { reviews :
-                        {
-                            userId:userIdToRemoveItsCommentAfterInsertion,
-                        }
-                    }}
-                )
-            }catch(error){
-                console.error(error);
-            }
+
+        describe("Inserting review on product then remove the inserted review for next test",()=>{
+            let reviewedUserToken :string ;
+            const userIdForAddingReviewsWithUserAlreadyReviewed = testData.userIdForAddingReviewsWithUserAlreadyReviewed;
+
+            beforeAll(async()=>{
+                reviewedUserToken = await createUserTokenAndCache(userIdForAddingReviewsWithUserAlreadyReviewed) as string;
+            })
+
+            it("Should return an error with status code 400 and message with user already reviews this product",async()=>{
+                const {body,statusCode} = await supertest(app).post(`/api/reviews`)
+                .set("Authorization",reviewedUserToken).send({
+                    productId:productIdToUserForAddingReview,
+                    comment:faker.word.words({count:{min:2,max:3}}),
+                    rating:faker.number.int({min:1,max:5}),
+                })
+                expect(statusCode).toBe(400);
+                expect(body).toStrictEqual({error:"user has already reviews this product"});
+            });
+
+            afterAll(async()=>{
+                await pullUserReview(userIdToRemoveItsCommentAfterInsertion,productIdToUserForAddingReview)
+            });
         })
+        
     })
 
     describe("Testing edit review",()=>{
-        const userTokenToEditReview = testData.userTokenForEditingReview;
+        let userTokenToEditReview : string;
+        const userIdToEditReview = testData.userIdToEditReview;
+        beforeAll(async()=>{
+            userTokenToEditReview = await createUserTokenAndCache(userIdToEditReview) as string;
+        });
         const reviewId = "6627bfcd5f0434b2e66c33ba";
         it("Should edit review and return message is success",async()=>{
             const {body,statusCode} = await supertest(app).put("/api/reviews").send({
@@ -111,54 +124,22 @@ describe("Reviews",()=>{
     })
 
     describe("Testing removing review",()=>{
-        const userTokenToRemoveReview = testData.userTokenForRemovingReviews;
         const productIdForRemovingReview = testData.productIdForRemovingReview;
-        const userIdForTheRemoveToken = "662703ac1ef3793e27fbab76"
+        let userTokenToRemoveReview :string;
+        const userIdToRemoveReview = testData.userIdToRemoveReview;
         let reviewId:string;
         beforeAll(async()=>{
-            // fetching review Id to delete it
-            try{
-                const productWithReviewId = await Product.findOne({
-                    _id:productIdForRemovingReview
-                });
-                if(!productWithReviewId){
-                    throw "product with review id is not found"
-                }
-                const review = productWithReviewId?.reviews.map((review : any)=>{
-                    if(review.userId =="662703ac1ef3793e27fbab76"){
-                        reviewId = review._id;
-                        return review._id as string;
-                    }
-                })
-                if(review.length == 0){
-                    throw "review was not found"
-                }
-            }catch(error){
-                console.error(error)
-            }
+            reviewId = await insertUserReview(userIdToRemoveReview,productIdForRemovingReview) as string;
+            userTokenToRemoveReview = await createUserTokenAndCache(userIdToRemoveReview) as string;
         })
-        afterAll(async()=>{
-            // Adding the a comment for the next text
-            try{
-                await Product.findOneAndUpdate(
-                    {_id:productIdForRemovingReview},
-                    { $push: { reviews :
-                        {
-                            userId:userIdForTheRemoveToken,
-                            comment:faker.word.words({count:{min:1,max:5}}),
-                            rating:faker.number.int({min:1,max:5}),
-                        }
-                    }}
-                )
-            }catch(error){
-                console.error(error);
-            }
-        })
+
         it("Should remove comment",async()=>{
-            const {statusCode} = await supertest(app).delete("/api/reviews").set("Authorization",userTokenToRemoveReview).send({
+            const {body,statusCode} = await supertest(app).delete("/api/reviews").set("Authorization",userTokenToRemoveReview).send({
                 productId:productIdForRemovingReview,
                 reviewId:reviewId,
             })
+            console.log(reviewId)
+            console.log(JSON.stringify(body))
             expect(statusCode).toBe(204)
         })
     })

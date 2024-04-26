@@ -16,14 +16,16 @@ export interface ICategory {
     imageUrl:String,
 }
 export interface IProduct {
+    _id:Schema.Types.ObjectId;
     name: string;
     description: string;
     price: number;
     offer:number;
-    categoryId:Schema.Types.ObjectId,
+    categoryId:Schema.Types.ObjectId;
     finalPrice?: number;
     quantity: number;
     reviews: {
+        _id:Schema.Types.ObjectId;
         comment: string;
         userId: Schema.Types.ObjectId;
         rating: number;
@@ -66,6 +68,7 @@ export interface IUser {
 }
 
 export interface IAddresses {
+    _id:Schema.Types.ObjectId;
     fullName:string;
     mobileNumber:string;
     state:string;
@@ -173,3 +176,13 @@ export type image = {
     thumbnailUrl:string,
 }
 
+export interface ITokensCache {
+    [key:string] : string
+}
+
+export interface IResetPassCode {
+    _id:ObjectId;
+    userId:Schema.Types.ObjectId;
+    code:string | undefined;
+    expiredAt:Date;
+}
