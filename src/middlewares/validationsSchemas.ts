@@ -137,7 +137,7 @@ export const ordersStatusSchema = Joi.object({
 })
 
 export const appendImagesToProductSchema = Joi.object({
-    images:Joi.array().min(1).max(9).required(),
+    imagesLength:Joi.number().integer().min(1).max(9),
 })
 
 const atLeastOneFieldRequired = (value : IUserChangeInformation, helpers : Joi.CustomHelpers<IUserChangeInformation>) => {

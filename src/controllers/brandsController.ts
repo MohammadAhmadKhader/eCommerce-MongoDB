@@ -2,38 +2,32 @@ import {Request,Response} from "express"
 import Brand from "../models/brand"
 import CloudinaryUtils from "../utils/CloudinaryUtils"
 import { IMulterFile } from "../@types/types"
+import { asyncHandler } from "../utils/asyncHandler"
+import AppError from "../utils/AppError"
 
-export const getAllBrands = async (req:Request,res:Response) =>{
-    try{
-        const brands = await Brand.find()
+export const getAllBrands = asyncHandler( async (req, res, next) =>{
+    
+    const brands = await Brand.find()
+    return res.status(200).json({brands})
+})
 
-        return res.status(200).json({brands})
-    }catch(error : any){
-        console.error(error)
-        return res.status(500).json({error:error?.message})
-   }
-}
+export const createNewBrand = asyncHandler(async (req, res, next)=>{
+    const { brandName } = req.body;
+    if(!req.file){
+        const error = new AppError("image does not exist",400);
+        return next(error);
+    }
 
-export const createNewBrand = async (req:Request,res:Response)=>{
-    try{
-        const { brandName } = req.body;
-        if(!req.file){
-            return res.status(400).json({error:"image does not exist"})
-        }
+    const ImageUrl = await CloudinaryUtils.UploadOne(req.file as IMulterFile,process.env.BrandsImages as string)
+    if(!ImageUrl){
+        const error = new AppError("Failed To Upload Image",400);
+        return next(error);
+    }
 
-        const ImageUrl = await CloudinaryUtils.UploadOne(req.file as IMulterFile,process.env.BrandsImages as string)
-        if(!ImageUrl){
-            return res.status(400).json({error:"Failed To Upload Image"})
-        }
+    const brand = await Brand.create({
+        name:brandName,
+        imageUrl:ImageUrl
+    })
 
-        const brand = await Brand.create({
-            name:brandName,
-            imageUrl:ImageUrl
-        })
-
-        return res.status(200).json({message:"success",brand})
-    }catch(error : any){
-        console.error(error)
-        return res.status(500).json({error:error?.message})
-   }
-}
+    return res.status(200).json({message:"success",brand})
+})

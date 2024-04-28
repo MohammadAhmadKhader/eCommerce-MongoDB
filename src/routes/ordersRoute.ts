@@ -12,6 +12,6 @@ router.get("/singleOrder/:orderId",authenticateUser,ordersRouter.getSingleOrderB
 router.post("/",authenticateUser,ordersRouter.createOrder);
 router.delete("/",validateOrderId,authenticateUser,ordersRouter.deleteOrder);
 router.post("/stripe/createPaymentIntent",validateOrderId,authenticateUser,ordersRouter.createPaymentIntent)
-router.post("/stripe/OrderCheckingOut",validateCheckOrder,authenticateUser,ordersRouter.OrderCheckingOut)
+router.post("/stripe/orderCheckingOut",validateCheckOrder,authenticateUser,ordersRouter.orderCheckingOut)
 
 export default router;

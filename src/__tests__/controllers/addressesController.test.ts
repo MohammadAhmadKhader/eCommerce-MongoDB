@@ -4,7 +4,7 @@ import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import { faker } from '@faker-js/faker';
 import testData from "../assets/testData/testData.json"
-import { createAddressAndReturnId, createUserTokenAndCache, expectId, popUserAddress } from '../utils/helperTestFunctions.test';
+import { createAddressAndReturnId, createUserTokenAndCache, expectErrorMessage, expectId, expectOperationalError, popUserAddress } from '../utils/helperTestFunctions.test';
 const app = createServer();
 
 
@@ -14,6 +14,7 @@ describe("Addresses",()=>{
     const addressIdForUpdate = testData.addressIdForUpdate;
     const randomAddressId = testData.randomAddressId;
     const userId = adminUserId;
+    const addressIdNotExisting = "65eccbc950cbedf3920a2a39"
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
@@ -67,6 +68,22 @@ describe("Addresses",()=>{
             expect(updatedAddress[0].city).toBe(newAddress.city);
             expect(updatedAddress[0]._id.length).toBe(24);
         })
+
+        it("Should return and error with status code 400 that 'Address was not found'",async()=>{
+            const newAddress = {
+                pinCode:faker.location.zipCode(),
+                state:"Palestine",
+                fullName:faker.person.fullName(),
+                mobileNumber:"059826138182",
+                streetAddress:faker.location.streetAddress(),
+                city:faker.location.city()
+            }
+            const {body,statusCode} = await supertest(app).put(`/api/addresses`).send({...newAddress,userId,addressId:addressIdNotExisting}).set("Authorization",adminUserToken);
+            expect(statusCode).toBe(400)
+            expect(body.message).toBe("Address was not found.");
+            expectErrorMessage(body);
+            expectOperationalError(body);
+        })
     })
     
     describe("Delete an address",()=>{
@@ -86,7 +103,9 @@ describe("Addresses",()=>{
             .set("Authorization",adminUserToken);
             expect(statusCode).toBe(400)
             expect(body.user).toBeUndefined()
-            expect(body).toStrictEqual({error:"Address does not exist"})
+            expect(body.message).toEqual("Address was not found.");
+            expectErrorMessage(body);
+            expectOperationalError(body)
         })
 
         it("Should delete an address",async()=>{

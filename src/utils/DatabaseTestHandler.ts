@@ -5,7 +5,7 @@ async function connectToDB(testDB : typeof mongoose ,databaseTestURL : string){
 
     await testDB.connect(databaseTestURL).then(async()=>{
     }).catch((error)=>{
-       console.log(error);
+       console.error(error);
     })
 }
 

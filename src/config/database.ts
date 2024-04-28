@@ -1,14 +1,16 @@
 import mongoose from "mongoose";
 import { app } from "../app";
+import {Server} from 'http';
 
 const DB_URL = process.env.DB_URL as string;
 const PORT = process.env.PORT as string;
-mongoose.connect(DB_URL).then((result)=>{
+export let serverConnection : Server;
+mongoose.connect(DB_URL).then(()=>{
     console.log("Connected to Database successfully!");
-    app.listen(PORT,()=>{
-    console.log(`Connected to PORT : ${PORT}`);
 
-})
-}).catch((e)=>{
-    console.log(e);
+    serverConnection = app.listen(PORT,()=>{
+        console.log(`Connected to PORT : ${PORT}`);
+    })
+}).catch((error)=>{
+    console.error(error);
 })

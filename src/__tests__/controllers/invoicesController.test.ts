@@ -3,7 +3,7 @@ import createServer from "../../utils/Server";
 import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
-import { createUserTokenAndCache } from "../utils/helperTestFunctions.test";
+import { createUserTokenAndCache, expectErrorMessage, expectOperationalError } from "../utils/helperTestFunctions.test";
 const app = createServer()
 
 describe("Invoices",()=>{
@@ -61,7 +61,9 @@ describe("Invoices",()=>{
         it("Should return an error with invoice not found",async()=>{
             const {body,statusCode} = await supertest(app).get(`/api/invoices/${orderIdWithNoInvoice }`).set("Authorization",userToken);
             expect(statusCode).toBe(400);
-            expect(body).toStrictEqual({error: "Invoice was not found",})
+            expectErrorMessage(body);
+            expectOperationalError(body);
+            expect(body.message).toEqual("Invoice was not found");
         });
     })
 });

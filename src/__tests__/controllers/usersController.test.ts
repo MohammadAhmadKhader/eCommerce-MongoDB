@@ -11,7 +11,7 @@ import "../../config/cloudinary";
 import CloudinaryUtils from '../../utils/CloudinaryUtils';
 import ResetPassCode from '../../models/resetPassCode';
 import MailUtils from '../../utils/MailUtils';
-import { changeUserUpdateAt, createResetCode, createUserTokenAndCache } from '../utils/helperTestFunctions.test';
+import { changeUserUpdateAt, createResetCode, createUserTokenAndCache, expectErrorMessage,  expectOperationalError } from '../utils/helperTestFunctions.test';
 import { expectUser } from '../utils/userUtils.test';
 import { IResetPassCode } from '../../@types/types';
 
@@ -35,8 +35,8 @@ describe("Users",()=>{
     describe("User sign up controller",()=>{
         it("Should create a user and return success message with token",async()=>{
             const user = {
-                firstName:faker.person.firstName(),
-                lastName:faker.person.lastName(),
+                firstName:faker.person.firstName().substring(0, 32),
+                lastName:faker.person.lastName().substring(0, 32),
                 email:faker.internet.email({firstName:faker.person.firstName(),lastName:`${faker.person.lastName()}_${faker.number.int({min:1,max:5000})}`}),
                 password:process.env.USER_TEST_PASSWORD,
             };
@@ -52,13 +52,14 @@ describe("Users",()=>{
 
         it("Should return an error with status code 500 with error that email already exist",async()=>{
             const user = {
-                firstName:faker.person.firstName(),
-                lastName:faker.person.lastName(),
+                firstName:faker.person.firstName().substring(0, 32),
+                lastName:faker.person.lastName().substring(0, 32),
                 email:"Alvis93@yahoo.com",
                 password:faker.internet.password(),
             };
             const {body,statusCode} = await supertest(app).post("/api/users/signup").send(user);
             expect(statusCode).toBe(500);
+            expectErrorMessage(body);
             expect(body.user).toBeUndefined();
             expect(body.token).toBeUndefined();
         })
@@ -83,6 +84,7 @@ describe("Users",()=>{
                 expect(testSessionTokenFindOneAndUpdate).toHaveBeenCalledTimes(1)
            }catch(error){
                 console.error(error)
+                throw error;
            }finally{
                 testSessionTokenFindOneAndUpdate.mockRestore();
            }
@@ -97,9 +99,13 @@ describe("Users",()=>{
                 });
 
                 expect(statusCode).toBe(401);
-                expect(body).toStrictEqual({error:"Invalid email or password"});
+
+                expect(body.message).toEqual("Invalid email or password");
+                expectErrorMessage(body);
+                expectOperationalError(body);
                 expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
             }catch(error){
+                console.error(error)
                 throw error;
             }finally{
                 testSessionTokenFindOneAndUpdate.mockRestore();
@@ -115,9 +121,12 @@ describe("Users",()=>{
                 });
 
                 expect(statusCode).toBe(401);
-                expect(body).toStrictEqual({error:"Invalid email or password"});
+                expect(body.message).toEqual("Invalid email or password");
+                expectErrorMessage(body);
+                expectOperationalError(body);
                 expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
             }catch(error){
+                console.error(error)
                 throw error;
             }finally{
                 testSessionTokenFindOneAndUpdate.mockRestore();
@@ -141,14 +150,16 @@ describe("Users",()=>{
                     newPassword:password,
                     confirmNewPassword:password,
                     userId:userIdToChangePassword
-                }).set("Authorization",newPasswordUserToken)
+                }).set("Authorization",newPasswordUserToken);
+                
                 expect(statusCode).toBe(200);
                 expect(body.message).toBe("success");
                 expect(body.token.length).toBeGreaterThan(0);
                 expect(typeof body.token).toBe("string");
                 expect(test).toHaveBeenCalledTimes(1)
             }catch(error){
-                console.error(error)
+                console.error(error);
+                throw error
             }finally{
                 test.mockRestore();
             }
@@ -164,13 +175,17 @@ describe("Users",()=>{
                     newPassword:password,
                     confirmNewPassword:password,
                 }).set("Authorization",newPasswordUserToken)
-                expect(statusCode).toBe(400);
-                expect(body).toStrictEqual({error:"Invalid password"});
+                
+                expect(statusCode).toBe(401);
+                expect(body.message).toEqual("Invalid password");
+                expectErrorMessage(body);
+                expectOperationalError(body);
                 expect(body.token).toBeUndefined()
                 expect(testSessionTokenFindOneAndUpdate).not.toHaveBeenCalled()
                 expect(testUserFindOneAndUpdate).not.toHaveBeenCalled()
             }catch(error){
                 console.error(error);
+                throw error
             }finally{
                 testSessionTokenFindOneAndUpdate.mockRestore();
                 testUserFindOneAndUpdate.mockRestore();
@@ -195,7 +210,8 @@ describe("Users",()=>{
                 });
                 
             }catch(error){
-                console.error(error)
+                console.error(error);
+                throw error;
             }finally{
                 testSignOut.mockRestore();
             }
@@ -246,7 +262,7 @@ describe("Users",()=>{
             try{
                 const userEmail = faker.internet.email();
                 const mobileNumber = "0592718312812";
-                const birthdate = faker.date.birthdate({min:18,max:40});
+                const birthdate = faker.date.birthdate({min:2000,max:2018});
 
                 const {body,statusCode} = await supertest(app)
                 .put(`/api/users/${userIdToUpdateWithImg}?firstName=${userFirstName}&lastName=${userLastName}&email=${userEmail}&mobileNumber=${mobileNumber}&birthdate=${birthdate.toJSON()}`)
@@ -258,7 +274,8 @@ describe("Users",()=>{
                 expectUser(body.user);
                 expect(testUploadingImage).toHaveBeenCalledTimes(1);
             }catch(error){
-                console.error(error);
+                console.error(error)
+                throw error
             }finally{
                 testUploadingImage.mockRestore();
             }
@@ -268,9 +285,9 @@ describe("Users",()=>{
             const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}?firstName=${userFirstName}&lastName=${userLastName}`)
             .set("authorization",userTokenToUpdateBeforeOneWeekIsFinished);
             expect(statusCode).toBe(400)
-            expect(body).toStrictEqual({
-                error: "Normal User only allowed to change his information once per week",
-            })
+            expect(body.message).toEqual("Normal User only allowed to change his information once per week")
+            expectOperationalError(body);
+            expectErrorMessage(body);
         })
     })
 
@@ -300,6 +317,7 @@ describe("Users",()=>{
                 expect(testUserFindOneAndUpdate).toHaveBeenCalledTimes(1);
             }catch(error){
                 console.error(error)
+                throw error;
             }finally{
                 testTestPassCodeFindOne.mockRestore();
                 testUserFindOneAndUpdate.mockRestore();
@@ -311,15 +329,19 @@ describe("Users",()=>{
             const testTestPassCodeFindOne = jest.spyOn(ResetPassCode,"findOne");
             const testUserFindOneAndUpdate = jest.spyOn(User,"findOneAndUpdate");
             try{
-                const {statusCode} = await supertest(app).patch(`/api/users/resetPassword/${wrongToken}`).send({
+                const {body,statusCode} = await supertest(app).patch(`/api/users/resetPassword/${wrongToken}`).send({
                     newPassword:newPassword,
                     confirmedNewPassword:newPassword,
                 });
 
                 expect(statusCode).toBe(403);
+                expect(body.message).toBe("Wrong token or it has expired");
+                expectOperationalError(body);
+                expectErrorMessage(body);
                 expect(testTestPassCodeFindOne).toHaveBeenCalledTimes(1);
                 expect(testUserFindOneAndUpdate).not.toHaveBeenCalled();
             }catch(error){
+                console.error(error)
                 throw error;
             }finally{
                testTestPassCodeFindOne.mockRestore();
@@ -347,6 +369,7 @@ describe("Users",()=>{
                 expect(body.message).toBe("success");
                 expect(testSendMessageToEmail).toHaveBeenCalled();
             }catch(error){
+                console.error(error)
                 throw error;
             }finally{
                 testSendMessageToEmail.mockRestore();
@@ -360,10 +383,13 @@ describe("Users",()=>{
                     email:incorrectEmail
                 });
 
-                expect(statusCode).toBe(401);
-                expect(body);
+                expect(statusCode).toBe(400);
+                expect(body.message).toBe("The requested username is unavailable");
+                expectErrorMessage(body);
+                expectOperationalError(body);
                 expect(testSendMessageToEmail).not.toHaveBeenCalled()
             }catch(error){
+                console.error(error)
                 throw error;
             }finally{
                 testSendMessageToEmail.mockRestore();
@@ -377,9 +403,9 @@ describe("Users",()=>{
         it("Should return an error with status code 400 that ResetPassCode was not found",async()=>{
             const {body,statusCode} = await supertest(app).get(`/api/users/verifyResetPasswordToken/${wrongPassCodeToTest}`);
             expect(statusCode).toBe(400);
-            expect(body).toStrictEqual({
-                error: "Token was not found",
-            })
+            expect(body.message).toEqual("Invalid token. Please make sure you've entered the correct token.")
+            expectErrorMessage(body);
+            expectOperationalError(body);
         })
 
         it("Should pass successfully and return message equal success",async()=>{

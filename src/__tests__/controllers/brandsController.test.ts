@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
-import { createUserTokenAndCache } from "../utils/helperTestFunctions.test";
+import { createUserTokenAndCache, expectErrorMessage, expectOperationalError } from "../utils/helperTestFunctions.test";
 const app = createServer()
 
 describe("Brands",()=>{
@@ -34,7 +34,10 @@ describe("Brands",()=>{
                 expect(brand.name.length).toBeGreaterThan(0);
                 expect(brand._id.length).toBe(24); 
             })
-        })
+        }) 
+    })
+
+    describe("Create new brand",()=>{
 
         it("Should return an error that images does not exist",async()=>{
             const {body,statusCode} = await supertest(app).post(`/api/brands/${adminUserId}`)
@@ -42,19 +45,19 @@ describe("Brands",()=>{
                 name:"Nike"
             });
             expect(statusCode).toBe(400);
-            expect(body).toStrictEqual({error: "image does not exist"})
-        })
-
-        it("Should create a new brand with unique string name",async()=>{
-            const {body,statusCode} = await supertest(app).post(`/api/brands/${adminUserId}`)
-            .set("Authorization",adminUserToken).field("brandName","Nike").attach("brandLogo",imagePath);
-            expect(statusCode).toBe(500);
-            expect(body).toStrictEqual({
-                error: "E11000 duplicate key error collection: DB101_test.brands index: name_1 dup key: { name: \"Nike\" }",
-            })
+            expectErrorMessage(body);
+            expect(body.message).toEqual("image does not exist")
         })
 
         it("Should return an error that brand already exist",async()=>{
+            const {body,statusCode} = await supertest(app).post(`/api/brands/${adminUserId}`)
+            .set("Authorization",adminUserToken).field("brandName","Nike").attach("brandLogo",imagePath);
+            expect(statusCode).toBe(500);
+            expectErrorMessage(body);
+            expect(body.message).toEqual("E11000 duplicate key error collection: DB101_test.brands index: name_1 dup key: { name: \"Nike\" }",)
+        })
+
+        it("Should create a new brand with unique string name",async()=>{
             const uniqueString = uuid();
             const {body,statusCode} = await supertest(app).post(`/api/brands/${adminUserId}`)
             .set("Authorization",adminUserToken).field("brandName",uniqueString).attach("brandLogo",imagePath);
@@ -64,7 +67,5 @@ describe("Brands",()=>{
             expect(typeof body.brand.imageUrl).toBe("string");
             expect(body.brand.imageUrl.length).toBeGreaterThan(1);
         })
-        
     })
-
 })

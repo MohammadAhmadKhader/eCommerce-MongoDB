@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
-import { createProduct, createUserTokenAndCache, popProductImages } from '../utils/helperTestFunctions.test';
+import { createProduct, createUserTokenAndCache, expectErrorMessage,  expectOperationalError, popProductImages } from '../utils/helperTestFunctions.test';
 import { ObjectId } from 'mongoose';
 import { expectProductReview } from '../utils/productUtils.test';
 const app = createServer()
@@ -48,16 +48,20 @@ describe("Products",()=>{
         it("Should return an Error 500 when the ODM does not accept the Id",async()=>{
             const productId = "randomString";
             const {body,statusCode} = await supertest(app).get(`/api/products/${productId}`);
+            
             expect(statusCode).toBe(500);
-            expect(body.product).toBeUndefined;
+            expect(body.product).toBeUndefined();
+            expectErrorMessage(body);
         })
 
         it("Should return an Error 400 when product was not found",async()=>{
             const productId = "65ecde9d53bbedd3920a2c0c";
             const {body,statusCode} = await supertest(app).get(`/api/products/${productId}`);
+            
             expect(statusCode).toBe(400); 
-            expect(body).toStrictEqual({ error: 'product was not found' });
-            expect(body.product).toBeUndefined()
+            expect(body.product).toBeUndefined();
+            expectErrorMessage(body);
+            expectOperationalError(body)
         })
     }) 
     
@@ -247,7 +251,7 @@ describe("Products",()=>{
             .field("name",productName).field("categoryId",categoryId).field("brand",productBrand)
             .field("price",200).field("description",productDescription)
             .attach("image",imagePath).set('Authorization', adminUserToken);
-            console.log(JSON.stringify(body))
+            
             expect(statusCode).toBe(201);
             expect(body.message).toBe("success");
             expect(body.product.name).toBe(productName);
@@ -265,6 +269,7 @@ describe("Products",()=>{
 
     describe("Append Images to Product",()=>{
         const productIdForUpdate = testData.productsRoute.productIdForUpdate;
+        // const productIdForUpdate = "65ecac2fdeee9c7ef42ffe65"
         it("Should append images to product",async()=>{
             const {body,statusCode} = await supertest(app).post(`/api/products/${productIdForUpdate}/${adminUserId}`)
             .set('Authorization', adminUserToken)
@@ -274,6 +279,14 @@ describe("Products",()=>{
             expect(body).toStrictEqual({message:"success"})
         })
         
+        it("Should return an error because images were not set and return error with status code 400",async()=>{
+            const {body,statusCode} = await supertest(app).post(`/api/products/${productIdForUpdate}/${adminUserId}`)
+            .set('Authorization', adminUserToken)
+            expect(statusCode).toBe(400);
+            expectErrorMessage(body)
+            expectOperationalError(body)
+        })
+
         afterAll(async()=>{
             await popProductImages(productIdForUpdate);
             await popProductImages(productIdForUpdate);
@@ -316,8 +329,10 @@ describe("Products",()=>{
             const productIdForDelete  = "68ecde9d50cbcdf3920a2c2b"
             const {body,statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}/${adminUserId}`)
             .set('Authorization', adminUserToken);
+            
             expect(statusCode).toBe(400);
-            expect(body).toStrictEqual({error : "product was not found"})
+            expectErrorMessage(body);
+            expectOperationalError(body)
         })
     })
 
