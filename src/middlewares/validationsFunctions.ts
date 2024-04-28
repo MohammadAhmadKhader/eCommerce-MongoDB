@@ -110,7 +110,6 @@ export const validateCreateProduct = (req:Request,res:Response,next:NextFunction
     },{abortEarly:false})
     
     if(error){
-        //console.log(error)
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         req.validationError = errorMessage;
         return res.status(400).json({error:errorMessage});
@@ -300,9 +299,9 @@ export const validateOrdersStatus = (req:Request,res:Response,next:NextFunction)
 
 export const validateAppendImagesToProduct = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = appendImagesToProductSchema.validate({
-        images:req.files
+        imagesLength:req.files?.length
     },{abortEarly:false})
-
+    
     if(error){
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         req.validationError = errorMessage;
@@ -321,6 +320,7 @@ export const validateUserChangeInformation = (req:Request,res:Response,next:Next
     },{abortEarly:false})
 
     if(error){
+        console.log(error)
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         req.validationError = errorMessage;
         return res.status(400).json({error:errorMessage});

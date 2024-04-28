@@ -20,7 +20,6 @@ options: {injectedFunction:(req:Request,res:Response,next:NextFunction)=>any;inj
     return (req : Request,res : Response,next: NextFunction)=>{     
         try{
             const mockNextFunction : NextFunction = ()=>{}
-            const mockFile = {} as Express.Multer.File;
             const validator = validationMiddleware;
             const authenticator = authenticationMiddleware;
 

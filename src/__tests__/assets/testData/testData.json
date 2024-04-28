@@ -31,10 +31,17 @@
   "userIdToUpdateBeforeOneWeekIsFinished": "6626921b7a6e757723b59431",
   "userIdTestingWishlist": "6627c6df40da1283c9e65151",
   "userIdWithNoReviews": "662703c3217f9946408238f6",
+  "userIdToGetCartItems":"66280e8c6a26077f0d4e0947",
   "productIdForRemovingReview": "65ecc528fe69fb23c47e51f9",
   "productIdForAddingReviews": "65ecc69efe69fb23c47e525a",
   "userIdWithEmptyWishlist": "6627cc448c6dadcb9ce76f3c",
   "normalUserId":"662aee9a8f87c950d97926ea",
+  "userIdWithFullWishlist":"662e52bb5045d0e83d54319c",
+  "userIdToCreateOrderWithUnavailableQty":"662d78312963d1b82bd23405",
+  "userIdToCheckOrderWithUnregisteredStripe":"66281215458fa1e46cb82895",
+  "userIdToCheckOrderWithUnavailableQty":"662d78312963d1b82bd23405",
+  "userIdToAddToCartWithExistingItem":"662dcd5f864baca850ff4814",
+  "userIdToAddSameProductTwiceOnWishlist":"662e55117004dfc34dad75d6",
   "expiredAdminToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ik1vaGFtbWFkS2hhZGVycjE5OTlAZ21haWwuY29tIiwiaWQiOiI2NWU3ODJlZDM2OGMyMmUzNTQyMmY0YWQiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUyNjIzOTAyMn0.AOao3GNwQi3ocHZQ-tUsBBgQOx33Pj3YM4VGhOkgCJ8",
   "expiredNormalUserToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IlRoYWRkZXVzLkxpbmQ1QGdtYWlsLmNvbSIsImlkIjoiNjVlZjU4OTEwODJiNmEwNjk4ZDVjZWU5IiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MjYyMzkwMjJ9.1yEIwBz5DjdQDw6qu3FbModHU_nGEOLzjyaMVijuNBg"
 }

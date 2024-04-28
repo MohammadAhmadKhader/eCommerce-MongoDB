@@ -5,21 +5,11 @@ import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import "../../config/cloudinary";
 import testData from "../assets/testData/testData.json";
 import {  faker } from '@faker-js/faker';
-import { createUserTokenAndCache, insertUserReview, pullUserReview } from "../utils/helperTestFunctions.test";
+import { createUserTokenAndCache, expectErrorMessage, expectOperationalError, insertUserReview, pullUserReview } from "../utils/helperTestFunctions.test";
+import { expectReview } from "../utils/reviewsUtils.test";
 
 const app = createServer()
-const expectReview = (review : any,userId:string)=>{
-    const expectedRatings = [1,2,3,4,5]
-    expect(typeof review.comment).toBe("string");
-    expect(review.userId).toBe(userId);
-    expect(expectedRatings).toEqual(expect.arrayContaining([review.rating]));
-    expect(typeof review.createdAt).toBe("string");
-    expect(typeof review.updatedAt).toBe("string");
-    expect(typeof review._id).toBe("string");
-    expect(review.createdAt.length).toBe(24);
-    expect(review.updatedAt.length).toBe(24);
-    expect(review._id.length).toBe(24);
-}
+
 describe("Reviews",()=>{
     const userId = testData.adminUserId;
     const userIdWithNoReviews = testData.userIdWithNoReviews;
@@ -39,12 +29,14 @@ describe("Reviews",()=>{
     })
 
     describe("Testing get all Reviews by user",()=>{
-        it("Should return all user reviews",async()=>{
+        it("Should return all user reviews successfully",async()=>{
             const {body,statusCode} = await supertest(app).get(`/api/reviews/${userId}`).set("Authorization",userToken);
+            
             expect(statusCode).toBe(200);
             body.reviews.forEach((item : any) => {
                 expectReview(item,userId)
             });
+            
         });
 
         it("Should return an empty array with no reviews (length = 0)",async()=>{
@@ -66,10 +58,10 @@ describe("Reviews",()=>{
                 const {body,statusCode} = await supertest(app).post(`/api/reviews`)
                 .set("Authorization",userTokenToAddingReview).send({
                     productId:productIdToUserForAddingReview,
-                    comment:faker.word.words({count:{min:1,max:5}}),
+                    comment:faker.word.words({count:{min:1,max:3}}),
                     rating:faker.number.int({min:1,max:5}),
                 })
-                console.log(JSON.stringify(body))
+                
                 expect(statusCode).toBe(201);
                 expect(body).toStrictEqual({message:"success"});
             });
@@ -95,7 +87,9 @@ describe("Reviews",()=>{
                     rating:faker.number.int({min:1,max:5}),
                 })
                 expect(statusCode).toBe(400);
-                expect(body).toStrictEqual({error:"user has already reviews this product"});
+                expect(body.message).toEqual("user has already reviews this product");
+                expectErrorMessage(body);
+                expectOperationalError(body);
             });
 
             afterAll(async()=>{
@@ -112,14 +106,27 @@ describe("Reviews",()=>{
             userTokenToEditReview = await createUserTokenAndCache(userIdToEditReview) as string;
         });
         const reviewId = "6627bfcd5f0434b2e66c33ba";
-        it("Should edit review and return message is success",async()=>{
+        const reviewIdDoestNotExist = "6627bfcd5f0434b2e66c33b1";
+        it("Should edit review and return message is success and status code 201",async()=>{
             const {body,statusCode} = await supertest(app).put("/api/reviews").send({
                 comment:faker.word.words({count:{min:1,max:3}}),
                 rating:faker.number.int({min:1,max:5}),
                 reviewId:reviewId
             }).set("Authorization",userTokenToEditReview)
             expect(statusCode).toBe(201);
-            expect(body).toStrictEqual({message:"success"})
+            expect(body).toStrictEqual({message:"success"});
+        })
+
+        it("Should return error with status code 400 that reviews does not exist",async()=>{
+            const {body,statusCode} = await supertest(app).put("/api/reviews").send({
+                comment:faker.word.words({count:{min:1,max:3}}),
+                rating:faker.number.int({min:1,max:5}),
+                reviewId:reviewIdDoestNotExist
+            }).set("Authorization",userTokenToEditReview)
+            expect(statusCode).toBe(400);
+            expect(body.message).toEqual("The requested review does not exist");
+            expectErrorMessage(body);
+            expectOperationalError(body);
         })
     })
 
@@ -133,14 +140,26 @@ describe("Reviews",()=>{
             userTokenToRemoveReview = await createUserTokenAndCache(userIdToRemoveReview) as string;
         })
 
-        it("Should remove comment",async()=>{
-            const {body,statusCode} = await supertest(app).delete("/api/reviews").set("Authorization",userTokenToRemoveReview).send({
+        it("Should remove comment and return status code 204",async()=>{
+            const {statusCode} = await supertest(app).delete("/api/reviews").set("Authorization",userTokenToRemoveReview).send({
                 productId:productIdForRemovingReview,
                 reviewId:reviewId,
             })
-            console.log(reviewId)
-            console.log(JSON.stringify(body))
-            expect(statusCode).toBe(204)
+            
+            expect(statusCode).toBe(204);
+        })
+
+        it("Should remove comment and return status code 204",async()=>{
+            const reviewIdDoestNotExist = "6627bfcd5f0434b2e66c33b1";
+            const {body,statusCode} = await supertest(app).delete("/api/reviews").set("Authorization",userTokenToRemoveReview).send({
+                productId:productIdForRemovingReview,
+                reviewId:reviewIdDoestNotExist,
+            })
+            
+            expect(statusCode).toBe(400);
+            expect(body.message).toBe("The requested review or product does not exist");
+            expectErrorMessage(body);
+            expectOperationalError(body);
         })
     })
 })

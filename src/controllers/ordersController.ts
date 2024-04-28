@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import Order from "../models/order";
 import User from "../models/user";
 import Product from "../models/product";
@@ -7,155 +7,150 @@ import Invoice from "../models/Invoice";
 import { IUser } from "../@types/types";
 import StripeUtils from "../utils/StripeUtils";
 import { collectInvoiceData } from "../utils/HelperFunctions";
+import { asyncHandler } from "../utils/asyncHandler";
+import AppError from "../utils/AppError";
 
-export const getAllOrders = async(req:Request,res:Response)=>{
-    try{
-        const { limit,skip,page} = req.pagination;
-        const userId = req.user._id;
-        const status = req.query.status;
+export const getAllOrders = asyncHandler(async(req ,res )=>{
+    const { limit,skip,page} = req.pagination;
+    const userId = req.user._id;
+    const status = req.query.status;
         
-        const match = {status:status,userId:userId};
-        const orders = await Order.find(match).sort({createdAt:-1}).skip(skip).limit(limit)
-        const count = await Order.find(match).countDocuments()
+    const match = {status:status,userId:userId};
+    const orders = await Order.find(match).sort({createdAt:-1}).skip(skip).limit(limit)
+    const count = await Order.find(match).countDocuments()
         
-        return res.status(200).json({count,page,limit,orders})
-    }catch(error : any){
-        console.error(error)
-        return res.status(500).json({error:error?.message})
-   }
-}
+    return res.status(200).json({count,page,limit,orders})
+})
 
-export const getSingleOrderById = async(req:Request,res:Response)=>{
-    try{
-        const {orderId} = req.params;
-        const order = await Order.findOne({_id:orderId});
-        if(!order){
-            return res.status(400).json({error:"order was not found"})
-        }
-        
-        return res.status(200).json({order})
-    }catch(error){
-        console.error(error)
-        return res.status(500).json({error})
+export const getSingleOrderById =asyncHandler( async(req ,res ,next)=>{
+    const {orderId} = req.params;
+    const order = await Order.findOne({_id:orderId});
+    if(!order){
+        const error = new AppError("The requested order was not found",400)
+        return next(error);
     }
-}
-
-export const createOrder = async(req :Request,res:Response)=>{
-    try{
-        // const userId = req.body.userId;
-        const arrayOfProductsIds : any = [];
-        const user = req.user as IUser;
-        const userId = user._id;
-
-        if(user.cart.length == 0){
-            return res.status(400).json({error:"cart is empty"});
-        }
         
+    return res.status(200).json({order})
+})
+
+export const createOrder = asyncHandler(async (req ,res ,next)=>{
+    // const userId = req.body.userId;
+    const arrayOfProductsIds : any = [];
+    const user = req.user as IUser;
+    const userId = user._id;
+
+    if(user.cart.length == 0){
+        const error = new AppError("User's cart is empty",400)
+        return next(error);
+    }
+        
+    user.cart.forEach((cartItem)=>{
+        arrayOfProductsIds.push(cartItem.productId);
+    })
+    // mapper[id] => amount person picked
+    const mapper : any ={};
+        
+    arrayOfProductsIds.forEach((item : any)=>{
         user.cart.forEach((cartItem)=>{
-            arrayOfProductsIds.push(cartItem.productId);
+            if(cartItem.productId == item){
+                mapper[item] = cartItem.quantity
+            }
         })
-        // mapper[id] => amount person picked
-        const mapper : any ={};
-        
-        arrayOfProductsIds.forEach((item : any)=>{
-            user.cart.forEach((cartItem)=>{
-                if(cartItem.productId == item){
-                    mapper[item] = cartItem.quantity
-                }
-            })
-        })
+    })
 
-        // cartItem.quantity => main product 
-        const cartItems = await Product.find(
-            {_id: {$in : arrayOfProductsIds }},
-            {reviews:0,__v:0,description:0,categoryId:0,brand:0});
+    // cartItem.quantity => main product 
+    const cartItems = await Product.find(
+        {_id: {$in : arrayOfProductsIds }},
+        {reviews:0,__v:0,description:0,categoryId:0,brand:0});
+    
+    let subTotal = 0;
+    cartItems.forEach((cartItem)=>{
+        subTotal += (cartItem.finalPrice! * mapper[cartItem._id.toString()]);
+    });
         
-        let subTotal = 0;
-        cartItems.forEach((cartItem)=>{
-            subTotal += (cartItem.finalPrice! * mapper[cartItem._id.toString()]);
-        });
-        
-        const discount =0,deliveryFee =0
-        const orderGrandTotal = subTotal - discount + deliveryFee
-        
-        const order = await Order.create({
-            userId:userId,
-            deliveryFee,
-            discount,
-            subTotal:Number(subTotal).toFixed(2),
-            grandTotal:Number(orderGrandTotal).toFixed(2),
-            orderItems:cartItems.map((cartItem)=> ({
-                name:cartItem.name,
-                price:cartItem.finalPrice,
-                thumbnailUrl:cartItem.images[0].thumbnailUrl,
-                quantity:mapper[cartItem._id.toString()] <= cartItem.quantity ? mapper[cartItem._id.toString()] : (()=>{
-                    throw new Error("You cant buy more than the existing amount")
-                })() ,
-                productId:cartItem._id,
-                subTotal:Number(cartItem.quantity * cartItem.finalPrice!).toFixed(2)
-            })),
-        })
-        
-        const userAfterCartAndOrderChanged = await User.findOneAndUpdate({_id:userId},{
-            $set :{cart:[]}
-        },{new:true,select:"-password -__v"});
+    const discount =0,deliveryFee =0
+    const orderGrandTotal = subTotal - discount + deliveryFee
 
-        return res.status(201).json({message:"success",user:userAfterCartAndOrderChanged,order})
-    }catch(error : any){
-        console.error(error);
-        return res.status(500).json({error:error?.message})
-   }
-}
+    const transaction = mongoose.startSession();
+    ;(await transaction).startTransaction();
 
-export const deleteOrder = async (req:Request,res:Response) => {
-    try{
-        //const userId = req.body.userId as string
-        const userId = req.user._id as string
-        const orderId = req.body.orderId as string
-        
-        const order = await Order.findOneAndUpdate({
-            userId:userId,
-            _id:orderId},
-        {
-            $set: {  status: "Cancelled",updatedDate: new Date().toUTCString()},
-        },{new:true})
-        
-        return res.sendStatus(204)
-    }catch(error : any){
-        console.error(error)
-        return res.status(500).json({error:error?.message})
-   }
-}
+    let isIncorrectOrder = false;
+    const order = await Order.create({
+        userId:userId,
+        deliveryFee,
+        discount,
+        subTotal:Number(subTotal).toFixed(2),
+        grandTotal:Number(orderGrandTotal).toFixed(2),
+        orderItems:cartItems.map((cartItem)=> ({
+            name:cartItem.name,
+            price:cartItem.finalPrice,
+            thumbnailUrl:cartItem.images[0].thumbnailUrl,
+            quantity:mapper[cartItem._id.toString()] <= cartItem.quantity ? mapper[cartItem._id.toString()] : (()=>{
+                isIncorrectOrder = true
+            })() ,
+            productId:cartItem._id,
+            subTotal:Number(cartItem.quantity * cartItem.finalPrice!).toFixed(2)
+        })),
+    })
 
-export const createPaymentIntent = async(req:Request,res:Response)=>{
-    try{
-        const {orderId} = req.body;
-        const user = req.user;
-        const order = await Order.findOne({_id:orderId});
-        const customerId = user._id;
-        if(!order){
-            return res.status(400).json({error:"Order was not found"})
-        }
-
-        const stripe = StripeUtils.createStripe();
-        const customer = await StripeUtils.searchCustomerCreateOneIfDoesNotExist(customerId,stripe,user)
-
-        const paymentIntent = await stripe.paymentIntents.create({
-            currency:"usd",
-            amount:Number((Number(order.grandTotal) * 100).toFixed(2)),
-            automatic_payment_methods:{
-                enabled:true
-            },
-        })
-
-        return res.status(200).json({clientSecret:paymentIntent.client_secret,customer:customer})
-    }catch(error : any){
-        console.error(error)
-        return res.status(500).json({error:error?.message})
+    if(isIncorrectOrder){
+        (await transaction).abortTransaction();
+        const error = new AppError("An unexpected error has occurred",400);
+        return next(error);
     }
-}
+    const userAfterCartAndOrderChanged = await User.findOneAndUpdate({_id:userId},{
+        $set :{cart:[]}
+    },{new:true,select:"-password -__v"});
 
-export const OrderCheckingOut = async(req:Request,res:Response)=>{
+    ;(await transaction).commitTransaction();
+    return res.status(201).json({message:"success",user:userAfterCartAndOrderChanged,order})
+})
+
+export const deleteOrder = asyncHandler(async (req, res, next) => {
+    //const userId = req.body.userId as string
+    const userId = req.user._id;
+    const orderId = req.body.orderId as string
+        
+    const order = await Order.findOneAndUpdate({
+        userId:userId,
+        _id:orderId},
+    {
+        $set: {  status: "Cancelled",updatedDate: new Date().toUTCString()},
+    },{new:true});
+
+    if(!order){
+        const error = new AppError("The requested order was not found",400);
+        return next(error)
+    }
+        
+    return res.sendStatus(204)
+})
+
+export const createPaymentIntent =asyncHandler( async(req, res, next)=>{
+    const {orderId} = req.body;
+    const user = req.user;
+    const order = await Order.findOne({_id:orderId});
+    const customerId = user._id;
+    if(!order){
+        const error = new AppError("The requested order was not found",400);
+        return next(error)
+    }
+
+    const stripe = StripeUtils.createStripe();
+    const customer = await StripeUtils.searchCustomerCreateOneIfDoesNotExist(customerId.toString(),stripe,user)
+    
+    const paymentIntent = await stripe.paymentIntents.create({
+        currency:"usd",
+        amount:Number((Number(order.grandTotal) * 100).toFixed(2)),
+        automatic_payment_methods:{
+            enabled:true
+        },
+    })
+
+    return res.status(200).json({clientSecret:paymentIntent.client_secret,customer:customer})
+})
+
+export const orderCheckingOut = async(req:Request,res:Response, next : NextFunction)=>{
     const transaction = mongoose.startSession();
     try{
         ;(await transaction).startTransaction();
@@ -169,15 +164,17 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
         );
         if(!order){
             (await transaction).abortTransaction();
-            return res.status(400).json({error:"Order was not found"})
+            const error = new AppError("The requested order was not found",400);
+            return next(error);
         }
         const customerId = user._id;
         const stripe = StripeUtils.createStripe();
-        const customers = await StripeUtils.searchCustomer(customerId,stripe);
-
+        const customers = await StripeUtils.searchCustomer(customerId.toString(),stripe);
+        
         if(customers.data.length == 0){
             (await transaction).abortTransaction();
-            return res.status(400).json({error:"Customer was not found"})
+            const error = new AppError("An unexpected error has occurred",400);
+            return next(error);
         }  
         const customer = customers.data[0];
         const invoice = await StripeUtils.createInvoice(customer,stripe);
@@ -187,7 +184,7 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
 
         const InvoiceData = collectInvoiceData(finalizingTheInvoice,order);
         const issuedInvoice = await Invoice.create(InvoiceData);
-
+        
         const arrayOfProductsIds : any = [];
         issuedInvoice.invoiceItems.forEach((item)=>{
             arrayOfProductsIds.push(item.productId);
@@ -201,25 +198,29 @@ export const OrderCheckingOut = async(req:Request,res:Response)=>{
         order.orderItems.forEach((orderItem)=>{
             orderItemsProductIdQuantityMapper[orderItem.productId.toString()] = orderItem.quantity;
         })
-
+        
         const bulkWriteArray : any= [];
+        let isBulkWriteIsIncorrect = false;
         for(let i =0; i < products.length;i++){
             bulkWriteArray.push({
                 updateOne:{
                     filter: { _id :products[i]._id },
                     update: { $inc :{ quantity : productsIdQuantityMapper[products[i]._id.toString()] >= orderItemsProductIdQuantityMapper[products[i]._id.toString()] ? 
-                        -orderItemsProductIdQuantityMapper[products[i]._id.toString()] : await (async()=>{
-                            throw new Error("You cant buy more than the existing amount")
+                        -orderItemsProductIdQuantityMapper[products[i]._id.toString()] : (()=>{
+                            isBulkWriteIsIncorrect = true
+                            // This return meant to avoid the casting error from undefined to number
+                            return 1
                         })()
                     }} 
                 }
             })
         }
-       
+    
         const updateProductQuantity = await Product.bulkWrite(bulkWriteArray);
-        if(updateProductQuantity.modifiedCount !== arrayOfProductsIds.length){
+        if(updateProductQuantity.modifiedCount !== arrayOfProductsIds.length || isBulkWriteIsIncorrect){
             (await transaction).abortTransaction();
-            return res.status(400).json({error:"Something Went Wrong Please Try Again Later!"})
+            const error = new AppError("An error occurred while processing your order. Please try again later or contact support.",400)
+            return next(error);
         }
 
         ;(await transaction).commitTransaction();

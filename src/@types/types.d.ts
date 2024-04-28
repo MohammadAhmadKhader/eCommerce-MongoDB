@@ -198,3 +198,17 @@ export interface IUserChangeInformation {
     mobileNumber?: string;
     birthdate?: string;
 }
+
+export interface ICartItemPopulated {
+    _id:Schema.Types.ObjectId;
+    product:{
+        name:string;
+        categoryId:Schema.Types.ObjectId;
+        price:number;
+        finalPrice:number;
+        offer:number;
+        quantity:number;
+        images:image[];
+        brand:string;
+    }
+}

@@ -1,18 +1,15 @@
-import {Response,Request} from "express"
 import Invoice from "../models/Invoice";
+import { asyncHandler } from "../utils/asyncHandler";
+import AppError from "../utils/AppError";
 
 
-export const getInvoiceByOrderId = async(req:Request,res:Response)=>{
-    try{
-        const {orderId} = req.params;
-        const invoice = await Invoice.findOne({orderId});
-        if(!invoice){
-            return res.status(400).json({error:"Invoice was not found"});
-        }
-        
-        return res.status(200).json({message:"success",invoice})
-    }catch(error : any){
-        console.error(error);
-        return res.status(500).json({error:error?.message})
+export const getInvoiceByOrderId = asyncHandler( async(req ,res ,next)=>{
+    const {orderId} = req.params;
+    const invoice = await Invoice.findOne({orderId});
+    if(!invoice){
+        const error = new AppError("Invoice was not found",400);
+        return next(error);
     }
-}
+        
+    return res.status(200).json({message:"success",invoice})
+})

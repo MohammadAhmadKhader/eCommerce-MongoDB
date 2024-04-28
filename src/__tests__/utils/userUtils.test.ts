@@ -2,7 +2,7 @@ import { ObjectId } from "mongoose";
 import { ICartItem, IUser, IWishListItem } from "../../@types/types";
 import { expectId } from "./helperTestFunctions.test";
 import { expectUnpopulatedWishlistItem } from "./wishlist.test";
-import { expectUnpopulatedCart } from "./cart.test";
+import { expectUnpopulatedCart } from "./cartUtils.test";
 import { expectAddress } from "./addressUtils.test";
 
 export function expectUser(user: IUser){

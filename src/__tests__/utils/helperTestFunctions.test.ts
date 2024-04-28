@@ -2,7 +2,7 @@ import { Response } from "express";
 import SessionToken from "../../models/sessionToken";
 import { signToken } from "../../utils/HelperFunctions";
 import User from "../../models/user";
-import { ITokensCache } from "../../@types/types";
+import { ICartItem, ITokensCache } from "../../@types/types";
 import Order from "../../models/order";
 import Product from "../../models/product";
 import testData from "../assets/testData/testData.json"
@@ -15,6 +15,19 @@ const tokensCache : ITokensCache = {};
 export function expectId(expectedId: any){
     expect(typeof expectedId).toBe("string");
     expect(expectedId.length).toBe(24);
+}
+
+export function expectErrorMessage(response: any){
+    expect(response.message).toBeTruthy();
+    expect(response.stackTrace).toBeTruthy();
+    expect(response.status).toBeTruthy();
+    expect(response.error).toBeTruthy();
+}
+
+export function expectOperationalError(response : any){
+    expect(response.error).toBeTruthy();
+    expect(response.error.isOperational).toEqual(true);
+    expect(response.error.statusCode).toBeTruthy();
 }
 
 export function createResponseNext(){
@@ -52,6 +65,7 @@ export async function createUserTokenAndCache(userId : string){
         return renewedToken.token;
     }catch(error){
         console.error(error);
+        return ""
     }
 }
 
@@ -241,5 +255,92 @@ export async function popProductImages(productId : string){
         },{multi:true})
     }catch(error){
         console.error(error)
+    }
+}
+
+export const deleteUserCartItemByItsId = async (userId:string,cartItemId:string)=>{
+    try{
+        await User.findOneAndUpdate({_id:userId,"cart._id":cartItemId},{
+            $pull:{
+                cart:{
+                    _id:cartItemId
+                }
+            }
+        })
+    }catch(error){
+        console.error(error)
+    }
+}
+
+export const addCartItemThenReturnIt = async (userId:string,cartItem:{productId:string,quantity:number})=>{
+    try{
+        const userAfterUpdate = await User.findOneAndUpdate({_id:userId},{
+            $push:{
+                cart:{
+                    quantity:cartItem.quantity,
+                    productId:cartItem.productId
+                },
+            }
+        },{new:true})
+        if(!userAfterUpdate){
+            throw new Error("Something went wrong during inserting cart item to user")
+        }
+        const addedCartItem : any= {};
+        userAfterUpdate.cart.forEach((userCartItem)=>{
+            if(cartItem.quantity ==  userCartItem.quantity && cartItem.productId == userCartItem.productId.toString()){
+                addedCartItem.quantity = userCartItem.quantity;
+                addedCartItem.productId = userCartItem.productId;
+                addedCartItem._id = userCartItem._id
+            }
+        })
+        
+        return addedCartItem as ICartItem
+    }catch(error){
+        console.error(error)
+    }
+}
+
+export const removeWishlistItemByProductId = async (userId:string,productId:string)=>{
+    try{
+        const updatingUser = await User.updateOne({_id:userId},{
+            $pull:{
+                wishList:{
+                    productId:productId
+                }
+            }
+        })
+        if(updatingUser.modifiedCount == 0){
+            throw "User was not modified before testing on adding wishlist item"
+        }
+    }catch(error){
+        console.error(error)
+    }
+}
+
+export const addToWishlistAndReturnItemId = async (userId:string,productId:string)=>{   
+    try{
+        let wishlistItemId = "";
+        const updatedUser = await User.findOneAndUpdate({_id:userId},{
+            $push:{
+                wishList:{
+                    productId:productId
+                }
+            }
+        })
+
+        if(!updatedUser){
+            throw "User was not modified before testing on removing wishlist item"
+        }
+
+        updatedUser.wishList.forEach((item)=>{
+            if(item.productId.toString() == productId){
+                wishlistItemId = item._id.toString();
+            }
+        })
+        
+        return wishlistItemId as string
+    }catch(error){
+        console.error(error);
+        return ""
     }
 }
