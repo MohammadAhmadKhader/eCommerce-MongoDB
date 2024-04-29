@@ -1,4 +1,4 @@
-import express,{Response,Request, NextFunction} from "express";
+import express,{Response,Request} from "express";
 import productsRoute from "../routes/productsRoute"
 import usersRoute from "../routes/usersRoute"
 import cartsRoute from "../routes/cartsRoute"
@@ -14,7 +14,8 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import sanitize from "express-mongo-sanitize"
-import globalErrorHandler from "../controllers/errorController"
+import globalErrorHandler from "../controllers/errorController";
+
 const cors = require("cors");
 
 function createServer(){
@@ -31,8 +32,13 @@ function createServer(){
     app.use(sanitize());
     app.use(express.json());
     app.use(cors());
-    app.use(morgan('dev'));
 
+    if((process.env.NODE_ENV as string).trim() === "development"){
+        app.use(morgan('dev'));
+    }else{
+        app.use(morgan('combined'));
+    }
+    
     app.use("/api/categories",categoriesRoute)
     app.use("/api/products",productsRoute);
     app.use("/api/users",usersRoute)
@@ -48,7 +54,7 @@ function createServer(){
     app.use("/api/*",(req:Request,res:Response)=>{
         return res.sendStatus(404);
     })
-
+    
     app.use(globalErrorHandler)
 
     return app;

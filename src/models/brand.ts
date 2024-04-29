@@ -1,6 +1,7 @@
 import mongoose,{Schema} from "mongoose";
+import { IBrand } from "../@types/types";
 
-const brandSchema = new Schema ({
+const brandSchema : Schema<IBrand>= new Schema ({
     name:{
         type:String,
         required:true,

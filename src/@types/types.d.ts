@@ -212,3 +212,17 @@ export interface ICartItemPopulated {
         brand:string;
     }
 }
+
+export interface ISessionToken {
+    _id:Schema.Types.ObjectId;
+    userId:Schema.Types.ObjectId;
+    token:string;
+    updatedAt:Date;
+    createdAt:Date;
+}
+
+export interface IBrand {
+    _id:Schema.Types.ObjectId;
+    name:string;
+    imageUrl:string;
+}

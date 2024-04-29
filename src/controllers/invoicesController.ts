@@ -4,7 +4,7 @@ import AppError from "../utils/AppError";
 
 
 export const getInvoiceByOrderId = asyncHandler( async(req ,res ,next)=>{
-    const {orderId} = req.params;
+    const {orderId} = req.params; // to url
     const invoice = await Invoice.findOne({orderId});
     if(!invoice){
         const error = new AppError("Invoice was not found",400);

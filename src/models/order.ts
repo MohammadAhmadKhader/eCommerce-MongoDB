@@ -58,6 +58,7 @@ const orderSchema : Schema<IOrder> = new Schema({
     timestamps:true
 })
 
+orderSchema.index({_id:1,userId:1,status:1})
 
 const Order = mongoose.model("Order",orderSchema)
 export default Order;

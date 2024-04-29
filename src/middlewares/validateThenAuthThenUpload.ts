@@ -4,7 +4,7 @@ import {Request,Response ,NextFunction} from "express"
 const storage = multer.memoryStorage()
 
 export interface IAuthenticateMiddleware {
-    (req: Request, res: Response, next: NextFunction) : Promise<void | Response<any, Record<string, any>>>
+    (req: Request, res: Response, next: NextFunction) : void
 }
 /**
  * 
