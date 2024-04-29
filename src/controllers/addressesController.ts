@@ -1,4 +1,3 @@
-import {NextFunction, Request,Response} from "express"
 import User from "../models/user";
 import { asyncHandler } from "../utils/asyncHandler";
 import AppError from "../utils/AppError";
@@ -24,7 +23,7 @@ export const createNewAddress = asyncHandler( async (req ,res ,next)=>{
 })
 
 export const editAddress = asyncHandler( async (req, res, next)=>{
-    const {fullName,mobileNumber,pinCode,streetAddress,city,state,addressId} = req.body 
+    const {fullName,mobileNumber,pinCode,streetAddress,city,state,addressId} = req.body // addressId => to url 
     const user = req.user;
 
     const addressIndex = user.addresses.findIndex((address: any) => address._id == addressId);
@@ -56,7 +55,7 @@ export const editAddress = asyncHandler( async (req, res, next)=>{
 })
 
 export const deleteAddress = asyncHandler( async (req, res, next)=>{
-    const {addressId} = req.body;
+    const {addressId} = req.body; // => to url
     const user = req.user;
     const addressIndex = user.addresses.findIndex((address: any) => address._id == addressId);
         

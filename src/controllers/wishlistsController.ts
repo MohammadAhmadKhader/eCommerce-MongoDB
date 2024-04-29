@@ -3,7 +3,6 @@ import { asyncHandler } from "../utils/asyncHandler";
 import AppError from "../utils/AppError";
 
 export const getWishList = asyncHandler( async (req, res)=>{
-    //const userId = req.params.userId;
     const userId = req.user._id;
     const user = await User.findOne({_id:userId}).populate({
         path:"wishList.productId",

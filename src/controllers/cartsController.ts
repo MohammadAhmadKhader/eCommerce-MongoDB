@@ -6,7 +6,6 @@ import { asyncHandler } from '../utils/asyncHandler';
 import AppError from '../utils/AppError';
 
 export const getAllCartItems = asyncHandler( async (req ,res ,next)=>{
-    // const userId = req.params.userId;
     const userId = req.user._id;     
     const cartItems = await User.findById(userId,{cart:1}).populate({
         path:"cart.productId",
@@ -40,7 +39,7 @@ export const addToCart = asyncHandler(async (req ,res ,next)=>{
 })
 
 export const deleteFromCart = asyncHandler( async (req ,res,next)=>{ 
-    const cartItemId = req.body.cartItemId ;
+    const cartItemId = req.body.cartItemId; // => to url
     const userId = req.user._id;
     const userBeforeCartChanged = req.user;
 

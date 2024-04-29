@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import mongoose,{Schema} from "mongoose";
 import { IInvoice } from "../@types/types";
 
-const InvoiceSchema : Schema<IInvoice>= new Schema ({
+const invoiceSchema : Schema<IInvoice>= new Schema ({
     hostedLink:{
         type:String,
         required:true
@@ -46,6 +46,6 @@ const InvoiceSchema : Schema<IInvoice>= new Schema ({
 },{
     timestamps:true
 })
-
-const Invoice = mongoose.model("Invoice",InvoiceSchema)
+invoiceSchema.index({orderId:1})
+const Invoice = mongoose.model("Invoice",invoiceSchema)
 export default Invoice;

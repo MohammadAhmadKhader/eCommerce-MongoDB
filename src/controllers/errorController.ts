@@ -3,7 +3,7 @@ import AppError from '../utils/AppError';
 
 const errorController = ((error : any ,req : Request,res : Response,next : NextFunction)=>{
     error.statusCode = error.statusCode || 500;
-    
+
     if((process.env.NODE_ENV as string).trim() == "development"){
         developmentErrors(res,error)
     }else if((process.env.NODE_ENV as string).trim() == "production"){
@@ -18,6 +18,14 @@ const errorController = ((error : any ,req : Request,res : Response,next : NextF
             error = duplicateKeyErrorHandler(error);
         }
         
+        if(error.name == "TokenExpiredError"){
+            error = tokenExpiredErrorHandler();
+        }
+        
+        if(error.name == "JsonWebTokenError" && error.message == "invalid signature"){
+            error = malformedTokenErrorHandler();
+        }
+
         productionErrors(res,error)
     }
 })
@@ -37,6 +45,16 @@ const duplicateKeyErrorHandler = (error : any)=>{
     const email = error.keyValue.email;
     const message = `This ${keyName} ${email} already exist, please try another one!`
     return new AppError(message,400);
+}
+
+const tokenExpiredErrorHandler = ()=>{
+    const message = 'Your session has expired. Please log in again.'
+    return new AppError(message,401);
+}
+
+const malformedTokenErrorHandler = ()=>{
+    const message ="Invalid token. Please provide a valid token.";
+    return new AppError(message,401);
 }
 
 const productionErrors = (res : Response,error : any)=>{

@@ -320,7 +320,6 @@ export const validateUserChangeInformation = (req:Request,res:Response,next:Next
     },{abortEarly:false})
 
     if(error){
-        console.log(error)
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         req.validationError = errorMessage;
         return res.status(400).json({error:errorMessage});

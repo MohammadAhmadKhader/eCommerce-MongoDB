@@ -10,7 +10,7 @@ const router = express.Router()
 
 
 router.get("/",brandsRouter.getAllBrands)
-router.post("/:userId",authenticateAdmin, upload.single('brandLogo'),brandsRouter.createNewBrand)
+router.post("/",authenticateAdmin, upload.single('brandLogo'),brandsRouter.createNewBrand)
 
 
 export default router;

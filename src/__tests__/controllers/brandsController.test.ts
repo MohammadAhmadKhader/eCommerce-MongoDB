@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
-import { createUserTokenAndCache, expectErrorMessage, expectOperationalError } from "../utils/helperTestFunctions.test";
+import { createUserTokenAndCache, expectErrorMessage, expectId, expectOperationalError } from "../utils/helperTestFunctions.test";
 const app = createServer()
 
 describe("Brands",()=>{
@@ -29,10 +29,9 @@ describe("Brands",()=>{
             body.brands.forEach((brand : any)=>{
                 expect(typeof brand.imageUrl).toBe("string");
                 expect(typeof brand.name).toBe("string");
-                expect(typeof brand._id).toBe("string");
                 expect(brand.imageUrl.length).toBeGreaterThan(0);
                 expect(brand.name.length).toBeGreaterThan(0);
-                expect(brand._id.length).toBe(24); 
+                expectId(brand._id)
             })
         }) 
     })
@@ -40,7 +39,7 @@ describe("Brands",()=>{
     describe("Create new brand",()=>{
 
         it("Should return an error that images does not exist",async()=>{
-            const {body,statusCode} = await supertest(app).post(`/api/brands/${adminUserId}`)
+            const {body,statusCode} = await supertest(app).post(`/api/brands`)
             .set("Authorization",adminUserToken).send({
                 name:"Nike"
             });
@@ -50,7 +49,7 @@ describe("Brands",()=>{
         })
 
         it("Should return an error that brand already exist",async()=>{
-            const {body,statusCode} = await supertest(app).post(`/api/brands/${adminUserId}`)
+            const {body,statusCode} = await supertest(app).post(`/api/brands`)
             .set("Authorization",adminUserToken).field("brandName","Nike").attach("brandLogo",imagePath);
             expect(statusCode).toBe(500);
             expectErrorMessage(body);
@@ -59,7 +58,7 @@ describe("Brands",()=>{
 
         it("Should create a new brand with unique string name",async()=>{
             const uniqueString = uuid();
-            const {body,statusCode} = await supertest(app).post(`/api/brands/${adminUserId}`)
+            const {body,statusCode} = await supertest(app).post(`/api/brands`)
             .set("Authorization",adminUserToken).field("brandName",uniqueString).attach("brandLogo",imagePath);
             expect(statusCode).toBe(200);
             expect(body.message).toBe("success");

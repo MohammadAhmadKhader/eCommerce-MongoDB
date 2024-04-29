@@ -1,69 +1,82 @@
-import { Request,Response,NextFunction } from "express";
 import SessionToken from "../models/sessionToken";
 import User from "../models/user";
-import { ObjectId } from "mongodb";
 import jwt from "jsonwebtoken";
 import util from "util"
 import { IDecodedToken } from "../@types/types";
+import { asyncHandler } from "../utils/asyncHandler";
+import AppError from "../utils/AppError";
 
-export const authenticateUser = async (req:Request,res:Response,next:NextFunction)=>{
-    try{
-        const sessionId = req.headers.authorization;
-        if(!sessionId){
-            return res.status(401).json({error:"Unauthorized - Session id is not provided"});
-        }
-    
-        // getting error here for having the second parameter saying we must have only on parameter inside this function which is wrong
-        // not just wrong but also return an error and against the documentation and does not make sense.
-        //@ts-expect-error
-        const decodedToken : IDecodedToken = await util.promisify(jwt.verify)(sessionId,process.env.TOKEN_SECRET as string)
-    
-        const session = await SessionToken.findOne({
-            token:sessionId,userId:decodedToken.id ? decodedToken.id : ""
-        })
-    
-        const user = await User.findOne({_id:decodedToken.id})
-        if(!user || !session){
-            return res.sendStatus(401)
-        }
-        
-        if(await user.isPasswordHasChanged(decodedToken.iat)){
-            return res.status(401).json({error:"Unauthorized password has changed"})
-        }
-
-        req.user = user;
-        return next()
-    }catch(error){
-        console.error(error);
-        return res.sendStatus(500)
+export const authenticateUser = asyncHandler(async (req, res, next)=>{
+    const sessionId = req.headers.authorization;
+    if(!sessionId){
+        const error = new AppError("Unauthorized - Session id is not provided",401);
+        return next(error);
     }
-}
 
-export const authenticateAdmin = async (req:Request,res:Response,next:NextFunction)=>{
-    try{
-        const sessionId = req.headers.authorization;
-        
-        if(!sessionId){
-            return res.status(401).json({error:"Unauthorized - Session id is not provided"});
-        }
-        //@ts-expect-error
-        const decodedToken : IDecodedToken = await util.promisify(jwt.verify)(sessionId,process.env.TOKEN_SECRET as string)
-        const user = await User.findOne({_id:new ObjectId(decodedToken.id)});
-        
-        if(!user || user.role != "admin"){
-            return res.sendStatus(401)
-        }
-        const session = await SessionToken.findOne({
-            token:sessionId,userId:decodedToken.id ? decodedToken.id : ""
-        })
-        if(!session){
-            return res.sendStatus(401)
-        }
+    let error : any;
+    // getting error here for having the second parameter saying we must have only on parameter inside this function which is wrong
+    // not just wrong but also return an error and against the documentation and does not make sense.
+    //@ts-expect-error
+    const decodedToken : IDecodedToken = await util.promisify(jwt.verify)(sessionId,process.env.TOKEN_SECRET as string)
+    .catch((err)=>{
+        error = err
+    })
 
-        req.user = user;
-        return next()
-    }catch(error){
-        console.error(error);
-        return res.sendStatus(500)
+    if(error){
+        return next(error)
     }
-}
+
+    const session = await SessionToken.findOne({
+        token:sessionId,userId:decodedToken.id ? decodedToken.id : ""
+    })
+    
+    const user = await User.findOne({_id:decodedToken.id})
+    if(!user || !session){
+        const error = new AppError("Unauthorized",401);
+        return next(error);
+    }
+        
+    if(await user.isPasswordHasChanged(decodedToken.iat)){
+        const error = new AppError("Unauthorized password has changed",401);
+        return next(error);
+    }
+
+    req.user = user;
+    return next()
+})
+
+export const authenticateAdmin = asyncHandler( async (req, res, next)=>{
+    const sessionId = req.headers.authorization;
+        
+    if(!sessionId){
+        const error = new AppError("Unauthorized - Session id is not provided",401);
+        return next(error);
+    }
+    let error : any;
+    //@ts-expect-error
+    const decodedToken : IDecodedToken = await util.promisify(jwt.verify)(sessionId,process.env.TOKEN_SECRET as string).catch((err)=>{
+        error = err
+    });
+
+    if(error){
+        return next(error)
+    }
+
+    const user = await User.findOne({_id:decodedToken.id});
+    
+    if(!user || user.role != "admin"){
+        const error = new AppError("Unauthorized",401);
+        return next(error);
+    }
+
+    const session = await SessionToken.findOne({
+        token:sessionId,userId:decodedToken.id ? decodedToken.id : ""
+    })
+    if(!session){
+        const error = new AppError("Unauthorized",401);
+        return next(error);
+    }
+    
+    req.user = user;
+    return next()
+})

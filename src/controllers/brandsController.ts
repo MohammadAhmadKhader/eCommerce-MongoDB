@@ -1,4 +1,3 @@
-import {Request,Response} from "express"
 import Brand from "../models/brand"
 import CloudinaryUtils from "../utils/CloudinaryUtils"
 import { IMulterFile } from "../@types/types"

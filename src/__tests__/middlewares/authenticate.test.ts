@@ -5,6 +5,8 @@ import { authenticateAdmin, authenticateUser } from "../../middlewares/authentic
 import testData from "../assets/testData/testData.json"
 import dotenv from "dotenv";
 import { createResponseNext, createUserTokenAndCache } from "../utils/helperTestFunctions.test";
+import AppError from "../../utils/AppError";
+jest.mock("../../utils/AppError")
 
 dotenv.config();
 describe("Authentication Middlewares",()=>{
@@ -27,6 +29,7 @@ describe("Authentication Middlewares",()=>{
     afterAll(async()=>{
         await DatabaseTestHandler.disconnectFromDB(mongoose);
     })
+    
     describe("Authenticate Admin",()=>{
         
         it("Should authenticate admin pass the middle ware and set user inside request",async()=>{
@@ -37,16 +40,12 @@ describe("Authentication Middlewares",()=>{
                     authorization: userToken
                 }
             } as Request;
-            const test = await authenticateAdmin(req,res,next)
+            await authenticateAdmin(req,res,next)
             expect(typeof req.headers.authorization).toBe("string");
-            expect(test).toBe(next());
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).not.toHaveBeenCalled();
+            expect(AppError).not.toHaveBeenCalled();
             expect(req.user).toBeDefined()
         })
-
-        it("Should return an error with status 500 from sendStatus function when token is malformed",async()=>{
+        it("Should return error token is malformed and call the next function when its admin token",async()=>{
             const { next,res } = createResponseNext()
             const req = {
                 body: {},
@@ -54,14 +53,12 @@ describe("Authentication Middlewares",()=>{
                     authorization: userToken+"qwdqwdd"
                 }
             } as Request;
-            await authenticateAdmin(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).toHaveBeenCalledWith(500);
-            expect(req.user).not.toBeDefined()
+            await authenticateAdmin(req,res,next);
+            expect(next).toHaveBeenCalledTimes(1)
+            expect(req.user).toBeUndefined()
         })
 
-        it("Should return an error with status 500 from sendStatus function when token is expired",async()=>{
+        it("Should return an error and call the next function with it token is expired when its admin token",async()=>{
             const { next,res } = createResponseNext()
             const req = {
                 body: {},
@@ -69,15 +66,12 @@ describe("Authentication Middlewares",()=>{
                     authorization: expiredAdminToken
                 }
             } as Request;
-            await authenticateAdmin(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).toHaveBeenCalledWith(500);
+            authenticateAdmin(req,res,next)
+            expect(AppError).not.toHaveBeenCalled();
             expect(req.user).not.toBeDefined()
         })
 
-
-        it("Should return an error with status 401 with status function and send error message when token does not exist",async()=>{
+        it("Should return an error with status 401 and send error message 'Unauthorized - Session id is not provided' ",async()=>{
             const { next,res } = createResponseNext()
             const req = {
                 body: {},
@@ -85,10 +79,8 @@ describe("Authentication Middlewares",()=>{
                     
                 }
             } as Request;
-            await authenticateAdmin(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(401);
-            expect(res.json).toHaveBeenCalledWith({error:"Unauthorized - Session id is not provided"});
-            expect(res.sendStatus).not.toHaveBeenCalled();
+            authenticateAdmin(req,res,next)
+            expect(AppError).toHaveBeenCalledWith("Unauthorized - Session id is not provided", 401)
             expect(req.user).not.toBeDefined()
         })
 
@@ -100,11 +92,10 @@ describe("Authentication Middlewares",()=>{
                     authorization: notAdminToken
                 }
             } as Request;
-            await authenticateAdmin(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).toHaveBeenCalledWith(401);
-            expect(req.user).toBeUndefined()
+            
+            await authenticateAdmin(req,res,next);
+            expect(AppError).toHaveBeenCalledWith("Unauthorized", 401);
+            expect(req.user).toBeUndefined();
         })
 
         it("Should return an error with status 401 with sendStatus function when token is correct and does not exist in DB",async()=>{
@@ -116,9 +107,7 @@ describe("Authentication Middlewares",()=>{
                 }
             } as Request;
             await authenticateAdmin(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).toHaveBeenCalledWith(401);
+            expect(AppError).toHaveBeenCalledWith("Unauthorized", 401);
             expect(req.user).toBeUndefined()
         })
 
@@ -131,9 +120,8 @@ describe("Authentication Middlewares",()=>{
                 }
             } as Request;
             await authenticateAdmin(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).toHaveBeenCalledWith(401);
+
+            expect(AppError).toHaveBeenCalledWith("Unauthorized", 401);
             expect(req.user).toBeUndefined()
         })
     })
@@ -148,17 +136,13 @@ describe("Authentication Middlewares",()=>{
                     
                 }
             } as Request;
-           
             await authenticateUser(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(401);
-            expect(res.json).toHaveBeenCalledWith({error:"Unauthorized - Session id is not provided"});
-            expect(res.sendStatus).not.toHaveBeenCalled();
+            expect(AppError).toHaveBeenCalledWith("Unauthorized - Session id is not provided", 401);
             expect(req.user).toBeUndefined()
         })
 
 
-
-        it("Should return error with status code 500 using sendStatus when token is expired",async()=>{
+        it("Should return error token expired error and call the next function when its not admin token token",async()=>{
             const { next,res } = createResponseNext()
             const req = {
                 body:{},
@@ -167,14 +151,12 @@ describe("Authentication Middlewares",()=>{
                 }
             } as Request;
            
-            await authenticateUser(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).toHaveBeenCalledWith(500);
+            await authenticateUser(req,res,next);
+            expect(next).toHaveBeenCalledTimes(1)
             expect(req.user).toBeUndefined()
         })
-
-        it("Should return error with status code 500 using sendStatus when token is malformed",async()=>{
+        
+        it("Should return error token is malformed and call the next function when token is not admin token token",async()=>{
             const { next,res } = createResponseNext()
             const req = {
                 body:{},
@@ -184,13 +166,11 @@ describe("Authentication Middlewares",()=>{
             } as Request;
            
             await authenticateUser(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).toHaveBeenCalledWith(500);
+            expect(next).toHaveBeenCalledTimes(1)
             expect(req.user).toBeUndefined()
         })
 
-        it("Should pass successfully when token is for normal user and return user in request and not call json or status or sendStatus functions",async()=>{
+        it("Should pass successfully when token is for normal user and return user in request and not call AppError",async()=>{
             const { next,res } = createResponseNext()
             const req = {
                 body:{},
@@ -200,13 +180,11 @@ describe("Authentication Middlewares",()=>{
             } as Request;
            
             await authenticateUser(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).not.toHaveBeenCalled();
+            expect(AppError).not.toHaveBeenCalled();
             expect(req.user).toBeDefined()
         })
 
-        it("Should pass successfully when token is for an admin and return user in request and not call json or status or sendStatus functions",async()=>{
+        it("Should pass successfully when token is for an admin and return user in request and not call AppError",async()=>{
             const { next,res } = createResponseNext()
             const req = {
                 body:{},
@@ -216,11 +194,8 @@ describe("Authentication Middlewares",()=>{
             } as Request;
            
             await authenticateUser(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
-            expect(res.sendStatus).not.toHaveBeenCalled();
+            expect(AppError).not.toHaveBeenCalled();
             expect(req.user).toBeDefined()
         })
-
     })
 })

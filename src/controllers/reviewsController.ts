@@ -5,7 +5,6 @@ import AppError from "../utils/AppError";
 export const getAllReviewsByUserId = asyncHandler(async (req, res ) =>{
     const {skip,page,limit} = req.pagination;
     const userId = req.user._id;
-    // const userId = req.params.userId;
     const match = { 'reviews.userId' :userId }
 
     const reviews = await Product.aggregate([
@@ -33,7 +32,6 @@ export const getAllReviewsByUserId = asyncHandler(async (req, res ) =>{
 export const addReviewToProduct = asyncHandler(async (req, res, next)=>{
     const {comment, rating} = req.body
     const userId = req.user._id;
-    // const userId = req.body.userId as string;
     const productId = req.body.productId;
 
     const oldReviews = await Product.findOne(
@@ -87,7 +85,7 @@ export const editReview = asyncHandler(async (req, res, next)=>{
 })
 
 export const deleteReview = asyncHandler(async(req, res, next)=>{
-    const reviewId = req.body.reviewId as string;
+    const reviewId = req.body.reviewId as string; // => to url
     const productId = req.body.productId as string;
        
     const removeReviewFromProduct = await Product.updateOne(

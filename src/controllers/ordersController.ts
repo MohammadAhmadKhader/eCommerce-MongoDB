@@ -15,7 +15,7 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
     const userId = req.user._id;
     const status = req.query.status;
         
-    const match = {status:status,userId:userId};
+    const match = {userId:userId,status:status};
     const orders = await Order.find(match).sort({createdAt:-1}).skip(skip).limit(limit)
     const count = await Order.find(match).countDocuments()
         
@@ -34,7 +34,6 @@ export const getSingleOrderById =asyncHandler( async(req ,res ,next)=>{
 })
 
 export const createOrder = asyncHandler(async (req ,res ,next)=>{
-    // const userId = req.body.userId;
     const arrayOfProductsIds : any = [];
     const user = req.user as IUser;
     const userId = user._id;
@@ -107,13 +106,13 @@ export const createOrder = asyncHandler(async (req ,res ,next)=>{
 })
 
 export const deleteOrder = asyncHandler(async (req, res, next) => {
-    //const userId = req.body.userId as string
     const userId = req.user._id;
-    const orderId = req.body.orderId as string
+    const orderId = req.body.orderId; // => to url
         
     const order = await Order.findOneAndUpdate({
-        userId:userId,
-        _id:orderId},
+        _id:orderId,
+        userId:userId
+    },
     {
         $set: {  status: "Cancelled",updatedDate: new Date().toUTCString()},
     },{new:true});
