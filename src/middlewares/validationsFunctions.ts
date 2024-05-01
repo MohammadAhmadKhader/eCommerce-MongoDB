@@ -7,6 +7,7 @@ import { addToCartSchema, addToWishlistSchema, changeCartItemQuantityByOneSchema
      appendImagesToProductSchema,
      userChangeInformationSchema,
      createBrandSchema,} from "./validationsSchemas";
+import Joi from "joi";
 
 export const validateUserRegistration = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = userRegistrationSchema.validate({
@@ -164,7 +165,7 @@ export const validateChangeCartItemQuantityByOne = (req:Request,res:Response,nex
         productId:req.body.productId,
         operation:req.body.operation,
     },{abortEarly:false})
-
+    
     if(error){
         const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
         return res.status(400).json({error:errorMessage});
