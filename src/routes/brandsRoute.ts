@@ -1,6 +1,8 @@
 import * as brandsRouter from "../controllers/brandsController"
 import express from "express";
 import { authenticateAdmin } from "../middlewares/authenticate";
+import {getServerCache}from "../middlewares/serverCache"
+import { validateCreateBrand } from "../middlewares/validationsFunctions";
 import multer from "multer"
 const storage = multer.memoryStorage()
 const upload = multer({
@@ -9,8 +11,8 @@ const upload = multer({
 const router = express.Router()
 
 
-router.get("/",brandsRouter.getAllBrands)
-router.post("/",authenticateAdmin, upload.single('brandLogo'),brandsRouter.createNewBrand)
+router.get("/",getServerCache("brands"),brandsRouter.getAllBrands)
+router.post("/",authenticateAdmin, upload.single('brandLogo'),validateCreateBrand,brandsRouter.createNewBrand)
 
 
 export default router;

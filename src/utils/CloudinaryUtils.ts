@@ -77,12 +77,24 @@ async function DeleteMany(ImagesArray : string[],Folder:string){
     return deleteAnImage
 }
 
+async function UploadOneFilePath(imagePath : string,Folder : string,width=1400,height=1400){
+    const { secure_url } = await Cloudinary.uploader.upload(imagePath,{
+        use_filename: true,
+        resource_type: "image",
+        folder: Folder,
+        transformation: [{ width: width, height: height, crop: "fit" }],
+    })
+    
+    return secure_url;
+}
+
 const CloudinaryUtils = {
     UploadOne,
     DeleteOne,
     UploadOneFromBase64,
     UploadManySubImagesAndThumbnails,
-    DeleteMany
+    DeleteMany,
+    UploadOneFilePath
 }
 
 export default CloudinaryUtils;

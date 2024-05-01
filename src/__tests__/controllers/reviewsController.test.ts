@@ -108,21 +108,21 @@ describe("Reviews",()=>{
         const reviewId = "6627bfcd5f0434b2e66c33ba";
         const reviewIdDoestNotExist = "6627bfcd5f0434b2e66c33b1";
         it("Should edit review and return message is success and status code 201",async()=>{
-            const {body,statusCode} = await supertest(app).put("/api/reviews").send({
+            const {body,statusCode} = await supertest(app).put(`/api/reviews/${reviewId}`).send({
                 comment:faker.word.words({count:{min:1,max:3}}),
                 rating:faker.number.int({min:1,max:5}),
-                reviewId:reviewId
-            }).set("Authorization",userTokenToEditReview)
+            }).set("Authorization",userTokenToEditReview);
+            
             expect(statusCode).toBe(201);
             expect(body).toStrictEqual({message:"success"});
         })
 
         it("Should return error with status code 400 that reviews does not exist",async()=>{
-            const {body,statusCode} = await supertest(app).put("/api/reviews").send({
+            const {body,statusCode} = await supertest(app).put(`/api/reviews/${reviewIdDoestNotExist}`).send({
                 comment:faker.word.words({count:{min:1,max:3}}),
                 rating:faker.number.int({min:1,max:5}),
-                reviewId:reviewIdDoestNotExist
             }).set("Authorization",userTokenToEditReview)
+            
             expect(statusCode).toBe(400);
             expect(body.message).toEqual("The requested review does not exist");
             expectErrorMessage(body);
@@ -141,21 +141,17 @@ describe("Reviews",()=>{
         })
 
         it("Should remove comment and return status code 204",async()=>{
-            const {statusCode} = await supertest(app).delete("/api/reviews").set("Authorization",userTokenToRemoveReview).send({
-                productId:productIdForRemovingReview,
-                reviewId:reviewId,
-            })
+            const {statusCode} = await supertest(app).delete(`/api/reviews/${productIdForRemovingReview}/${reviewId}`)
+            .set("Authorization",userTokenToRemoveReview);
             
             expect(statusCode).toBe(204);
         })
 
         it("Should remove comment and return status code 204",async()=>{
             const reviewIdDoestNotExist = "6627bfcd5f0434b2e66c33b1";
-            const {body,statusCode} = await supertest(app).delete("/api/reviews").set("Authorization",userTokenToRemoveReview).send({
-                productId:productIdForRemovingReview,
-                reviewId:reviewIdDoestNotExist,
-            })
-            
+            const {body,statusCode} = await supertest(app).delete(`/api/reviews/${productIdForRemovingReview}/${reviewIdDoestNotExist}`)
+            .set("Authorization",userTokenToRemoveReview);
+                
             expect(statusCode).toBe(400);
             expect(body.message).toBe("The requested review or product does not exist");
             expectErrorMessage(body);

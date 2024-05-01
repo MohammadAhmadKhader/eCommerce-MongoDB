@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.get("/:userId",authenticateUser,cartsRouter.getAllCartItems)
 router.post("/",validateAddingToCart,authenticateUser,cartsRouter.addToCart);
-router.put("/changeQtyByOne",validateChangeCartItemQuantityByOne,authenticateUser,cartsRouter.changeCartItemQuantityByOne)
+router.put("/changeQtyByOne/:cartItemId",validateChangeCartItemQuantityByOne,authenticateUser,cartsRouter.changeCartItemQuantityByOne)
 router.delete("/clearCart",authenticateUser,cartsRouter.clearCart)
-router.delete("/deleteCartItem",validateDeletingFromCart,authenticateUser,cartsRouter.deleteFromCart)
+router.delete("/:cartItemId",validateDeletingFromCart,authenticateUser,cartsRouter.deleteFromCart)
 
 export default router

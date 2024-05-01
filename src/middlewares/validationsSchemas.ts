@@ -165,3 +165,8 @@ export const userChangeInformationSchema = Joi.object({
         Joi.date().max(new Date(Date.now() - 157680000000 /**before 5 years */)).min(new Date(Date.now() - 2522880000000/**before 80 years */)).allow("")
     ).optional(),
 }).custom(atLeastOneFieldRequired,"atLeastOneFieldRequired")
+
+export const createBrandSchema = Joi.object({
+    brandName:Joi.string().min(1).max(32).required(),
+})
+

@@ -8,7 +8,7 @@ const router = express.Router()
 
 router.get("/:userId",authenticateUser,pagination,reviewsRouter.getAllReviewsByUserId)
 router.post("/",validateUserReview,authenticateUser,reviewsRouter.addReviewToProduct)
-router.put("/",validateEditUserReview,authenticateUser,reviewsRouter.editReview);
-router.delete("/",validateDeleteUserReview,authenticateUser,reviewsRouter.deleteReview)
+router.put("/:reviewId",validateEditUserReview,authenticateUser,reviewsRouter.editReview);
+router.delete("/:productId/:reviewId",validateDeleteUserReview,authenticateUser,reviewsRouter.deleteReview)
 
 export default router;

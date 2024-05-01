@@ -18,7 +18,6 @@ import { IResetPassCode } from '../../@types/types';
 const app = createServer()
 
 describe("Users",()=>{
-    const testDataFilePath = "./src/__tests__/assets/testData/testData.json";
     const imagePath = "./src/__tests__/assets/images/testImage.jpg"
     const adminUserId = testData.adminUserId;
     let adminUserToken: string;
@@ -33,10 +32,13 @@ describe("Users",()=>{
     })
 
     describe("User sign up controller",()=>{
+        const randomNum = faker.number.int({min:1,max:5000})
+        const firstName = `James${randomNum}`;
+        const lastName = `NotJames${randomNum}`;
         it("Should create a user and return success message with token",async()=>{
             const user = {
-                firstName:faker.person.firstName().substring(0, 32),
-                lastName:faker.person.lastName().substring(0, 32),
+                firstName:firstName,
+                lastName:lastName,
                 email:faker.internet.email({firstName:faker.person.firstName(),lastName:`${faker.person.lastName()}_${faker.number.int({min:1,max:5000})}`}),
                 password:process.env.USER_TEST_PASSWORD,
             };
@@ -52,12 +54,13 @@ describe("Users",()=>{
 
         it("Should return an error with status code 500 with error that email already exist",async()=>{
             const user = {
-                firstName:faker.person.firstName().substring(0, 32),
-                lastName:faker.person.lastName().substring(0, 32),
+                firstName:firstName,
+                lastName:lastName,
                 email:"Alvis93@yahoo.com",
-                password:faker.internet.password(),
+                password:faker.internet.password().substring(0,23),
             };
             const {body,statusCode} = await supertest(app).post("/api/users/signup").send(user);
+            
             expect(statusCode).toBe(500);
             expectErrorMessage(body);
             expect(body.user).toBeUndefined();
@@ -137,9 +140,12 @@ describe("Users",()=>{
     // Should be refactored to make a complete isolation
     describe("User changepassword controller",()=>{
         const userIdToChangePassword = testData.userIdToChangePassword;
+        const userIdWithWrongPassword = testData.userIdWithWrongPassword;
         let newPasswordUserToken : string;
+        let newWrongPasswordUserToken :string
         beforeAll(async()=>{
-           newPasswordUserToken = await createUserTokenAndCache(userIdToChangePassword) as string;
+           newPasswordUserToken = await createUserTokenAndCache(userIdToChangePassword);
+           newWrongPasswordUserToken = await createUserTokenAndCache(userIdWithWrongPassword);
         })
         const password = "newPassword#1";
         it("Should change password successfully and return message is success with token and status code 200",async()=>{
@@ -174,7 +180,7 @@ describe("Users",()=>{
                     oldPassword:wrongPassword,
                     newPassword:password,
                     confirmNewPassword:password,
-                }).set("Authorization",newPasswordUserToken)
+                }).set("Authorization",newWrongPasswordUserToken)
                 
                 expect(statusCode).toBe(401);
                 expect(body.message).toEqual("Invalid password");
@@ -249,25 +255,36 @@ describe("Users",()=>{
             const mobileNumber = "0592718312812";
             const birthdate = faker.date.birthdate();
 
-            const {body,statusCode} = await supertest(app)
-            .put(`/api/users/${userIdToUpdateWithImg}?firstName=${userFirstName}&lastName=${userLastName}&email=${userEmail}&mobileNumber=${mobileNumber}&birthdate=${birthdate.toJSON()}`)
+            const {body,statusCode} = await supertest(app).put(`/api/users/userInformation`)
+            .field("firstName",userFirstName)
+            .field("lastName",userLastName)
+            .field("email",userEmail)
+            .field("mobileNumber",mobileNumber)
+            .field("birthdate",birthdate.toJSON())
             .set("authorization",userTokenToUpdateWithoutImg);
+
+
             expect(statusCode).toBe(200);
             expect(body.message).toBe("success");
             expectUser(body.user);
         })
 
         it("Should return success message and status code 200 and user after update with updating image",async()=>{
-            const testUploadingImage = jest.spyOn(CloudinaryUtils,"UploadOne");
+            const testUploadingImage = jest.spyOn(CloudinaryUtils,"UploadOne"); 
             try{
                 const userEmail = faker.internet.email();
                 const mobileNumber = "0592718312812";
                 const birthdate = faker.date.birthdate({min:2000,max:2018});
 
                 const {body,statusCode} = await supertest(app)
-                .put(`/api/users/${userIdToUpdateWithImg}?firstName=${userFirstName}&lastName=${userLastName}&email=${userEmail}&mobileNumber=${mobileNumber}&birthdate=${birthdate.toJSON()}`)
-                .attach("userImg",imagePath)
-                .set("authorization",userTokenToUpdateWithImg);
+                .put(`/api/users/userInformation`)
+                .set("authorization",userTokenToUpdateWithImg)
+                .field("email",userEmail)
+                .field("mobileNumber",mobileNumber)
+                .field("birthdate",birthdate.toJSON())
+                .field("firstName",userFirstName)
+                .field("lastName",userLastName)
+                .attach("userImg",imagePath);
                 
                 expect(statusCode).toBe(200);
                 expect(body.message).toBe("success");
@@ -282,7 +299,8 @@ describe("Users",()=>{
         })
 
         it("Should return an error with 400 status code when a normal user try to update once in same week",async()=>{
-            const {body,statusCode} = await supertest(app).put(`/api/users/${userIdToUpdateWithImg}?firstName=${userFirstName}&lastName=${userLastName}`)
+            const {body,statusCode} = await supertest(app).put(`/api/users/userInformation`)
+            .field("firstName",userFirstName).field("lastName",userLastName)
             .set("authorization",userTokenToUpdateBeforeOneWeekIsFinished);
             expect(statusCode).toBe(400)
             expect(body.message).toEqual("Normal User only allowed to change his information once per week")

@@ -18,7 +18,7 @@ router.post("/signup",validateUserRegistration,usersRouter.signUp);
 router.post("/signin",validateUserSignIn,usersRouter.signIn)
 router.delete("/logout",authenticateUser,usersRouter.logout)
 router.put("/changepassword",validateUserChangePassword,authenticateUser,usersRouter.changePassword)
-router.put("/:userId",validateUserChangeInformation,authenticateUser,authorizeUserInfoUpdate,upload.single("userImg"),usersRouter.changeUserInformation)
+router.put("/userInformation",authenticateUser,authorizeUserInfoUpdate,upload.single("userImg"),validateUserChangeInformation,usersRouter.changeUserInformation)
 router.patch("/resetPassword/:token",validateResetPasswordViaCode,usersRouter.resetPasswordViaCode)
 router.post("/forgotPassword",validateForgotPassword,usersRouter.forgotPassword)
 export default router;

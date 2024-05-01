@@ -5,7 +5,7 @@ import { validateCreatingAddress, validateUpdatingAddress } from "../middlewares
 const router = express.Router()
 
 router.post("/",validateCreatingAddress,authenticateUser,addressesRouter.createNewAddress)
-router.put("/",validateUpdatingAddress,authenticateUser,addressesRouter.editAddress)
-router.delete("/",authenticateUser,addressesRouter.deleteAddress)
+router.put("/:addressId",validateUpdatingAddress,authenticateUser,addressesRouter.editAddress)
+router.delete("/:addressId",authenticateUser,addressesRouter.deleteAddress)
 
 export default router;

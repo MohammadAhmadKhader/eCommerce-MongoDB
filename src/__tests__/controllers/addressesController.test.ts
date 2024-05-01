@@ -30,9 +30,9 @@ describe("Addresses",()=>{
             const newAddress = {
                 pinCode:faker.location.zipCode(),
                 state:"Palestine",
-                fullName:faker.person.fullName(),
+                fullName:faker.person.fullName().substring(0,31),
                 mobileNumber:"059826138182",
-                streetAddress:faker.location.streetAddress(),
+                streetAddress:faker.location.streetAddress().substring(0,61),
                 city:faker.location.city()
             }
             const {body,statusCode} = await supertest(app).post(`/api/addresses`).send({...newAddress,userId}).set("Authorization",adminUserToken);
@@ -50,12 +50,12 @@ describe("Addresses",()=>{
             const newAddress = {
                 pinCode:faker.location.zipCode(),
                 state:"Palestine",
-                fullName:faker.person.fullName(),
+                fullName:faker.person.fullName().substring(0,31),
                 mobileNumber:"059826138182",
-                streetAddress:faker.location.streetAddress(),
+                streetAddress:faker.location.streetAddress().substring(0,61),
                 city:faker.location.city()
             }
-            const {body,statusCode} = await supertest(app).put(`/api/addresses`).send({...newAddress,userId,addressId:addressIdForUpdate}).set("Authorization",adminUserToken);
+            const {body,statusCode} = await supertest(app).put(`/api/addresses/${addressIdForUpdate}`).send({...newAddress,userId}).set("Authorization",adminUserToken);
             expect(statusCode).toBe(200)
             expect(body.message).toBe("success");
             const updatedAddress = body.user.addresses.filter((address : any)=>address._id == addressIdForUpdate);
@@ -73,12 +73,12 @@ describe("Addresses",()=>{
             const newAddress = {
                 pinCode:faker.location.zipCode(),
                 state:"Palestine",
-                fullName:faker.person.fullName(),
+                fullName:faker.person.fullName().substring(0,31),
                 mobileNumber:"059826138182",
-                streetAddress:faker.location.streetAddress(),
+                streetAddress:faker.location.streetAddress().substring(0,61),
                 city:faker.location.city()
             }
-            const {body,statusCode} = await supertest(app).put(`/api/addresses`).send({...newAddress,userId,addressId:addressIdNotExisting}).set("Authorization",adminUserToken);
+            const {body,statusCode} = await supertest(app).put(`/api/addresses/${addressIdNotExisting}`).send({...newAddress,userId}).set("Authorization",adminUserToken);
             expect(statusCode).toBe(400)
             expect(body.message).toBe("Address was not found.");
             expectErrorMessage(body);
@@ -99,7 +99,7 @@ describe("Addresses",()=>{
             addressIdForDelete = await createAddressAndReturnId(adminUserId,newAddressToDelete) as string;
         })
         it("Should return an error with status 400 that address was not found",async()=>{
-            const {body,statusCode} = await supertest(app).delete(`/api/addresses`).send({userId,addressId:randomAddressId})
+            const {body,statusCode} = await supertest(app).delete(`/api/addresses/${randomAddressId}`).send({userId})
             .set("Authorization",adminUserToken);
             expect(statusCode).toBe(400)
             expect(body.user).toBeUndefined()
@@ -109,7 +109,7 @@ describe("Addresses",()=>{
         })
 
         it("Should delete an address",async()=>{
-            const {body,statusCode} = await supertest(app).delete(`/api/addresses`).send({userId,addressId:addressIdForDelete})
+            const {body,statusCode} = await supertest(app).delete(`/api/addresses/${addressIdForDelete}`).send({userId})
             .set("Authorization",adminUserToken);
             expect(statusCode).toBe(202)
             expect(body.message).toBe("success");

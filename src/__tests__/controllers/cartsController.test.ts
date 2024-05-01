@@ -115,9 +115,8 @@ describe("Carts",()=>{
                 cartItemId = cartItem?._id;
             })
             it("Should delete cart Item and return status code 204 with message to success and user after deletion of cart item",async()=>{
-                const {body,statusCode} = await supertest(app).delete(`/api/carts/deleteCartItem`).send({
-                    cartItemId:cartItemId,
-                }).set("Authorization",userTokenForTestUserForDeleteFromCart);
+                const {body,statusCode} = await supertest(app).delete(`/api/carts/${cartItemId}`)
+                .set("Authorization",userTokenForTestUserForDeleteFromCart);
 
                 expect(statusCode).toBe(204);
             })
@@ -125,9 +124,8 @@ describe("Carts",()=>{
 
         it("Should return an error that cart item does not exist",async()=>{
             const cartItemIdThatDoesNotExist = "62ae4891082b2a0698d5cef1"
-            const {body,statusCode} = await supertest(app).delete(`/api/carts/deleteCartItem`).send({
-                cartItemId:cartItemIdThatDoesNotExist,
-            }).set("Authorization",userTokenForTestUserForDeleteFromCart);
+            const {body,statusCode} = await supertest(app).delete(`/api/carts/${cartItemIdThatDoesNotExist}`)
+            .set("Authorization",userTokenForTestUserForDeleteFromCart);
             expect(statusCode).toBe(400);
             expectErrorMessage(body);
             expectOperationalError(body);
@@ -151,8 +149,7 @@ describe("Carts",()=>{
         it("Should increase cart Item by 1 when operation set to +1",async()=>{
             const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");
             try{
-                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
-                    cartItemId:cartItemId_1,
+                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne/${cartItemId_1}`).send({
                     productId:productId_1,
                     operation:"+1",
                 }).set("Authorization",testUserChangeCartItemsQuantityToken);
@@ -184,8 +181,7 @@ describe("Carts",()=>{
         it("Should decrease cart Item by 1 when operation is set to -1",async()=>{
             const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");
             try{
-                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
-                    cartItemId:cartItemId_2,
+                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne/${cartItemId_2}`).send({
                     productId:productId_2,
                     operation:"-1",
                 }).set("Authorization",testUserChangeCartItemsQuantityToken);
@@ -217,8 +213,7 @@ describe("Carts",()=>{
         it("Should return an error that quantity cant be less than 1 with status code 400",async()=>{
             const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");
             try{
-                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
-                    cartItemId:cartItemId_3,
+                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne/${cartItemId_3}`).send({
                     productId:productIdWithQuantity0,
                     operation:"-1",
                 }).set("Authorization",testUserChangeCartItemsQuantityToken);
@@ -239,8 +234,7 @@ describe("Carts",()=>{
         it("Should return an error that Product was not found with status code 400",async()=>{
             const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");
             try{
-                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
-                    cartItemId:cartItemId_3,
+                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne/${cartItemId_3}`).send({
                     productId:productIdNotExisting,
                     operation:"-1",
                 }).set("Authorization",testUserChangeCartItemsQuantityToken);
@@ -261,8 +255,7 @@ describe("Carts",()=>{
         it("Should return an error that Product was not found with status code 400",async()=>{
             const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");
             try{
-                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne`).send({
-                    cartItemId:cartItemIdNotExisting,
+                const {body,statusCode} = await supertest(app).put(`/api/carts/changeQtyByOne/${cartItemIdNotExisting}`).send({
                     productId:productIdWithQuantity0,
                     operation:"+1",
                 }).set("Authorization",testUserChangeCartItemsQuantityToken);

@@ -39,13 +39,13 @@ export const addToCart = asyncHandler(async (req ,res ,next)=>{
 })
 
 export const deleteFromCart = asyncHandler( async (req ,res,next)=>{ 
-    const cartItemId = req.body.cartItemId; // => to url
+    const cartItemId = req.params.cartItemId; // => to url
     const userId = req.user._id;
     const userBeforeCartChanged = req.user;
 
     let isItemInCart = false;
     userBeforeCartChanged.cart.forEach((cartItem)=>{
-        if(cartItem._id == cartItemId){
+        if(cartItem._id as unknown as string == cartItemId){
             isItemInCart = true
         }
     });
@@ -65,7 +65,7 @@ export const deleteFromCart = asyncHandler( async (req ,res,next)=>{
 
 export const changeCartItemQuantityByOne = asyncHandler(async (req ,res ,next)=>{
     const productId = req.body.productId as string;
-    const cartItemId = req.body.cartItemId as string;
+    const cartItemId = req.params.cartItemId as string;
     const user= req.user;
     const operation = req.body.operation;
     let amount = 1;
