@@ -29,7 +29,7 @@ describe("Orders",()=>{
     describe("Get all Orders by status and userId",()=>{
         it("Should get all user orders with status Completed",async()=>{
             const status = "Completed";
-            const {body,statusCode} = await supertest(app).get(`/api/orders/${userId}?status=${status}`).set("Authorization",userToken);
+            const {body,statusCode} = await supertest(app).get(`/api/orders?status=${status}`).set("Authorization",userToken);
             expect(statusCode).toBe(200);
             expect(body.orders.length).toBeGreaterThan(0)
             body.orders.forEach((order : any)=>{
@@ -39,7 +39,7 @@ describe("Orders",()=>{
 
         it("Should get all user orders with status Placed",async()=>{
             const status = "Placed";
-            const {body,statusCode} = await supertest(app).get(`/api/orders/${userId}?status=${status}`).set("Authorization",userToken);
+            const {body,statusCode} = await supertest(app).get(`/api/orders?status=${status}`).set("Authorization",userToken);
             expect(statusCode).toBe(200);
             expect(body.orders.length).toBeGreaterThan(0);
             body.orders.forEach((order : any)=>{
@@ -49,7 +49,7 @@ describe("Orders",()=>{
 
         it("Should get all user orders with status Processing",async()=>{
             const status = "Processing";
-            const {body,statusCode} = await supertest(app).get(`/api/orders/${userId}?status=${status}`).set("Authorization",userToken);
+            const {body,statusCode} = await supertest(app).get(`/api/orders?status=${status}`).set("Authorization",userToken);
             expect(statusCode).toBe(200);
             expect(body.orders.length).toBeGreaterThan(0);
             body.orders.forEach((order : any)=>{
@@ -59,7 +59,7 @@ describe("Orders",()=>{
 
         it("Should get all user orders with status Cancelled",async()=>{
             const status = "Cancelled";
-            const {body,statusCode} = await supertest(app).get(`/api/orders/${userId}?status=${status}`).set("Authorization",userToken);
+            const {body,statusCode} = await supertest(app).get(`/api/orders?status=${status}`).set("Authorization",userToken);
             expect(statusCode).toBe(200);
             expect(body.orders.length).toBeGreaterThanOrEqual(0);
             body.orders.forEach((order : any)=>{
@@ -95,10 +95,10 @@ describe("Orders",()=>{
         })
         describe("Creating cart items then creating order from them",()=>{
             const productIdWithQuantity120 = "65ecdc4b50cbedf3920a2ba6";
-            it("Should throw error with because cartItem has more quantity than the product itself and error with status code 500",async()=>{
+            it("Should throw error with because cartItem has more quantity than the product itself and error with status code 400",async()=>{
                 const {body,statusCode} = await supertest(app).post("/api/orders").set("Authorization",userTokenDeleteWithWrongQtyCartItem);
+                
                 expect(statusCode).toBe(400);
-
                 expect(body.message).toEqual("An unexpected error has occurred");
                 expectErrorMessage(body);
                 expectOperationalError(body);
@@ -107,6 +107,7 @@ describe("Orders",()=>{
 
             it("Should create order and return message is success and status code 201 with the created order",async()=>{
                 const {body,statusCode} = await supertest(app).post("/api/orders").set("Authorization",userTokenCreateOrder);
+                
                 expect(statusCode).toBe(201);
                 expect(body.message).toBe("success");
                 expectOrder(body.order);
@@ -133,7 +134,7 @@ describe("Orders",()=>{
             
             it("Should return an error with status code 400 that issue occurred during processing the order when the product quantity in order is more than available",async()=>{
                 const {body,statusCode} = await supertest(app).post(`/api/orders`).set("Authorization",userTokenToCreateOrderWithUnavailableQty);
-
+                
                 expect(statusCode).toBe(400);
                 expect(body.message).toBe("An unexpected error has occurred");
                 expectErrorMessage(body);
@@ -152,18 +153,14 @@ describe("Orders",()=>{
         const orderPreviousState = "Placed";
 
         it("Should delete an order and return status code 204",async()=>{
-            const {statusCode} = await supertest(app).delete(`/api/orders`).send({
-                orderId:orderId
-            })
+            const {statusCode} = await supertest(app).delete(`/api/orders/${orderId}`)
             .set("Authorization",userTokenDeleteOrder);
             expect(statusCode).toBe(204);
         })
 
         it("Should return an error with status code 400 that order does not exist",async()=>{
             const orderIdNotExisting = "662873a7b343f16adec3c901";
-            const {body,statusCode} = await supertest(app).delete(`/api/orders`).send({
-                orderId:orderIdNotExisting
-            })
+            const {body,statusCode} = await supertest(app).delete(`/api/orders/${orderIdNotExisting}`)
             .set("Authorization",userTokenDeleteOrder);
             expect(statusCode).toBe(400);
             expect(body.message).toBe("The requested order was not found");
@@ -237,7 +234,7 @@ describe("Orders",()=>{
                 address:address
             })
             .set("Authorization",userTokenOrderCheckingOut);
-
+            
             expect(statusCode).toBe(200);
             expectOrder(body.order,"Completed");
             expectInvoice(body.invoice);

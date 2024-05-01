@@ -2,11 +2,13 @@ import Brand from "../models/brand"
 import CloudinaryUtils from "../utils/CloudinaryUtils"
 import { IMulterFile } from "../@types/types"
 import { asyncHandler } from "../utils/asyncHandler"
+import {setServerCache,deleteServerCacheKey} from "../utils/ServerCache";
 import AppError from "../utils/AppError"
 
 export const getAllBrands = asyncHandler( async (req, res, next) =>{
-    
-    const brands = await Brand.find()
+    const brands = await Brand.find();
+    setServerCache("brands",brands)
+
     return res.status(200).json({brands})
 })
 
@@ -27,6 +29,7 @@ export const createNewBrand = asyncHandler(async (req, res, next)=>{
         name:brandName,
         imageUrl:ImageUrl
     })
-
+    deleteServerCacheKey("brands");
+    
     return res.status(200).json({message:"success",brand})
 })

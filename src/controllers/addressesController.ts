@@ -23,7 +23,8 @@ export const createNewAddress = asyncHandler( async (req ,res ,next)=>{
 })
 
 export const editAddress = asyncHandler( async (req, res, next)=>{
-    const {fullName,mobileNumber,pinCode,streetAddress,city,state,addressId} = req.body // addressId => to url 
+    const {addressId} = req.params;
+    const {fullName,mobileNumber,pinCode,streetAddress,city,state} = req.body;
     const user = req.user;
 
     const addressIndex = user.addresses.findIndex((address: any) => address._id == addressId);
@@ -55,7 +56,7 @@ export const editAddress = asyncHandler( async (req, res, next)=>{
 })
 
 export const deleteAddress = asyncHandler( async (req, res, next)=>{
-    const {addressId} = req.body; // => to url
+    const {addressId} = req.params;
     const user = req.user;
     const addressIndex = user.addresses.findIndex((address: any) => address._id == addressId);
         

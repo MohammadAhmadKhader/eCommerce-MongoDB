@@ -6,7 +6,7 @@ const router = express.Router()
 
 router.get("/:userId",authenticateUser,wishListsRouter.getWishList)
 router.post("/",validateAddToWishList,authenticateUser,wishListsRouter.addToWishList)
-router.delete("/",validateRemoveFromWishlist,authenticateUser,wishListsRouter.removeFromWishList)
+router.delete("/:wishlistItemId",validateRemoveFromWishlist,authenticateUser,wishListsRouter.removeFromWishList)
 
 
 export default router

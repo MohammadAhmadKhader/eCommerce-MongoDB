@@ -43,7 +43,7 @@ export const addToWishList = asyncHandler(async (req, res, next)=>{
 })
 
 export const removeFromWishList = asyncHandler(async (req ,res, next)=>{
-    const wishlistItemId = req.body.wishlistItemId as string;
+    const wishlistItemId = req.params.wishlistItemId as string;
     const user = req.user;
 
     const isAddressNotExisting = user.wishList.findIndex(wishlistItem => wishlistItem._id.toString() == wishlistItemId);

@@ -6,6 +6,8 @@ import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
 import { createUserTokenAndCache, expectErrorMessage, expectId, expectOperationalError } from "../utils/helperTestFunctions.test";
+import { IBrand } from "../../@types/types";
+import { expectBrand } from "../utils/brandUtils.test";
 const app = createServer()
 
 describe("Brands",()=>{
@@ -26,12 +28,9 @@ describe("Brands",()=>{
         it("Should return all brands",async()=>{
             const {body,statusCode} = await supertest(app).get(`/api/brands`);
             expect(statusCode).toBe(200)
-            body.brands.forEach((brand : any)=>{
-                expect(typeof brand.imageUrl).toBe("string");
-                expect(typeof brand.name).toBe("string");
-                expect(brand.imageUrl.length).toBeGreaterThan(0);
-                expect(brand.name.length).toBeGreaterThan(0);
-                expectId(brand._id)
+            expect(body.brands.length).toBeGreaterThan(0);
+            body.brands.forEach((brand : IBrand)=>{
+                expectBrand(brand)
             })
         }) 
     })
@@ -41,7 +40,7 @@ describe("Brands",()=>{
         it("Should return an error that images does not exist",async()=>{
             const {body,statusCode} = await supertest(app).post(`/api/brands`)
             .set("Authorization",adminUserToken).send({
-                name:"Nike"
+                brandName:"Nike"
             });
             expect(statusCode).toBe(400);
             expectErrorMessage(body);
@@ -59,12 +58,11 @@ describe("Brands",()=>{
         it("Should create a new brand with unique string name",async()=>{
             const uniqueString = uuid();
             const {body,statusCode} = await supertest(app).post(`/api/brands`)
-            .set("Authorization",adminUserToken).field("brandName",uniqueString).attach("brandLogo",imagePath);
+            .set("Authorization",adminUserToken).field("brandName",uniqueString.substring(0,15)).attach("brandLogo",imagePath);
             expect(statusCode).toBe(200);
             expect(body.message).toBe("success");
-            expect(body.brand.name).toBe(uniqueString);
-            expect(typeof body.brand.imageUrl).toBe("string");
-            expect(body.brand.imageUrl.length).toBeGreaterThan(1);
+            expect(body.brand.name).toBe(uniqueString.substring(0,15));
+            expectBrand(body.brand);
         })
     })
 })

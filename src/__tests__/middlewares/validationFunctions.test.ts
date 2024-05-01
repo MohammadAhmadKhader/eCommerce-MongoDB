@@ -1,7 +1,8 @@
-import { validateAddToWishList, validateAddingToCart, validateChangeCartItemQuantityByOne, validateCheckOrder, validateCreatingAddress, validateDeleteUserReview, validateDeletingFromCart, validateEditUserReview, validateForgotPassword, validateOrderId, validateOrdersStatus, validateRemoveFromWishlist, validateResetPasswordViaCode, validateSendingMessage, validateUserChangeInformation, validateUserSignIn } from '../../middlewares/validationsFunctions';
+import { validateAddToWishList, validateAddingToCart, validateChangeCartItemQuantityByOne, validateCheckOrder, validateCreateBrand, validateCreatingAddress, validateDeleteUserReview, validateDeletingFromCart, validateEditUserReview, validateForgotPassword, validateOrderId, validateOrdersStatus, validateRemoveFromWishlist, validateResetPasswordViaCode, validateSendingMessage, validateUserChangeInformation, validateUserSignIn } from '../../middlewares/validationsFunctions';
 import { Request } from 'express';
 import { validateUserRegistration,validateUserChangePassword, validateUserReview, validateCreateProduct, validateUpdatingAddress } from '../../middlewares/validationsFunctions';
 import { createResponseNext } from '../utils/helperTestFunctions.test';
+import { faker } from '@faker-js/faker';
 
 describe("Validation Middlewares",()=>{
     const stringWith25Char = "2i3n8sLqAe7z0m9c6R4s2W1t8";
@@ -1224,6 +1225,9 @@ describe("Validation Middlewares",()=>{
                     const req = {
                         body:{
 
+                        },
+                        params:{
+
                         }
                     } as Request;
                     validateChangeCartItemQuantityByOne(req,res,next);
@@ -1240,10 +1244,13 @@ describe("Validation Middlewares",()=>{
                 const req = {
                     body:{
                         productId:hexWith24Char,
-                        cartItemId:hexWith24Char,
+                        
                         operation:"+2"
+                    },
+                    params:{
+                        cartItemId:hexWith24Char,
                     }
-                } as Request;
+                } as unknown as Request;
                 validateChangeCartItemQuantityByOne(req,res,next);
                 expect(res.status).toHaveBeenCalledWith(400);
                 expect(res.json).toHaveBeenCalledWith({error:[
@@ -1256,10 +1263,12 @@ describe("Validation Middlewares",()=>{
                 const req = {
                     body:{
                         productId:hexWith24Char,
-                        cartItemId:hexWith24Char,
                         operation:"+1"
+                    },
+                    params:{
+                        cartItemId:hexWith24Char,
                     }
-                } as Request;
+                } as unknown as Request;
                 validateChangeCartItemQuantityByOne(req,res,next);
                 expect(res.status).not.toHaveBeenCalled();
                 expect(res.json).not.toHaveBeenCalled()
@@ -1270,10 +1279,12 @@ describe("Validation Middlewares",()=>{
                 const req = {
                     body:{
                         productId:hexWith24Char,
-                        cartItemId:hexWith24Char,
                         operation:"-1"
+                    },
+                    params:{
+                        cartItemId:hexWith24Char,
                     }
-                } as Request;
+                } as unknown as Request;
                 validateChangeCartItemQuantityByOne(req,res,next);
                 expect(res.status).not.toHaveBeenCalled();
                 expect(res.json).not.toHaveBeenCalled()
@@ -1284,7 +1295,7 @@ describe("Validation Middlewares",()=>{
             it("Should return an error that all fields are empty",()=>{
                     const { next,res } = createResponseNext()
                     const req = {
-                        body:{
+                        params:{
 
                         }
                     } as Request;
@@ -1298,10 +1309,10 @@ describe("Validation Middlewares",()=>{
             it("Should return an error when cartItem Id is not 24 length",()=>{
                 const { next,res } = createResponseNext()
                 const req = {
-                    body:{
+                    params:{
                         cartItemId:hexWith25Char, 
                     }
-                } as Request;
+                } as unknown as Request;
                 validateDeletingFromCart(req,res,next);
                 expect(res.status).toHaveBeenCalledWith(400);
                 expect(res.json).toHaveBeenCalledWith({error:[
@@ -1312,10 +1323,10 @@ describe("Validation Middlewares",()=>{
             it("Should pass successfully when cartItemId is hex 24 length",()=>{
                 const { next,res } = createResponseNext()
                 const req = {
-                    body:{
+                    params:{
                         cartItemId:hexWith24Char,
                     }
-                } as Request;
+                } as unknown as Request;
                 validateDeletingFromCart(req,res,next);
                 expect(res.status).not.toHaveBeenCalled();
                 expect(res.json).not.toHaveBeenCalled()
@@ -1397,7 +1408,7 @@ describe("Validation Middlewares",()=>{
         it("Should return an error that wishlistItemtId is required",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
 
                 }
             } as Request;
@@ -1411,10 +1422,10 @@ describe("Validation Middlewares",()=>{
         it("Should return an error that when wishlistItemId is length 24 and not hex",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
                     wishlistItemId:stringWith24Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateRemoveFromWishlist(req,res,next);
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1425,10 +1436,10 @@ describe("Validation Middlewares",()=>{
         it("Should return an error that when wishlistItemId is not string",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
                     wishlistItemId:[]
                 }
-            } as Request;
+            } as unknown as Request;
             validateRemoveFromWishlist(req,res,next);
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1439,10 +1450,10 @@ describe("Validation Middlewares",()=>{
         it("Should return an error that when wishlistItemId is length is not 24",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
                     wishlistItemId:hexWith25Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateRemoveFromWishlist(req,res,next);
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1453,10 +1464,10 @@ describe("Validation Middlewares",()=>{
         it("Should pass successfully when wishlistItemId is hex 24 length",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
                     wishlistItemId:hexWith24Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateRemoveFromWishlist(req,res,next);
             expect(res.status).not.toHaveBeenCalled();
             expect(res.json).not.toHaveBeenCalled()
@@ -1469,8 +1480,11 @@ describe("Validation Middlewares",()=>{
             const req = {
                 body:{
 
+                },
+                params:{
+
                 }
-            } as Request;
+            } as unknown as Request;
             validateEditUserReview(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1486,9 +1500,12 @@ describe("Validation Middlewares",()=>{
                 body:{
                     rating:1.5,
                     comment:"comment",
+                    
+                },
+                params:{
                     reviewId:hexWith24Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateEditUserReview(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1502,9 +1519,12 @@ describe("Validation Middlewares",()=>{
                 body:{
                     rating:1,
                     comment:"comment",
+                },
+                params:{
                     reviewId:stringWith24Char
                 }
-            } as Request;
+            } as unknown as Request
+            
             validateEditUserReview(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1518,9 +1538,11 @@ describe("Validation Middlewares",()=>{
                 body:{
                     rating:1,
                     comment:"comment",
+                },
+                params:{
                     reviewId:hexWith25Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateEditUserReview(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1535,8 +1557,11 @@ describe("Validation Middlewares",()=>{
                     rating:1,
                     comment:"comment",
                     reviewId:hexWith24Char
+                },
+                params:{
+                    reviewId:hexWith24Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateEditUserReview(req,res,next)
             expect(res.status).not.toHaveBeenCalled();
             expect(res.json).not.toHaveBeenCalled()
@@ -1547,10 +1572,10 @@ describe("Validation Middlewares",()=>{
         it("Should return an error that all fields are equired",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
-
+                params:{
+                    
                 }
-            } as Request;
+            } as unknown as Request;
             validateDeleteUserReview(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1562,11 +1587,11 @@ describe("Validation Middlewares",()=>{
         it("Should return an error that productId and reviewId must 24 length",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
+                    reviewId:hexWith25Char,
                     productId:hexWith25Char,
-                    reviewId:hexWith25Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateDeleteUserReview(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1578,11 +1603,11 @@ describe("Validation Middlewares",()=>{
         it("Should return an error that productId and reviewId must be hex type",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
+                    reviewId:stringWith24Char,
                     productId:stringWith24Char,
-                    reviewId:stringWith24Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateDeleteUserReview(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1594,11 +1619,11 @@ describe("Validation Middlewares",()=>{
         it("Should pass successfully when all parameters meet the conditions",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
+                    reviewId:hexWith24Char,
                     productId:hexWith24Char,
-                    reviewId:hexWith24Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateDeleteUserReview(req,res,next)
             expect(res.status).not.toHaveBeenCalled();
             expect(res.json).not.toHaveBeenCalled()
@@ -1731,6 +1756,9 @@ describe("Validation Middlewares",()=>{
             const req = {
                 body:{
                     
+                },
+                params:{
+
                 }
             } as Request;
             validateOrderId(req,res,next)
@@ -1743,10 +1771,10 @@ describe("Validation Middlewares",()=>{
         it("Should return error that orderId type must be hex",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
                     orderId:stringWith24Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateOrderId(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1757,10 +1785,10 @@ describe("Validation Middlewares",()=>{
         it("Should return error that orderId must be 24 length",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
                     orderId:hexWith25Char
                 }
-            } as Request;
+            } as unknown as Request;
             validateOrderId(req,res,next)
             expect(res.status).toHaveBeenCalledWith(400);
             expect(res.json).toHaveBeenCalledWith({error:[
@@ -1771,10 +1799,10 @@ describe("Validation Middlewares",()=>{
         it("Should pass successfully when orderId is hex and 24 length",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                body:{
+                params:{
                     orderId:hexWith24Char,
                 }
-            } as Request;
+            } as unknown as Request;
             validateOrderId(req,res,next);
             expect(res.status).not.toHaveBeenCalled();
             expect(res.json).not.toHaveBeenCalled()
@@ -1833,7 +1861,7 @@ describe("Validation Middlewares",()=>{
         it("Should return error that all fields are required",()=>{
             const { next,res } = createResponseNext()
             const req = {
-                query:{
+                body:{
                     
                 }
             } as unknown as Request;
@@ -1847,7 +1875,7 @@ describe("Validation Middlewares",()=>{
         it("Should pass successfully when all arguments set to minimum values",()=>{
             const { next,res } = createResponseNext();
             const req = {
-                query: {
+                body: {
                     firstName:stringWith4Char,
                     lastName:stringWith4Char,
                     email:emailWith6Char,
@@ -1863,7 +1891,7 @@ describe("Validation Middlewares",()=>{
         it("Should pass successfully when all arguments set to maximum values",()=>{
             const { next,res } = createResponseNext();
             const req = {
-                query: {
+                body: {
                     firstName:stringWith32Char,
                     lastName:stringWith32Char,
                     email:emailWith64Char,
@@ -1879,7 +1907,7 @@ describe("Validation Middlewares",()=>{
         it("Should return an error when values set to more than maximum",()=>{
             const { next,res } = createResponseNext();
             const req = {
-                query: {
+                body: {
                     firstName:stringWith33Char,
                     lastName:stringWith33Char,
                     email:emailWith65Char,
@@ -1900,7 +1928,7 @@ describe("Validation Middlewares",()=>{
         it("Should return an error when values set to less than minimum or when email is invalid",()=>{
             const { next,res } = createResponseNext();
             const req = {
-                query: {
+                body: {
                     fullName:stringWith3Char,
                     lastName:stringWith3Char,
                     email:emailWith5Char,
@@ -1916,6 +1944,86 @@ describe("Validation Middlewares",()=>{
                 "email length must be at least 6 characters long",
                 "mobileNumber length must be at least 6 characters long",
             ]})
+        })
+    })
+
+    describe("Tesitng validateCreateBrand Middleware",()=>{
+        it("Should return an error when fields are empty",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    
+                },
+            } as unknown as Request;
+            validateCreateBrand(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "brandName is required",
+            ]})
+        })
+
+        it("Should return an error when fields are less than minimum",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    brandName:""
+                },
+            } as unknown as Request;
+            validateCreateBrand(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "brandName is not allowed to be empty",
+            ]})
+        })
+
+        it("Should return an error when fields are more than maximum",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    brandName:stringWith33Char
+                },
+            } as unknown as Request;
+            validateCreateBrand(req,res,next)
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({error:[
+                "brandName length must be less than or equal to 32 characters long",
+            ]})
+        })
+
+        it("Should pass successfully when brandName set to maximum",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    brandName:stringWith32Char
+                },
+            } as unknown as Request;
+            validateCreateBrand(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+
+        it("Should pass successfully when brandName set to minimum",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    brandName:"Y"
+                },
+            } as unknown as Request;
+            validateCreateBrand(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
+        })
+
+        it("Should pass successfully when all parameters meet the conditions",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    brandName:faker.person.firstName().substring(1,14),  
+                },
+            } as unknown as Request;
+            validateCreateBrand(req,res,next)
+            expect(res.status).not.toHaveBeenCalled();
+            expect(res.json).not.toHaveBeenCalled()
         })
     })
 })

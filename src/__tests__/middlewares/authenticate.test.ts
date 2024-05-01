@@ -66,7 +66,7 @@ describe("Authentication Middlewares",()=>{
                     authorization: expiredAdminToken
                 }
             } as Request;
-            authenticateAdmin(req,res,next)
+            await authenticateAdmin(req,res,next)
             expect(AppError).not.toHaveBeenCalled();
             expect(req.user).not.toBeDefined()
         })
@@ -79,7 +79,7 @@ describe("Authentication Middlewares",()=>{
                     
                 }
             } as Request;
-            authenticateAdmin(req,res,next)
+            await authenticateAdmin(req,res,next)
             expect(AppError).toHaveBeenCalledWith("Unauthorized - Session id is not provided", 401)
             expect(req.user).not.toBeDefined()
         })

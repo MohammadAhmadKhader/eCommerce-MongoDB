@@ -122,11 +122,11 @@ export const changePassword = asyncHandler(async (req, res, next)=>{
 
 export const changeUserInformation = asyncHandler(async(req, res, next)=>{
     const userId = req.user._id;
-    const {email,firstName,lastName,mobileNumber,birthdate,userImg : deleteUserImage} = req.query;
-    const userImageAsBinary = req.file;
+    const {email,firstName,lastName,mobileNumber,birthdate,userImg : deleteUserImage} = req.body;
+    const userImageAsBinary = req.file as unknown as IMulterFile;
     
     const user = await User.findOneAndUpdate(
-        {_id:userId},
+       {_id:userId},
         { 
             email,
             firstName,

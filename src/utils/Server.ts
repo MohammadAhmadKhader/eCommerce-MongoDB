@@ -32,13 +32,14 @@ function createServer(){
     app.use(sanitize());
     app.use(express.json());
     app.use(cors());
-
+    
     if((process.env.NODE_ENV as string).trim() === "development"){
         app.use(morgan('dev'));
     }else{
         app.use(morgan('combined'));
     }
     
+
     app.use("/api/categories",categoriesRoute)
     app.use("/api/products",productsRoute);
     app.use("/api/users",usersRoute)

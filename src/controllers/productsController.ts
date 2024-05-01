@@ -263,8 +263,10 @@ export const appendImagesToProduct = asyncHandler(async (req, res,next) =>{
 export const deleteProduct = asyncHandler(async (req, res, next) =>{
     const productId = req.params.productId;
     const productToDelete = await Product.findOne({_id:productId})
+    
     const ArrOfImagesThumbnailToDelete : string[] = []
     const ArrOfImagesMainToDelete : string[] = []
+    
     if(!productToDelete){
         const error = new AppError("product was not found",400)
         return next(error);

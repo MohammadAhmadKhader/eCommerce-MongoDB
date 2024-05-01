@@ -12,6 +12,7 @@ export interface IMulterFile {
 };
 
 export interface ICategory {
+    _id:Schema.Types.ObjectId;
     name:String,
     imageUrl:String,
 }
@@ -41,6 +42,7 @@ export interface IProduct {
 }
 
 export interface IReview {
+    _id:Schema.Types.ObjectId;
     comment: string;
     userId: Schema.Types.ObjectId;
     rating: number;
@@ -155,6 +157,7 @@ export interface IInvoiceItem {
 }
 
 export interface IOrderItem {
+    _id:Schema.Types.ObjectId;
     name:string,
     quantity:number,
     productId:Schema.Types.ObjectId,
@@ -162,7 +165,6 @@ export interface IOrderItem {
     price:number,
     subTotal:number,
     brand:string;
-
 }
 
 export interface IProductImage {

@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import Order from "../models/order";
 import User from "../models/user";
 import Product from "../models/product";
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 import Invoice from "../models/Invoice";
 import { IUser } from "../@types/types";
 import StripeUtils from "../utils/StripeUtils";
@@ -70,11 +70,11 @@ export const createOrder = asyncHandler(async (req ,res ,next)=>{
     const discount =0,deliveryFee =0
     const orderGrandTotal = subTotal - discount + deliveryFee
 
-    const transaction = mongoose.startSession();
-    ;(await transaction).startTransaction();
+    const transaction = await mongoose.startSession();
+    transaction.startTransaction();
 
     let isIncorrectOrder = false;
-    const order = await Order.create({
+    const order = await Order.create([{
         userId:userId,
         deliveryFee,
         discount,
@@ -86,28 +86,29 @@ export const createOrder = asyncHandler(async (req ,res ,next)=>{
             thumbnailUrl:cartItem.images[0].thumbnailUrl,
             quantity:mapper[cartItem._id.toString()] <= cartItem.quantity ? mapper[cartItem._id.toString()] : (()=>{
                 isIncorrectOrder = true
+                return 1;
             })() ,
             productId:cartItem._id,
             subTotal:Number(cartItem.quantity * cartItem.finalPrice!).toFixed(2)
         })),
-    })
+    }],{session:transaction})
 
     if(isIncorrectOrder){
-        (await transaction).abortTransaction();
+        await transaction.abortTransaction();
         const error = new AppError("An unexpected error has occurred",400);
         return next(error);
     }
     const userAfterCartAndOrderChanged = await User.findOneAndUpdate({_id:userId},{
         $set :{cart:[]}
-    },{new:true,select:"-password -__v"});
+    },{new:true,select:"-password -__v"},);
 
-    ;(await transaction).commitTransaction();
-    return res.status(201).json({message:"success",user:userAfterCartAndOrderChanged,order})
+    await transaction.commitTransaction();
+    return res.status(201).json({message:"success",user:userAfterCartAndOrderChanged,order:order[0]})
 })
 
-export const deleteOrder = asyncHandler(async (req, res, next) => {
+export const cancelOrder = asyncHandler(async (req, res, next) => {
     const userId = req.user._id;
-    const orderId = req.body.orderId; // => to url
+    const orderId = req.params.orderId;
         
     const order = await Order.findOneAndUpdate({
         _id:orderId,
@@ -149,10 +150,10 @@ export const createPaymentIntent =asyncHandler( async(req, res, next)=>{
     return res.status(200).json({clientSecret:paymentIntent.client_secret,customer:customer})
 })
 
-export const orderCheckingOut = async(req:Request,res:Response, next : NextFunction)=>{
-    const transaction = mongoose.startSession();
+export const orderCheckingOut =asyncHandler( async(req ,res ,next )=>{
+    const transaction = await mongoose.startSession();
     try{
-        ;(await transaction).startTransaction();
+        ;transaction.startTransaction();
         const user = req.user;
         const {orderId,address} = req.body;
         
@@ -162,7 +163,7 @@ export const orderCheckingOut = async(req:Request,res:Response, next : NextFunct
             {new:true}
         );
         if(!order){
-            (await transaction).abortTransaction();
+            transaction.abortTransaction();
             const error = new AppError("The requested order was not found",400);
             return next(error);
         }
@@ -171,7 +172,7 @@ export const orderCheckingOut = async(req:Request,res:Response, next : NextFunct
         const customers = await StripeUtils.searchCustomer(customerId.toString(),stripe);
         
         if(customers.data.length == 0){
-            (await transaction).abortTransaction();
+            transaction.abortTransaction();
             const error = new AppError("An unexpected error has occurred",400);
             return next(error);
         }  
@@ -208,25 +209,25 @@ export const orderCheckingOut = async(req:Request,res:Response, next : NextFunct
                         -orderItemsProductIdQuantityMapper[products[i]._id.toString()] : (()=>{
                             isBulkWriteIsIncorrect = true
                             // This return meant to avoid the casting error from undefined to number
-                            return 1
+                            return 199999
                         })()
                     }} 
                 }
             })
         }
     
-        const updateProductQuantity = await Product.bulkWrite(bulkWriteArray);
+        const updateProductQuantity = await Product.bulkWrite(bulkWriteArray,{session:transaction});
         if(updateProductQuantity.modifiedCount !== arrayOfProductsIds.length || isBulkWriteIsIncorrect){
-            (await transaction).abortTransaction();
+            transaction.abortTransaction();
             const error = new AppError("An error occurred while processing your order. Please try again later or contact support.",400)
             return next(error);
         }
-
-        ;(await transaction).commitTransaction();
+        
+        transaction.commitTransaction();
         return res.status(200).json({order,invoice:issuedInvoice})
     }catch(error : any){
-        (await transaction).abortTransaction();
+        transaction.abortTransaction();
         console.error(error)
         return res.status(500).json({error:error?.message})
     }
-}
+})

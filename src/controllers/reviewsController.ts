@@ -63,8 +63,7 @@ export const addReviewToProduct = asyncHandler(async (req, res, next)=>{
 export const editReview = asyncHandler(async (req, res, next)=>{
     const {comment,rating} = req.body
     const userId = req.user._id;
-    const reviewId = req.body.reviewId as string;
-    //const userId = req.body.userId as string;
+    const reviewId = req.params.reviewId as string;
 
     const editReview = await Product.findOneAndUpdate(
         {'reviews._id' : reviewId,'reviews.userId': userId},
@@ -75,7 +74,7 @@ export const editReview = asyncHandler(async (req, res, next)=>{
             }
         },{new:true}
     )
-        
+    
     if(!editReview){
         const error = new AppError("The requested review does not exist",400);
         return next(error);
@@ -85,9 +84,8 @@ export const editReview = asyncHandler(async (req, res, next)=>{
 })
 
 export const deleteReview = asyncHandler(async(req, res, next)=>{
-    const reviewId = req.body.reviewId as string; // => to url
-    const productId = req.body.productId as string;
-       
+    const {reviewId,productId} = req.params;
+    
     const removeReviewFromProduct = await Product.updateOne(
         {
             _id:productId,

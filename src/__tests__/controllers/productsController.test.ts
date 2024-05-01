@@ -247,10 +247,11 @@ describe("Products",()=>{
             const productDescription = "test Description Product";
             const productBrand = "Levi's";
 
-            const {body,statusCode} = await supertest(app).post(`/api/products/${adminUserId}`)
+            const {body,statusCode} = await supertest(app).post(`/api/products`)
             .field("name",productName).field("categoryId",categoryId).field("brand",productBrand)
             .field("price",200).field("description",productDescription)
-            .attach("image",imagePath).set('Authorization', adminUserToken);
+            .attach("image",imagePath)
+            .set('Authorization', adminUserToken);
             
             expect(statusCode).toBe(201);
             expect(body.message).toBe("success");
@@ -271,7 +272,7 @@ describe("Products",()=>{
         const productIdForUpdate = testData.productsRoute.productIdForUpdate;
         // const productIdForUpdate = "65ecac2fdeee9c7ef42ffe65"
         it("Should append images to product",async()=>{
-            const {body,statusCode} = await supertest(app).post(`/api/products/${productIdForUpdate}/${adminUserId}`)
+            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdForUpdate}`)
             .set('Authorization', adminUserToken)
             .attach("images",imagePath)
             .attach("images",imagePath)
@@ -280,7 +281,7 @@ describe("Products",()=>{
         })
         
         it("Should return an error because images were not set and return error with status code 400",async()=>{
-            const {body,statusCode} = await supertest(app).post(`/api/products/${productIdForUpdate}/${adminUserId}`)
+            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdForUpdate}`)
             .set('Authorization', adminUserToken)
             expect(statusCode).toBe(400);
             expectErrorMessage(body)
@@ -309,7 +310,7 @@ describe("Products",()=>{
                 arrayOfThumbnailsUrl.push(item.thumbnailUrl);
             })
 
-            const {body,statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}/${adminUserId}`)
+            const {body,statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}`)
             .set('Authorization', adminUserToken);
             expect(statusCode).toBe(200);
             expect(body.message).toBe("success");
@@ -320,14 +321,14 @@ describe("Products",()=>{
 
         it("should return status 500 if product Id was not proper invalid _id",async()=>{
             const productIdForDelete  = "randomString"
-            const {statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}/${adminUserId}`)
+            const {statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}`)
             .set('Authorization', adminUserToken);
             expect(statusCode).toBe(500);
         })
 
         it("should return status 400 and body = {error : product was not found} if product was not found",async()=>{
             const productIdForDelete  = "68ecde9d50cbcdf3920a2c2b"
-            const {body,statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}/${adminUserId}`)
+            const {body,statusCode} = await supertest(app).delete(`/api/products/${productIdForDelete}`)
             .set('Authorization', adminUserToken);
             
             expect(statusCode).toBe(400);
