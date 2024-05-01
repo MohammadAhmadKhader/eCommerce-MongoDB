@@ -33,10 +33,10 @@ function createServer(){
     app.use(express.json());
     app.use(cors());
     
-    if((process.env.NODE_ENV as string).trim() === "development"){
-        app.use(morgan('dev'));
-    }else{
+    if((process.env.NODE_ENV as string).trim() === "production"){
         app.use(morgan('combined'));
+    }else{ 
+        app.use(morgan('dev'));
     }
     
 
