@@ -1,5 +1,5 @@
 import MailUtils from "../utils/MailUtils";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/AsyncHandler";
 
 
 export const sendMessage = asyncHandler(async(req ,res)=>{

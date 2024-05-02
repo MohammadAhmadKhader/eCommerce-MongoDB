@@ -151,10 +151,11 @@ describe("Orders",()=>{
         })
         const orderId = "662873a7a413f16adec3c906";
         const orderPreviousState = "Placed";
-
+        let isRequestHasSent = false;
         it("Should delete an order and return status code 204",async()=>{
             const {statusCode} = await supertest(app).delete(`/api/orders/${orderId}`)
             .set("Authorization",userTokenDeleteOrder);
+            isRequestHasSent = true;
             expect(statusCode).toBe(204);
         })
 
@@ -169,7 +170,9 @@ describe("Orders",()=>{
         })
 
         afterAll(async()=>{
-            await resetOrderStatus(orderId,orderPreviousState)  
+            if(isRequestHasSent){
+                await resetOrderStatus(orderId,orderPreviousState);
+            }
         })
     })
 
@@ -227,14 +230,14 @@ describe("Orders",()=>{
             userTokenOrderCheckingOutWithUnregisteredStripe = await createUserTokenAndCache(userIdCheckingOrderWithUnregisteredStripe) as string;
             userTokenOrderCheckingOutWithUnavailableQty = await createUserTokenAndCache(userIdToCheckOrderWithUnavailableQty) as string;
         })
-        
+        let isRequestHasSent = false;
         it("Should check order and set it to completed and return order and created invoice with its items with status code 200",async()=>{
             const {body,statusCode} = await supertest(app).post(`/api/orders/stripe/orderCheckingOut`).send({
                 orderId:orderId,
                 address:address
             })
             .set("Authorization",userTokenOrderCheckingOut);
-            
+            isRequestHasSent = true;
             expect(statusCode).toBe(200);
             expectOrder(body.order,"Completed");
             expectInvoice(body.invoice);
@@ -286,7 +289,9 @@ describe("Orders",()=>{
         })
 
         afterAll(async()=>{
-            await resetOrderStatus(orderId,orderInitialStatus)
+            if(isRequestHasSent){
+                await resetOrderStatus(orderId,orderInitialStatus)
+            }
         })
     })
 })

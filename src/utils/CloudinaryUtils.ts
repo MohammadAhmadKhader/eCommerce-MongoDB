@@ -1,59 +1,10 @@
-import imageThumbnail from 'image-thumbnail';
-import { v2 as Cloudinary } from "cloudinary"
-import { IMulterFile } from "../@types/types"
-import { ImageThumbnailOptions } from './ThumbnailUtils';
-
-export function convertBufferToBase64(buffer : Buffer){
-    return buffer.toString('base64')
-}
+import { v2 as Cloudinary, UploadApiResponse} from "cloudinary"
 
 function getImageName(url : string){
     const splitted = url.split("/");
     const imgNameWithExt = splitted[splitted.length - 1]
     const imgName = imgNameWithExt.split(".")[0]
     return imgName
-}
-
-async function UploadOne(Image : IMulterFile,Folder : string,width=1400,height=1400){
-    const base64 = convertBufferToBase64(Image.buffer)
-
-    const { secure_url } = await Cloudinary.uploader.upload(`data:image/png;base64,${base64}`,{
-        use_filename: true,
-        resource_type: "image",
-        folder: Folder,
-        transformation: [{ width: width, height: height, crop: "fit" }],
-    })
-    
-    return secure_url;
-}
-
-async function UploadOneFromBase64(ImageAsBase64:string,Folder : string,width=1400,height=1400){
-    const { secure_url } = await Cloudinary.uploader.upload(`data:image/png;base64,${ImageAsBase64}`,{
-        use_filename: true,
-        resource_type: "image",
-        folder: Folder,
-        transformation: [{ width: width, height: height, crop: "fit" }],
-    })
-    
-    return secure_url;
-}
-
-async function UploadManySubImagesAndThumbnails(Iterable : IMulterFile[]){
-    const arrayOfImages = [];
-    for(let i = 0;i < Iterable.length; i++){
-        const secure_url = await UploadOne(Iterable[i],process.env.ProductsImagesFolder as string);
-        const thumbnailAsBase64 = await imageThumbnail({uri:secure_url},ImageThumbnailOptions);
-        const thumbnailUrl = await CloudinaryUtils.UploadOneFromBase64(thumbnailAsBase64 as unknown as string,process.env.ThumbnailsImagesFolder as string);
-        arrayOfImages.push({
-            imageUrl:secure_url,
-            thumbnailUrl:thumbnailUrl
-        })
-    }
-
-    if(arrayOfImages.length == 0){
-        throw new Error("Images has failed to upload successfully");
-    }
-    return [...arrayOfImages]
 }
 
 async function DeleteOne(ImageLink : string,Folder : string){
@@ -77,24 +28,47 @@ async function DeleteMany(ImagesArray : string[],Folder:string){
     return deleteAnImage
 }
 
-async function UploadOneFilePath(imagePath : string,Folder : string,width=1400,height=1400){
-    const { secure_url } = await Cloudinary.uploader.upload(imagePath,{
-        use_filename: true,
-        resource_type: "image",
-        folder: Folder,
-        transformation: [{ width: width, height: height, crop: "fit" }],
-    })
+async function UploadOne(
+    buffer : Buffer,
+    folder : string,
+    options : {width?:number,height?:number,crop?: "fit"}
+    =
+    {width:1400,height:1400,crop:"fit" }) : Promise<UploadApiResponse | undefined>{
     
-    return secure_url;
+    const defaultOptions = {
+        width:1400,
+        height:1400,
+        crop:"fit"
+    }
+
+    const mergedOptions = {...defaultOptions,...options};
+
+    return new Promise((resolve, reject)   => {
+        const uploadStream = Cloudinary.uploader.upload_stream(
+          { resource_type: "image",
+          folder,
+          use_filename: true,
+          transformation: [{ width: mergedOptions.width, height: mergedOptions.height, crop: mergedOptions.crop }],
+         },
+
+          (error, result) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve(result);
+            }
+          }
+        );
+    
+        uploadStream.end(buffer);
+      });
 }
+ 
 
 const CloudinaryUtils = {
-    UploadOne,
     DeleteOne,
-    UploadOneFromBase64,
-    UploadManySubImagesAndThumbnails,
     DeleteMany,
-    UploadOneFilePath
+    UploadOne
 }
 
 export default CloudinaryUtils;

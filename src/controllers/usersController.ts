@@ -4,10 +4,10 @@ import SessionToken from "../models/sessionToken";
 import MailUtils from "../utils/MailUtils";
 import ResetPassCode from "../models/resetPassCode";
 import CloudinaryUtils from "../utils/CloudinaryUtils";
-import { IMulterFile, IUser } from "../@types/types";
+import { IUser } from "../@types/types";
 import { signToken } from "../utils/HelperFunctions";
 import crypto from 'crypto';
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
 
 export const signUp =asyncHandler( async (req, res)=>{
@@ -123,8 +123,8 @@ export const changePassword = asyncHandler(async (req, res, next)=>{
 export const changeUserInformation = asyncHandler(async(req, res, next)=>{
     const userId = req.user._id;
     const {email,firstName,lastName,mobileNumber,birthdate,userImg : deleteUserImage} = req.body;
-    const userImageAsBinary = req.file as unknown as IMulterFile;
-    
+    const image = req.file as Express.Multer.File;
+
     const user = await User.findOneAndUpdate(
        {_id:userId},
         { 
@@ -133,17 +133,16 @@ export const changeUserInformation = asyncHandler(async(req, res, next)=>{
             lastName,
             mobileNumber,
             birthdate:birthdate,
-            userImg: userImageAsBinary ? await CloudinaryUtils.UploadOne(userImageAsBinary as IMulterFile,process.env.UsersImages as string,400,400) : deleteUserImage == "deleteImg" ? null : undefined
+            userImg: image ? (await CloudinaryUtils.UploadOne(image.buffer,process.env.UsersImages as string,{width:400,height:400}))?.secure_url : deleteUserImage == "deleteImg" ? null : undefined
         },{
             new:true,select:"-password -__v"
         }
     );
-
+       
     if(deleteUserImage == "deleteImg"){
         try{
             await CloudinaryUtils.DeleteOne(user!.userImg,process.env.UsersImages as string);
         }catch(err){
-            console.error(err)
             const error = new AppError(`Something went wrong during image update user image`,400);
             return next(error);
         }   

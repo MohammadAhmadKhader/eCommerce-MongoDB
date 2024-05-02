@@ -1,7 +1,6 @@
 import Brand from "../models/brand"
 import CloudinaryUtils from "../utils/CloudinaryUtils"
-import { IMulterFile } from "../@types/types"
-import { asyncHandler } from "../utils/asyncHandler"
+import { asyncHandler } from "../utils/AsyncHandler"
 import {setServerCache,deleteServerCacheKey} from "../utils/ServerCache";
 import AppError from "../utils/AppError"
 
@@ -14,20 +13,21 @@ export const getAllBrands = asyncHandler( async (req, res, next) =>{
 
 export const createNewBrand = asyncHandler(async (req, res, next)=>{
     const { brandName } = req.body;
-    if(!req.file){
+    const image = req.file as Express.Multer.File;
+    if(!image){
         const error = new AppError("image does not exist",400);
         return next(error);
     }
 
-    const ImageUrl = await CloudinaryUtils.UploadOne(req.file as IMulterFile,process.env.BrandsImages as string)
-    if(!ImageUrl){
+    const uploadImageResponse = await CloudinaryUtils.UploadOne(image.buffer,process.env.BrandsImages as string)
+    if(!uploadImageResponse){
         const error = new AppError("Failed To Upload Image",400);
         return next(error);
     }
 
     const brand = await Brand.create({
         name:brandName,
-        imageUrl:ImageUrl
+        imageUrl:uploadImageResponse.secure_url
     })
     deleteServerCacheKey("brands");
     

@@ -290,6 +290,7 @@ describe("Users",()=>{
                 expect(body.message).toBe("success");
                 expectUser(body.user);
                 expect(testUploadingImage).toHaveBeenCalledTimes(1);
+                expect(testUploadingImage).toHaveBeenCalledWith(expect.any(Buffer),expect.any(String),expect.any(Object));
             }catch(error){
                 console.error(error)
                 throw error

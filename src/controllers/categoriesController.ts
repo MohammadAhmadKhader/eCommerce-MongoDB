@@ -1,6 +1,6 @@
 import Category from "../models/category";
 import { setServerCache } from "../utils/ServerCache";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/AsyncHandler";
 
 export const getAllCategories = asyncHandler(async (req ,res)=>{
     const categories = await Category.find({}).select("-__v");

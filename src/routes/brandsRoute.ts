@@ -3,16 +3,13 @@ import express from "express";
 import { authenticateAdmin } from "../middlewares/authenticate";
 import {getServerCache}from "../middlewares/serverCache"
 import { validateCreateBrand } from "../middlewares/validationsFunctions";
-import multer from "multer"
-const storage = multer.memoryStorage()
-const upload = multer({
-    storage,
-})
+import upload from "../utils/Multer";
+const MB2 = 2000;
 const router = express.Router()
 
 
 router.get("/",getServerCache("brands"),brandsRouter.getAllBrands)
-router.post("/",authenticateAdmin, upload.single('brandLogo'),validateCreateBrand,brandsRouter.createNewBrand)
+router.post("/",authenticateAdmin, upload({fileSize:MB2}).single('brandLogo'),validateCreateBrand,brandsRouter.createNewBrand)
 
 
 export default router;
