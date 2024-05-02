@@ -3,7 +3,7 @@ import User from "../models/user";
 import jwt from "jsonwebtoken";
 import util from "util"
 import { IDecodedToken } from "../@types/types";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
 
 export const authenticateUser = asyncHandler(async (req, res, next)=>{
@@ -53,6 +53,7 @@ export const authenticateAdmin = asyncHandler( async (req, res, next)=>{
         return next(error);
     }
     let error : any;
+    const test = util.promisify(jwt.verify);
     //@ts-expect-error
     const decodedToken : IDecodedToken = await util.promisify(jwt.verify)(sessionId,process.env.TOKEN_SECRET as string).catch((err)=>{
         error = err

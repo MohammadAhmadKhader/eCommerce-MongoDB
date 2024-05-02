@@ -2,7 +2,7 @@ import { ICartItem } from './../@types/types.d';
 import User from "../models/user";
 import Product from "../models/product";
 import { ObjectId } from "mongodb";
-import { asyncHandler } from '../utils/asyncHandler';
+import { asyncHandler } from '../utils/AsyncHandler';
 import AppError from '../utils/AppError';
 
 export const getAllCartItems = asyncHandler( async (req ,res ,next)=>{

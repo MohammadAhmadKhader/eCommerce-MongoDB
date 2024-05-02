@@ -1,5 +1,5 @@
 import User from "../models/user";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
 
 export const getWishList = asyncHandler( async (req, res)=>{

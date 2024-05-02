@@ -1,15 +1,5 @@
-import { ObjectId } from 'mongoose';
-import { IReview } from './types.d';
-import { Schema } from "mongoose";
-
-export interface IMulterFile {
-    buffer: Buffer, 
-    encoding: string, 
-    fieldname: string, 
-    mimetype: string, 
-    originalname: string, 
-    size: number;
-};
+import { ObjectId,Schema } from 'mongoose';
+import multer,{FileFilterCallback} from "multer"
 
 export interface ICategory {
     _id:Schema.Types.ObjectId;
@@ -103,8 +93,8 @@ export interface IImageThumbnailOptions {
     width:number;
     height:number;
     fit:string ;
-    responseType: string | any ;
-    jpegOptions: {force:boolean,quality:number};
+    responseType: "buffer"  ;
+    jpegOptions: {force:boolean;quality:number};
 }
 
 export interface ICartItem {
@@ -227,4 +217,10 @@ export interface IBrand {
     _id:Schema.Types.ObjectId;
     name:string;
     imageUrl:string;
+}
+
+export interface UploadOptions {
+    fileSize?: number;
+    filesNum?: number;
+    fileFilter?: (req: any, file: Express.Multer.File, callback: FileFilterCallback) => void;
 }

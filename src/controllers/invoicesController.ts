@@ -1,5 +1,5 @@
 import Invoice from "../models/Invoice";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
 
 

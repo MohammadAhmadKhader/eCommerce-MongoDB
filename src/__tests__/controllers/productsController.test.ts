@@ -253,6 +253,7 @@ describe("Products",()=>{
             .attach("image",imagePath)
             .set('Authorization', adminUserToken);
             
+
             expect(statusCode).toBe(201);
             expect(body.message).toBe("success");
             expect(body.product.name).toBe(productName);
@@ -270,27 +271,50 @@ describe("Products",()=>{
 
     describe("Append Images to Product",()=>{
         const productIdForUpdate = testData.productsRoute.productIdForUpdate;
+        let isNewImagesHasUploaded = false;
         // const productIdForUpdate = "65ecac2fdeee9c7ef42ffe65"
+        const productIdNotExisting = "66ec2c2fdcee2c7eb42f3e2f";
+
         it("Should append images to product",async()=>{
+            isNewImagesHasUploaded = true;
+
             const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdForUpdate}`)
             .set('Authorization', adminUserToken)
             .attach("images",imagePath)
             .attach("images",imagePath)
             expect(statusCode).toBe(200);
-            expect(body).toStrictEqual({message:"success"})
+            
+            expect(body.message).toBe("success");
+            expect(body.newImages.length).toBe(2);
+            body.newImages.forEach((image : image)=>{
+                expect(image.imageUrl).toBeTruthy();
+                expect(image.thumbnailUrl).toBeTruthy();
+            })
         })
         
-        it("Should return an error because images were not set and return error with status code 400",async()=>{
-            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdForUpdate}`)
+        it("Should return an error because product was not found with status code 400",async()=>{
+            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdNotExisting}`)
             .set('Authorization', adminUserToken)
+            expect(statusCode).toBe(400);
+            expectErrorMessage(body);
+            expectOperationalError(body);
+            expect(body.message).toBe("Product was not found.")
+        });
+
+        it("Should return an error because images were not sent and return error with status code 400",async()=>{
+            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdForUpdate}`)
+            .set('Authorization', adminUserToken);
+            
             expect(statusCode).toBe(400);
             expectErrorMessage(body)
             expectOperationalError(body)
         })
 
         afterAll(async()=>{
-            await popProductImages(productIdForUpdate);
-            await popProductImages(productIdForUpdate);
+            if(isNewImagesHasUploaded){
+                await popProductImages(productIdForUpdate);
+                await popProductImages(productIdForUpdate);
+            }
         })
     })
 

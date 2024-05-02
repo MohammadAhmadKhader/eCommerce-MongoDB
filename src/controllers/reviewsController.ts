@@ -1,5 +1,5 @@
 import Product from "../models/product";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
 
 export const getAllReviewsByUserId = asyncHandler(async (req, res ) =>{

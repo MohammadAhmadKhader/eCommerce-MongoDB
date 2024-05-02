@@ -137,7 +137,12 @@ export const ordersStatusSchema = Joi.object({
 })
 
 export const appendImagesToProductSchema = Joi.object({
-    imagesLength:Joi.number().integer().min(1).max(9),
+    imagesLength:Joi.number().integer().min(1).max(9).required().messages({
+        'number.base': 'Images were not sent',
+        'number.min': 'At least one image must be provided',
+        'number.max': 'Maximum of 9 images allowed',
+        'any.required': 'Images were not sent'
+    }),
 })
 
 const atLeastOneFieldRequired = (value : IUserChangeInformation, helpers : Joi.CustomHelpers<IUserChangeInformation>) => {

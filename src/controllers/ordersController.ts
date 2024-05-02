@@ -7,7 +7,7 @@ import Invoice from "../models/Invoice";
 import { IUser } from "../@types/types";
 import StripeUtils from "../utils/StripeUtils";
 import { collectInvoiceData } from "../utils/HelperFunctions";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
 
 export const getAllOrders = asyncHandler(async(req ,res )=>{

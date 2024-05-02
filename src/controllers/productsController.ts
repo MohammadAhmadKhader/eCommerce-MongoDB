@@ -1,11 +1,10 @@
-import { IMulterFile,image } from '../@types/types';
+import { image } from '../@types/types';
 import { Request, Response } from "express"
 import Product from "../models/product"
 import CloudinaryUtils from "../utils/CloudinaryUtils";
-import imageThumbnail from "image-thumbnail"
-import { ImageThumbnailOptions } from '../utils/ThumbnailUtils';
+import { getThumbnailImageBuffer } from '../utils/ThumbnailUtils';
 import { isJSON } from '../utils/HelperFunctions';
-import { asyncHandler } from '../utils/asyncHandler';
+import { asyncHandler } from '../utils/AsyncHandler';
 import AppError from "../utils/AppError";
 import { ObjectId } from 'mongodb';
 // import {setCache} from "../middlewares/cache";
@@ -208,19 +207,26 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
 
 export const postNewProduct = asyncHandler(async (req, res, next)=>{
     const { name, quantity, description, price , brand, categoryId,offer,finalPrice} = req.body;
-        
+    const image = req.file as Express.Multer.File
+    
     if(!req.file){
         const error = new AppError("Image does not exist",400)
         return next(error);
     }
-    const ImageUrl = await CloudinaryUtils.UploadOne(req.file as IMulterFile,process.env.ProductsImagesFolder as string)
-    if(!ImageUrl){
+    const originalImageUploadResponse = await CloudinaryUtils.UploadOne(image.buffer,process.env.ProductsImagesFolder as string)
+    
+    if(!originalImageUploadResponse){
         const error = new AppError("Failed To Upload Image",400)
         return next(error);
     }
-        
-    const thumbnailAsBase64 = await imageThumbnail({uri:ImageUrl},ImageThumbnailOptions)
-    const thumbnailUrl = await CloudinaryUtils.UploadOneFromBase64(thumbnailAsBase64 as unknown as string,process.env.ThumbnailsImagesFolder as string)
+    
+    const thumbnailBuffer = await getThumbnailImageBuffer(image.buffer);
+    const thumbnailUploadResponse = await CloudinaryUtils.UploadOne(thumbnailBuffer,process.env.ThumbnailsImagesFolder as string);
+    
+    if(!thumbnailUploadResponse){
+        const error = new AppError("Failed To Upload Image",400)
+        return next(error);
+    }
         
     const newProduct = await Product.create({
         name,
@@ -231,8 +237,8 @@ export const postNewProduct = asyncHandler(async (req, res, next)=>{
         price:Number(price).toFixed(2),
         categoryId,
         images:{
-            thumbnailUrl:thumbnailUrl,
-            imageUrl:ImageUrl
+            thumbnailUrl:thumbnailUploadResponse.secure_url,
+            imageUrl:originalImageUploadResponse.secure_url
         },
         brand:brand
     })
@@ -242,22 +248,40 @@ export const postNewProduct = asyncHandler(async (req, res, next)=>{
 
 export const appendImagesToProduct = asyncHandler(async (req, res,next) =>{
     const productId = req.params.productId;
-    const images = req.files as unknown as IMulterFile[];
+    const images = req.files as Express.Multer.File[]; 
+
+    const isProductExist = await Product.findOne({_id:productId});
+    if(!isProductExist){
+        const error = new AppError("Product was not found.",400)
+        return next(error);
+    }
     
-    if(!images || images.length == 0){
-        const error = new AppError("Images were not uploaded successfully",400)
-        return next(error);
-    }
-    const arrayOfImages = await CloudinaryUtils.UploadManySubImagesAndThumbnails(images)
+    const uploadPromises = images.map(async(file)=>{
+        const originalImageResult = await CloudinaryUtils.UploadOne(file.buffer,process.env.ProductsImagesFolder as string);
+        const thumbnailBuffer = await getThumbnailImageBuffer(file.buffer);
+        const thumbnailImageResult = await CloudinaryUtils.UploadOne(thumbnailBuffer,process.env.ThumbnailsImagesFolder as string);
         
-    const product = await Product.updateMany({_id:productId},{
-        $push:{images:arrayOfImages},
+        return {
+            imageUrl:originalImageResult?.secure_url,
+            thumbnailUrl:thumbnailImageResult?.secure_url
+        };
     })
-    if(product.modifiedCount != 1){
+    
+    const uploadedImages = await Promise.all(uploadPromises).catch((err)=>{
+        const error = new AppError("An unexpected error has occurred!",400)
+        return next(error);
+    });
+
+    const product = await Product.updateOne({_id:productId},{
+        $push:{images:uploadedImages},
+    })
+
+    if(product.modifiedCount != 1 || product.matchedCount == 0){
         const error = new AppError("Images were not uploaded successfully",400)
         return next(error);
     }
-    return res.status(200).json({message:"success"})
+    
+    return res.status(200).json({message:"success",newImages:uploadedImages})
 })
 
 export const deleteProduct = asyncHandler(async (req, res, next) =>{
