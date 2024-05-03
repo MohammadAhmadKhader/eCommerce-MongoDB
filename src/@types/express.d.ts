@@ -9,7 +9,7 @@ declare global{
               page: number;
             };
             user:IUser;
-            validationError:any;
+            validationError?:{blacklistedKeys:string[]};
         }
     }
 }

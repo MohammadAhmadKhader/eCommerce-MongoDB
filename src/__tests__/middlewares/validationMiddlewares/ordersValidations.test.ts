@@ -1,8 +1,8 @@
 
-import { validateCheckOrder, validateForgotPassword, validateOrderId, validateOrdersStatus, validateResetPasswordViaCode, validateUserChangeInformation, validateUserChangePassword, validateUserRegistration, validateUserSignIn } from "../../../middlewares/validationsFunctions";
-import { emailWith5Char, emailWith64Char, emailWith65Char, emailWith6Char, hexWith24Char, hexWith25Char, stringWith10Char, stringWith15Char, stringWith16Char, stringWith24Char, stringWith25Char, stringWith32Char, stringWith33Char, stringWith3Char, stringWith4Char, stringWith5Char, stringWith65Char, stringWith6Char } from "../../assets/testData/stringTestData";
-import { createResponseNext } from "../../utils/helperTestFunctions.test";
-import {Request,Response,NextFunction} from "express";
+import { validateCheckOrder,  validateOrderId, validateOrdersStatus, } from "../../../middlewares/validationsFunctions";
+import { hexWith24Char, hexWith25Char, stringWith24Char } from "../../assets/testData/stringTestData";
+import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
+import {Request} from "express";
 
 describe("Orders validation middlewares",()=>{
     describe("Testing validateCheckOrder middleware",()=>{
@@ -22,11 +22,11 @@ describe("Orders validation middlewares",()=>{
                 }
             } as Request;
             validateCheckOrder(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+        
+            expectValidationError(next,[
                 "orderId is required",
                 "address is required",
-            ]})
+            ])
         })
 
         it("Should return an error that orderId must 24 length",()=>{
@@ -38,10 +38,10 @@ describe("Orders validation middlewares",()=>{
                 }
             } as Request;
             validateCheckOrder(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "orderId length must be 24 characters long",
-            ]})
+            ])
         })
 
         it("Should return an error that orderId must be hex type",()=>{
@@ -53,10 +53,10 @@ describe("Orders validation middlewares",()=>{
                 }
             } as Request;
             validateCheckOrder(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "orderId must only contain hexadecimal characters",
-            ]})
+            ])
         })
 
         it("Should return an error when address values are all missing (empty address object)",()=>{
@@ -68,14 +68,14 @@ describe("Orders validation middlewares",()=>{
                 }
             } as Request;
             validateCheckOrder(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "address.fullName is required",
                 "address.streetAddress is required",
                 "address.city is required",
                 "address.state is required",
                 "address.mobileNumber is required",
-            ]})
+            ]);
         })
 
         it("Should return an error when address only one parameter is used inside the object",()=>{
@@ -86,14 +86,14 @@ describe("Orders validation middlewares",()=>{
                     address:{fullName:"fullName"}
                 }
             } as Request;
-            validateCheckOrder(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            validateCheckOrder(req,res,next);
+
+            expectValidationError(next,[
                 "address.streetAddress is required",
                 "address.city is required",
                 "address.state is required",
                 "address.mobileNumber is required",
-            ]})
+            ]);
         })
 
         it("Should disallow pinCode to be set to empty string and return error",()=>{
@@ -105,10 +105,10 @@ describe("Orders validation middlewares",()=>{
                 }
             } as Request;
             validateCheckOrder(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "address.pinCode is not allowed to be empty",
-            ]})
+            ]);
         })
 
         it("Should pass successfully when all parameters meet the conditions",()=>{
@@ -120,8 +120,7 @@ describe("Orders validation middlewares",()=>{
                 }
             } as Request;
             validateCheckOrder(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next);
         })
     })
 
@@ -137,10 +136,10 @@ describe("Orders validation middlewares",()=>{
                 }
             } as Request;
             validateOrderId(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "orderId is required",
-            ]})
+            ]);
         })
 
         it("Should return error that orderId type must be hex",()=>{
@@ -151,10 +150,10 @@ describe("Orders validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateOrderId(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "orderId must only contain hexadecimal characters",
-            ]})
+            ]);
         })
 
         it("Should return error that orderId must be 24 length",()=>{
@@ -165,10 +164,10 @@ describe("Orders validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateOrderId(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "orderId length must be 24 characters long",
-            ]})
+            ]);
         })
 
         it("Should pass successfully when orderId is hex and 24 length",()=>{
@@ -179,8 +178,7 @@ describe("Orders validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateOrderId(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next);
         })
     })
 
@@ -193,10 +191,10 @@ describe("Orders validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateOrdersStatus(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "status is required",
-            ]})
+            ]);
         })
 
         it("Should return error that orderId type must be hex",()=>{
@@ -208,10 +206,10 @@ describe("Orders validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateOrdersStatus(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "status must be one of [Completed, Processing, Cancelled, Placed]",
-            ]})
+            ]);
         })
 
         it("Should pass successfully when order status is correct",()=>{
@@ -223,8 +221,7 @@ describe("Orders validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateOrdersStatus(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next);
         })
     })
 })

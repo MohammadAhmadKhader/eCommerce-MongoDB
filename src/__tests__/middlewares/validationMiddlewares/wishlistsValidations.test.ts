@@ -1,6 +1,6 @@
 import { validateAddToWishList, validateRemoveFromWishlist } from "../../../middlewares/validationsFunctions";
 import { hexWith24Char, hexWith25Char, stringWith24Char } from "../../assets/testData/stringTestData";
-import { createResponseNext } from "../../utils/helperTestFunctions.test";
+import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
 import { Request } from "express";
 
 describe("Wishlists validation middlewares",()=>{
@@ -13,10 +13,10 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as Request;
             validateAddToWishList(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "productId is required",
-            ]})
+            ])
         })
 
         it("Should return an error that when productId is length 24 and not hex",()=>{
@@ -27,10 +27,10 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as Request;
             validateAddToWishList(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "productId must only contain hexadecimal characters",
-            ]})
+            ])
         })
 
         it("Should return an error that when productId is not string",()=>{
@@ -41,10 +41,10 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as Request;
             validateAddToWishList(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "productId must be a string",
-            ]})
+            ])
         })
 
         it("Should return an error that when productId is length is not 24",()=>{
@@ -55,10 +55,10 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as Request;
             validateAddToWishList(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "productId length must be 24 characters long",
-            ]})
+            ])
         })
 
         it("Should pass successfully when productId is hex 24 length",()=>{
@@ -69,8 +69,7 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as Request;
             validateAddToWishList(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next);
         })
     })
 
@@ -83,10 +82,10 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as Request;
             validateRemoveFromWishlist(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+                
+            expectValidationError(next,[
                 "wishlistItemId is required",
-            ]})
+            ])
         })
 
         it("Should return an error that when wishlistItemId is length 24 and not hex",()=>{
@@ -97,10 +96,10 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateRemoveFromWishlist(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "wishlistItemId must only contain hexadecimal characters",
-            ]})
+            ])
         })
 
         it("Should return an error that when wishlistItemId is not string",()=>{
@@ -111,10 +110,10 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateRemoveFromWishlist(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "wishlistItemId must be a string",
-            ]})
+            ])
         })
 
         it("Should return an error that when wishlistItemId is length is not 24",()=>{
@@ -125,10 +124,10 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateRemoveFromWishlist(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "wishlistItemId length must be 24 characters long",
-            ]})
+            ])
         })
 
         it("Should pass successfully when wishlistItemId is hex 24 length",()=>{
@@ -139,8 +138,8 @@ describe("Wishlists validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateRemoveFromWishlist(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            
+            expectValidationPassed(next);
         })
     })
 

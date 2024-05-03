@@ -1,8 +1,9 @@
 
-import { validateCreatingAddress, validateForgotPassword, validateResetPasswordViaCode, validateUpdatingAddress, validateUserChangeInformation, validateUserChangePassword, validateUserRegistration, validateUserSignIn } from "../../../middlewares/validationsFunctions";
-import { emailWith5Char, emailWith64Char, emailWith65Char, emailWith6Char, stringWith10Char, stringWith12Char, stringWith13Char, stringWith15Char, stringWith16Char, stringWith24Char, stringWith25Char, stringWith2Char, stringWith32Char, stringWith33Char, stringWith3Char, stringWith4Char, stringWith5Char, stringWith62Char, stringWith63Char, stringWith65Char, stringWith6Char } from "../../assets/testData/stringTestData";
-import { createResponseNext } from "../../utils/helperTestFunctions.test";
-import {Request,Response,NextFunction} from "express";
+import { validateCreatingAddress,validateUpdatingAddress, } from "../../../middlewares/validationsFunctions";
+import { stringWith12Char, stringWith13Char, stringWith15Char, stringWith16Char, stringWith2Char, stringWith32Char,
+     stringWith33Char, stringWith3Char, stringWith4Char, stringWith5Char, stringWith62Char, stringWith63Char, stringWith6Char } from "../../assets/testData/stringTestData";
+import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
+import {Request} from "express";
 
 describe("Addresses validation middlewares",()=>{
     describe("Testing creating address middleware",()=>{
@@ -13,15 +14,15 @@ describe("Addresses validation middlewares",()=>{
                     
                 }
             } as Request;
-            validateCreatingAddress(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            validateCreatingAddress(req,res,next);
+
+            expectValidationError(next,[
                 "fullName is required",
                 "streetAddress is required",
                 "city is required",
                 "state is required",
                 "mobileNumber is required",
-            ]})
+            ])
         })
 
         it("Should return error with all data empty",()=>{
@@ -36,14 +37,14 @@ describe("Addresses validation middlewares",()=>{
                 }
             } as Request;
             validateCreatingAddress(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "fullName is not allowed to be empty",
                 "streetAddress is not allowed to be empty",
                 "city is not allowed to be empty",
                 "state is not allowed to be empty",
                 "mobileNumber is not allowed to be empty",
-            ]})
+            ])
         })
 
 
@@ -59,16 +60,16 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith5Char
                 }
             } as Request;
-            validateCreatingAddress(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            validateCreatingAddress(req,res,next);
+
+            expectValidationError(next,[
                 "fullName length must be at least 4 characters long",
-                     "streetAddress length must be at least 4 characters long",
-                     "city length must be at least 3 characters long",
-                    "state length must be at least 4 characters long",
-                    "mobileNumber length must be at least 6 characters long",
-                     "pinCode length must be at least 3 characters long",
-            ]})
+                "streetAddress length must be at least 4 characters long",
+                "city length must be at least 3 characters long",
+                "state length must be at least 4 characters long",
+                "mobileNumber length must be at least 6 characters long",
+                "pinCode length must be at least 3 characters long",
+            ])
         })
 
         it("Should return error with all data more than the maximum length",()=>{
@@ -84,15 +85,15 @@ describe("Addresses validation middlewares",()=>{
                 }
             } as Request;
             validateCreatingAddress(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "fullName length must be less than or equal to 32 characters long",
                 "streetAddress length must be less than or equal to 62 characters long",
                 "city length must be less than or equal to 32 characters long",
                 "state length must be less than or equal to 32 characters long",
                 "mobileNumber length must be less than or equal to 15 characters long",
                 "pinCode length must be less than or equal to 12 characters long",
-            ]})
+            ])
         })
 
         it("Should pass with all parameters on max length",()=>{
@@ -107,10 +108,9 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith15Char
                 }
             } as Request;
-            const test = validateCreatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateCreatingAddress(req,res,next);
+
+            expectValidationPassed(next)
         })
 
         it("Should pass with all parameters on min length",()=>{
@@ -125,10 +125,9 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith6Char
                 }
             } as Request;
-            const test = validateCreatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateCreatingAddress(req,res,next);
+            
+            expectValidationPassed(next)
         })
     })
 
@@ -137,12 +136,14 @@ describe("Addresses validation middlewares",()=>{
            const { next,res } = createResponseNext()
             const req = {
                 body:{
-                    
+                    fullName:undefined
                 }
             } as Request;
-            validateUpdatingAddress(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:"one field at least is required"})
+            validateUpdatingAddress(req,res,next);
+
+            expectValidationError(next,[
+                "one field at least is required"
+            ])
         })
 
         it("Should return error with all data empty",()=>{
@@ -158,15 +159,15 @@ describe("Addresses validation middlewares",()=>{
                 }
             } as Request;
             validateUpdatingAddress(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "fullName is not allowed to be empty",
                 "streetAddress is not allowed to be empty",
                 "city is not allowed to be empty",
                 "state is not allowed to be empty",
                 "mobileNumber is not allowed to be empty",
                 "pinCode is not allowed to be empty",
-            ]})
+            ])
         })
 
 
@@ -183,15 +184,15 @@ describe("Addresses validation middlewares",()=>{
                 }
             } as Request;
             validateUpdatingAddress(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "fullName length must be at least 4 characters long",
-                     "streetAddress length must be at least 4 characters long",
-                     "city length must be at least 3 characters long",
-                    "state length must be at least 4 characters long",
-                    "mobileNumber length must be at least 6 characters long",
-                     "pinCode length must be at least 3 characters long",
-            ]})
+                "streetAddress length must be at least 4 characters long",
+                "city length must be at least 3 characters long",
+                "state length must be at least 4 characters long",
+                "mobileNumber length must be at least 6 characters long",
+                "pinCode length must be at least 3 characters long",
+            ])
         })
 
         it("Should return error with all data more than the maximum length",()=>{
@@ -206,16 +207,16 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith16Char
                 }
             } as Request;
-            validateUpdatingAddress(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            validateUpdatingAddress(req,res,next);
+
+            expectValidationError(next,[
                 "fullName length must be less than or equal to 32 characters long",
                 "streetAddress length must be less than or equal to 62 characters long",
                 "city length must be less than or equal to 32 characters long",
                 "state length must be less than or equal to 32 characters long",
                 "mobileNumber length must be less than or equal to 15 characters long",
                 "pinCode length must be less than or equal to 12 characters long",
-            ]})
+            ])
         })
 
         it("Should pass with all parameters on max length",()=>{
@@ -230,10 +231,9 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith15Char
                 }
             } as Request;
-            const test = validateUpdatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateUpdatingAddress(req,res,next);
+            
+            expectValidationPassed(next)
         })
 
         it("Should pass with all parameters on min length",()=>{
@@ -248,10 +248,9 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith6Char
                 }
             } as Request;
-            const test = validateUpdatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateUpdatingAddress(req,res,next);
+            
+            expectValidationPassed(next)
         })
 
         it("Should pass when fullname is not set",()=>{
@@ -265,10 +264,9 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith6Char
                 }
             } as Request;
-            const test = validateUpdatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateUpdatingAddress(req,res,next);
+            
+            expectValidationPassed(next)
         })
         
         it("Should pass when pinCode is not set",()=>{
@@ -282,10 +280,9 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith6Char
                 }
             } as Request;
-            const test = validateUpdatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateUpdatingAddress(req,res,next);
+            
+            expectValidationPassed(next)
         })
 
         it("Should pass when mobileNumber is not set",()=>{
@@ -299,10 +296,9 @@ describe("Addresses validation middlewares",()=>{
                     city:stringWith3Char,
                 }
             } as Request;
-            const test = validateUpdatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateUpdatingAddress(req,res,next);
+            
+            expectValidationPassed(next)
         })
 
         it("Should pass when state is not set",()=>{
@@ -316,10 +312,9 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith6Char
                 }
             } as Request;
-            const test = validateUpdatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateUpdatingAddress(req,res,next);
+            
+            expectValidationPassed(next)
         })
 
         it("Should pass when streetAddress is not set",()=>{
@@ -333,10 +328,9 @@ describe("Addresses validation middlewares",()=>{
                     mobileNumber:stringWith6Char
                 }
             } as Request;
-            const test = validateUpdatingAddress(req,res,next);
-            expect(test).toBe(next())
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateUpdatingAddress(req,res,next);
+            
+            expectValidationPassed(next)
         })
     })
 })

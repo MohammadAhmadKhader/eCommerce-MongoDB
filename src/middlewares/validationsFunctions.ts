@@ -18,8 +18,7 @@ export const validateUserRegistration = (req:Request,res:Response,next:NextFunct
     },{abortEarly:false})
     
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -29,12 +28,10 @@ export const validateUserChangePassword = (req:Request,res:Response,next:NextFun
         oldPassword:req.body.oldPassword,
         newPassword:req.body.newPassword,
         confirmNewPassword:req.body.confirmNewPassword
-
     },{abortEarly:false})
     
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -46,8 +43,7 @@ export const validateUserReview = (req:Request,res:Response,next:NextFunction)=>
     },{abortEarly:false})
     
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -64,15 +60,14 @@ export const validateCreatingAddress = (req:Request,res:Response,next:NextFuncti
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     
     return next()
 }
 
 export const validateUpdatingAddress = (req:Request,res:Response,next:NextFunction)=>{
-    const addressToUpdate : any= {
+    const addressToUpdate : any = {
         fullName:req.body.fullName,
         streetAddress:req.body.streetAddress,
         state:req.body.state,
@@ -83,9 +78,9 @@ export const validateUpdatingAddress = (req:Request,res:Response,next:NextFuncti
     const {error} = updatingAddressSchema.validate(addressToUpdate,{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
+
     for(const key in addressToUpdate){
         if(addressToUpdate[key] === undefined){
             delete addressToUpdate[key]
@@ -93,7 +88,17 @@ export const validateUpdatingAddress = (req:Request,res:Response,next:NextFuncti
     }
     
     if(Object.keys(addressToUpdate).length == 0){
-        return res.status(400).json({error:"one field at least is required"})
+        const details = [
+            {
+                message: 'one field at least is required',
+                path: [],
+                type: 'any.required',
+                context: {},
+            }
+        ]
+        
+        const error = new Joi.ValidationError("one field at least is required",details,{})
+        return next(error);
     }
     return next()
 }
@@ -111,9 +116,8 @@ export const validateCreateProduct = (req:Request,res:Response,next:NextFunction
     },{abortEarly:false})
     
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        req.validationError = errorMessage;
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["categoryId"]}
+        return next(error);
     }
     return next()
 }
@@ -127,8 +131,7 @@ export const validateSendingMessage = (req:Request,res:Response,next:NextFunctio
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -140,8 +143,8 @@ export const validateAddingToCart = (req:Request,res:Response,next:NextFunction)
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["productId"]};
+        return next(error);
     }
     return next()
 }
@@ -153,8 +156,7 @@ export const validateUserSignIn = (req:Request,res:Response,next:NextFunction)=>
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -167,8 +169,8 @@ export const validateChangeCartItemQuantityByOne = (req:Request,res:Response,nex
     },{abortEarly:false})
     
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["productId","cartItemId"]};
+        return next(error);
     }
     return next()
 }
@@ -179,8 +181,8 @@ export const validateDeletingFromCart = (req:Request,res:Response,next:NextFunct
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["cartItemId"]};
+        return next(error);
     }
     return next()
 }
@@ -192,8 +194,7 @@ export const validateResetPasswordViaCode = (req:Request,res:Response,next:NextF
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -204,8 +205,7 @@ export const validateForgotPassword = (req:Request,res:Response,next:NextFunctio
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -216,8 +216,8 @@ export const validateAddToWishList = (req:Request,res:Response,next:NextFunction
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["productId"]};
+        return next(error);
     }
     return next()
 }
@@ -228,8 +228,8 @@ export const validateRemoveFromWishlist = (req:Request,res:Response,next:NextFun
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["wishlistItemId"]};
+        return next(error);
     }
     return next()
 }
@@ -242,8 +242,8 @@ export const validateEditUserReview = (req:Request,res:Response,next:NextFunctio
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["reviewId"]};
+        return next(error);
     }
     return next()
 }
@@ -255,8 +255,8 @@ export const validateDeleteUserReview = (req:Request,res:Response,next:NextFunct
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["productId","reviewId"]};
+        return next(error);
     }
     return next()
 }
@@ -268,8 +268,8 @@ export const validateCheckOrder = (req:Request,res:Response,next:NextFunction)=>
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["orderId"]};
+        return next(error);
     }
     return next()
 }
@@ -280,8 +280,7 @@ export const validateOrderId = (req:Request,res:Response,next:NextFunction)=>{
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -292,8 +291,8 @@ export const validatePaymentIntent = (req:Request,res:Response,next:NextFunction
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        req.validationError = {blacklistedKeys:["orderId"]};
+        return next(error);
     }
     return next()
 }
@@ -302,10 +301,10 @@ export const validateOrdersStatus = (req:Request,res:Response,next:NextFunction)
     const {error} = ordersStatusSchema.validate({
         status:req.query.status
     },{abortEarly:false})
+    
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -316,9 +315,7 @@ export const validateAppendImagesToProduct = (req:Request,res:Response,next:Next
     },{abortEarly:false})
     
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        req.validationError = errorMessage;
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -333,9 +330,7 @@ export const validateUserChangeInformation = (req:Request,res:Response,next:Next
     },{abortEarly:false})
     
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        req.validationError = errorMessage;
-        return res.status(400).json({error:errorMessage});
+        return next(error);
     }
     return next()
 }
@@ -346,8 +341,7 @@ export const validateCreateBrand = (req:Request,res:Response,next:NextFunction)=
     },{abortEarly:false})
 
     if(error){
-        const errorMessage = error.details.map((detail) => detail.message.replace(/["']/g,''));
-        return res.status(400).json({error:errorMessage});
+        return next(error)
     }
     return next()
 }

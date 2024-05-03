@@ -1,8 +1,8 @@
 
 import { validateAddingToCart, validateChangeCartItemQuantityByOne, validateDeletingFromCart,} from "../../../middlewares/validationsFunctions";
 import { hexWith24Char, hexWith25Char} from "../../assets/testData/stringTestData";
-import { createResponseNext } from "../../utils/helperTestFunctions.test";
-import {Request,Response,NextFunction} from "express";
+import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
+import {Request} from "express";
 
 describe("Carts validation middlewares",()=>{
     describe("Testing validatAddingToCart middleware",()=>{
@@ -14,11 +14,11 @@ describe("Carts validation middlewares",()=>{
                     }
                 } as Request;
                 validateAddingToCart(req,res,next);
-                expect(res.status).toHaveBeenCalledWith(400);
-                expect(res.json).toHaveBeenCalledWith({error:[
+                
+                expectValidationError(next,[
                     "productId is required",
                      "quantity is required",
-                ]})
+                ])
         })
 
         it("Should return an error when quantity is not integer",()=>{
@@ -30,10 +30,10 @@ describe("Carts validation middlewares",()=>{
                 }
             } as Request;
             validateAddingToCart(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "quantity must be an integer"
-            ]})
+            ])
         })
 
         it("Should return an error when quantity is minus",()=>{
@@ -45,10 +45,10 @@ describe("Carts validation middlewares",()=>{
                 }
             } as Request;
             validateAddingToCart(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+    
+            expectValidationError(next,[
                 "quantity must be greater than or equal to 1",
-            ]})
+            ])
         })
 
         it("Should return an error when productId is not hex 24 length",()=>{
@@ -60,10 +60,10 @@ describe("Carts validation middlewares",()=>{
                 }
             } as Request;
             validateAddingToCart(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+        
+            expectValidationError(next,[
                 "productId length must be 24 characters long",
-            ]})
+            ])
         })
 
         it("Should pass successfully when quantity is 1 and productId is hex 24 length",()=>{
@@ -75,8 +75,7 @@ describe("Carts validation middlewares",()=>{
                 }
             } as Request;
             validateAddingToCart(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next)
         })
 
         it("Should pass successfully when quantity is more than 1 and positive and productId is hex 24 length",()=>{
@@ -88,8 +87,7 @@ describe("Carts validation middlewares",()=>{
                 }
             } as Request;
             validateAddingToCart(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next)
         })
     })
     
@@ -105,12 +103,12 @@ describe("Carts validation middlewares",()=>{
                     }
                 } as Request;
                 validateChangeCartItemQuantityByOne(req,res,next);
-                expect(res.status).toHaveBeenCalledWith(400);
-                expect(res.json).toHaveBeenCalledWith({error:[
+                
+                expectValidationError(next,[
                     "productId is required",
                     "cartItemId is required",
                     "operation is required",
-                ]})
+                ])
         })
 
         it("Should return an error when operation is not +1 or -1",()=>{
@@ -126,10 +124,10 @@ describe("Carts validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateChangeCartItemQuantityByOne(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+    
+            expectValidationError(next,[
                 "operation must be one of [+1, -1]",
-            ]})
+            ])
         })
 
         it("Should pass successfully when productId cartItemId are hex 24 length and operation is +1",()=>{
@@ -144,8 +142,7 @@ describe("Carts validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateChangeCartItemQuantityByOne(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next)
         })
 
         it("Should pass successfully when productId cartItemId are hex 24 length and operation is -1",()=>{
@@ -160,8 +157,7 @@ describe("Carts validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateChangeCartItemQuantityByOne(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next)
         })
     })
 
@@ -174,10 +170,10 @@ describe("Carts validation middlewares",()=>{
                     }
                 } as Request;
                 validateDeletingFromCart(req,res,next);
-                expect(res.status).toHaveBeenCalledWith(400);
-                expect(res.json).toHaveBeenCalledWith({error:[
+
+                expectValidationError(next,[
                     "cartItemId is required",
-                ]})
+                ])
         })
 
         it("Should return an error when cartItem Id is not 24 length",()=>{
@@ -188,10 +184,10 @@ describe("Carts validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateDeletingFromCart(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "cartItemId length must be 24 characters long",
-            ]})
+            ])
         })
 
         it("Should pass successfully when cartItemId is hex 24 length",()=>{
@@ -202,8 +198,7 @@ describe("Carts validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateDeletingFromCart(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next)
         })
     })
 })

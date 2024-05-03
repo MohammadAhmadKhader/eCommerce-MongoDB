@@ -1,8 +1,12 @@
 
-import { validateForgotPassword, validateResetPasswordViaCode, validateUserChangeInformation, validateUserChangePassword, validateUserRegistration, validateUserSignIn } from "../../../middlewares/validationsFunctions";
-import { emailWith5Char, emailWith64Char, emailWith65Char, emailWith6Char, stringWith10Char, stringWith15Char, stringWith16Char, stringWith24Char, stringWith25Char, stringWith32Char, stringWith33Char, stringWith3Char, stringWith4Char, stringWith5Char, stringWith65Char, stringWith6Char } from "../../assets/testData/stringTestData";
-import { createResponseNext } from "../../utils/helperTestFunctions.test";
-import {Request,Response,NextFunction} from "express";
+import { validateForgotPassword, validateResetPasswordViaCode, validateUserChangeInformation, validateUserChangePassword, 
+    validateUserRegistration, validateUserSignIn } from "../../../middlewares/validationsFunctions";
+import { emailWith5Char, emailWith64Char, emailWith65Char, emailWith6Char, stringWith10Char, 
+    stringWith15Char, stringWith16Char, stringWith24Char, stringWith25Char, stringWith32Char,
+     stringWith33Char, stringWith3Char, stringWith4Char, stringWith5Char, stringWith65Char, stringWith6Char } 
+     from "../../assets/testData/stringTestData";
+import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
+import {Request} from "express";
 
 describe("Users validation middlewares",()=>{
     describe("Testing registration validator middleware",()=>{ 
@@ -17,13 +21,13 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserRegistration(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
-                    "firstName is not allowed to be empty",
+
+            expectValidationError(next,[
+                "firstName is not allowed to be empty",
                     "lastName is not allowed to be empty",
                     "email is not allowed to be empty",
                     "password is not allowed to be empty",
-            ]})
+            ])
         })
 
         it("Should return call next function with minimum length on all parameters",()=>{ 
@@ -37,8 +41,7 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserRegistration(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+            expectValidationPassed(next);
         })
 
         it("Should return call next function with max length on all parameters",()=>{ 
@@ -52,8 +55,7 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserRegistration(req,res,next);
-            expect(res.status).not.toHaveBeenCalled()
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next);
         })
 
         it("Should return an error that all given data length is less than the required",()=>{ 
@@ -67,14 +69,14 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserRegistration(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "firstName length must be at least 4 characters long",
                 "lastName length must be at least 4 characters long",
                 "email must be a valid email",
                 "email length must be at least 6 characters long",
                 "password length must be at least 6 characters long",
-            ]})
+            ])
         })
 
         it("Should return an error that all given data length is more than the required",()=>{ 
@@ -88,17 +90,31 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserRegistration(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "firstName length must be less than or equal to 32 characters long",
                 "lastName length must be less than or equal to 32 characters long",
                 "email must be a valid email",
                 "password length must be less than or equal to 24 characters long",
-            ]})
+            ])
         })
 
         it("Should return an error that only alphanum characters allowed",()=>{
+            const { next,res } = createResponseNext()
+            const req = {
+                body:{
+                    firstName:"dwdd_s'x@",
+                    lastName:"dwdd_s'x@",
+                    email:emailWith6Char,
+                    password:stringWith24Char,
+                }
+            } as Request;
+            validateUserRegistration(req,res,next);
 
+            expectValidationError(next,[
+                "firstName must only contain alpha-numeric characters",
+                "lastName must only contain alpha-numeric characters",
+            ])
         })
     })
 
@@ -113,13 +129,11 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserChangePassword(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledTimes(1);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "oldPassword is not allowed to be empty",
                 "newPassword is not allowed to be empty",
-            ]})
-
+            ])
         })
 
         it("Should return error with all data less than the minimum length",()=>{
@@ -132,12 +146,11 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserChangePassword(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledTimes(1);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "oldPassword length must be at least 6 characters long",
                 "newPassword length must be at least 6 characters long",
-            ]})
+            ])
         })
 
         it("Should return error with all data more than the maximum length",()=>{
@@ -150,12 +163,11 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserChangePassword(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledTimes(1);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "oldPassword length must be less than or equal to 24 characters long",
                 "newPassword length must be less than or equal to 24 characters long",
-            ]})
+            ])
         })
 
         it("Should return error with not matching passwords",()=>{
@@ -168,11 +180,10 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserChangePassword(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledTimes(1);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "Password Must Match",
-            ]})
+            ])
         })
 
         it("Should pass the function and not call the json or status",()=>{
@@ -184,10 +195,9 @@ describe("Users validation middlewares",()=>{
                     confirmNewPassword:stringWith6Char
                 }
             } as Request;
-            const test = validateUserChangePassword(req,res,next);
-            expect(test).toBe(next());
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+            validateUserChangePassword(req,res,next);
+            
+            expectValidationPassed(next);
         })
     })
 
@@ -200,11 +210,11 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserSignIn(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "email is required",
                 "password is required",
-            ]});
+            ])
         })
 
         it("Should return an error with when all fields are less than the minimum length allowed or when email is invalid",()=>{
@@ -216,12 +226,12 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserSignIn(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "email must be a valid email",
                 "email length must be at least 6 characters long",
                 "password length must be at least 6 characters long",
-            ]});
+            ])
         })
 
         it("Should return an error with when all fields are more than maximum length",()=>{
@@ -233,11 +243,11 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserSignIn(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "email length must be less than or equal to 64 characters long",
                 "password length must be less than or equal to 24 characters long",
-            ]});
+            ])
         })
 
 
@@ -250,8 +260,7 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserSignIn(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+            expectValidationPassed(next);
         })
 
         it("Should pass successfully when email and password set to maximum allowed",()=>{
@@ -263,8 +272,7 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateUserSignIn(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+            expectValidationPassed(next);
         })
     })
 
@@ -277,11 +285,11 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateResetPasswordViaCode(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "newPassword is required",
                 "confirmedNewPassword is required",
-            ]});
+            ])
         })
 
         it("Should return an error when passwords are not matching",()=>{
@@ -293,10 +301,10 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateResetPasswordViaCode(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "Password Must Match",
-            ]});
+            ])
         })
 
         it("Should return an error when passwords are less than 6 characters",()=>{
@@ -308,10 +316,10 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateResetPasswordViaCode(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "newPassword length must be at least 6 characters long",
-            ]});
+            ])
         })
 
         it("Should return an error when passwords are more than 24 characters",()=>{
@@ -323,10 +331,10 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateResetPasswordViaCode(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "newPassword length must be less than or equal to 24 characters long",
-            ]});
+            ])
         })
 
         it("Should pass successfully when passwords are set to maximum allowed",()=>{
@@ -338,8 +346,7 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateResetPasswordViaCode(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+            expectValidationPassed(next);
         })
 
         it("Should pass successfully when passwords are set to minimum allowed allowed",()=>{
@@ -351,8 +358,7 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateResetPasswordViaCode(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+            expectValidationPassed(next);
         })
     })
 
@@ -365,10 +371,10 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateForgotPassword(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "email is required",
-            ]});
+            ])
         })
 
         it("Should return an error when email is less than minimum or invalid",()=>{
@@ -379,11 +385,11 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateForgotPassword(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "email must be a valid email",
                 "email length must be at least 6 characters long",
-            ]});
+            ])
         })
 
         it("Should return an error when email is more than maximum",()=>{
@@ -394,10 +400,10 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateForgotPassword(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "email length must be less than or equal to 64 characters long",
-            ]});
+            ])
         })
 
         it("Should pass successfully when email set to max allowed (64 characters)",()=>{
@@ -408,8 +414,8 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateForgotPassword(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+
+            expectValidationPassed(next);
         })
 
 
@@ -421,8 +427,8 @@ describe("Users validation middlewares",()=>{
                 }
             } as Request;
             validateForgotPassword(req,res,next);
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+
+            expectValidationPassed(next);
         })
     })
 
@@ -439,10 +445,10 @@ describe("Users validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateUserChangeInformation(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            
+            expectValidationError(next,[
                 "value failed custom validation because : At least one of the following fields is required: firstName, lastName, email, mobileNumber, birthdate",
-            ]})
+            ]);
         })
 
         it("Should pass successfully when all arguments set to minimum values",()=>{
@@ -456,9 +462,9 @@ describe("Users validation middlewares",()=>{
                     mobileNumber:stringWith6Char
                 }
             } as unknown as Request;
-            validateUserChangeInformation(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateUserChangeInformation(req,res,next);
+
+            expectValidationPassed(next);
         })
 
         it("Should pass successfully when all arguments set to maximum values",()=>{
@@ -473,8 +479,8 @@ describe("Users validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateUserChangeInformation(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            
+            expectValidationPassed(next);
         })
 
         it("Should return an error when values set to more than maximum",()=>{
@@ -489,13 +495,13 @@ describe("Users validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateUserChangeInformation(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "firstName length must be less than or equal to 32 characters long",
                 "lastName length must be less than or equal to 32 characters long",
                 "email length must be less than or equal to 64 characters long",
                 "mobileNumber length must be less than or equal to 15 characters long",
-            ]})
+            ])
         })
 
         it("Should return an error when values set to less than minimum or when email is invalid",()=>{
@@ -509,14 +515,14 @@ describe("Users validation middlewares",()=>{
                     mobileNumber:stringWith5Char
                 }
             } as unknown as Request;
-            validateUserChangeInformation(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            validateUserChangeInformation(req,res,next);
+
+            expectValidationError(next,[
                 "lastName length must be at least 4 characters long",
                 "email must be a valid email",
                 "email length must be at least 6 characters long",
                 "mobileNumber length must be at least 6 characters long",
-            ]})
+            ])
         })
     })
 
