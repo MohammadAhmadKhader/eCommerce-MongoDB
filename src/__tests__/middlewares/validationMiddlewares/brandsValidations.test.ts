@@ -1,8 +1,8 @@
 import { faker } from "@faker-js/faker";
 import { validateCreateBrand } from "../../../middlewares/validationsFunctions";
-import { createResponseNext } from "../../utils/helperTestFunctions.test";
+import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
 import { stringWith32Char, stringWith33Char } from "../../assets/testData/stringTestData";
-import {Request,Response,NextFunction} from "express";
+import {Request,} from "express";
 
 describe("Brands validation middleware",()=>{
     describe("Tesitng validateCreateBrand Middleware",()=>{
@@ -14,10 +14,10 @@ describe("Brands validation middleware",()=>{
                 },
             } as unknown as Request;
             validateCreateBrand(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            
+            expectValidationError(next,[
                 "brandName is required",
-            ]})
+            ])
         })
 
         it("Should return an error when fields are less than minimum",()=>{
@@ -28,10 +28,10 @@ describe("Brands validation middleware",()=>{
                 },
             } as unknown as Request;
             validateCreateBrand(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "brandName is not allowed to be empty",
-            ]})
+            ])
         })
 
         it("Should return an error when fields are more than maximum",()=>{
@@ -42,10 +42,10 @@ describe("Brands validation middleware",()=>{
                 },
             } as unknown as Request;
             validateCreateBrand(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            
+            expectValidationError(next,[
                 "brandName length must be less than or equal to 32 characters long",
-            ]})
+            ])
         })
 
         it("Should pass successfully when brandName set to maximum",()=>{
@@ -56,8 +56,7 @@ describe("Brands validation middleware",()=>{
                 },
             } as unknown as Request;
             validateCreateBrand(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next)
         })
 
         it("Should pass successfully when brandName set to minimum",()=>{
@@ -80,8 +79,7 @@ describe("Brands validation middleware",()=>{
                 },
             } as unknown as Request;
             validateCreateBrand(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            expectValidationPassed(next)
         })
     })
 })

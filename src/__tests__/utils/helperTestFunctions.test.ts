@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { NextFunction, Response } from "express";
 import SessionToken from "../../models/sessionToken";
 import { signToken } from "../../utils/HelperFunctions";
 import User from "../../models/user";
@@ -9,6 +9,7 @@ import testData from "../assets/testData/testData.json"
 import { faker } from "@faker-js/faker";
 import crypto from 'crypto';
 import ResetPassCode from "../../models/resetPassCode";
+import Joi from "joi";
 
 const tokensCache : ITokensCache = {};
 
@@ -343,4 +344,22 @@ export const addToWishlistAndReturnItemId = async (userId:string,productId:strin
         console.error(error);
         return ""
     }
+}
+
+export const extractJoiCallErrorMessage = (mockNext : jest.Mock<any, any, any>)=>{
+    const error = JSON.parse(JSON.stringify(mockNext.mock.calls[0]))[0];
+    const errorMessages = error.details.map((detail : Joi.ValidationErrorItem) => detail.message.replace(/["']/g,''));
+    return errorMessages;
+}
+
+export const expectValidationError = (next : NextFunction,error:string[])=>{
+    expect(next).toHaveBeenCalledWith(expect.any(Joi.ValidationError));
+    const receivedErrors = extractJoiCallErrorMessage(next as any);
+    expect(receivedErrors).toStrictEqual(error);
+    expect(next).toHaveBeenCalledTimes(1);
+}
+
+export const expectValidationPassed = (next : NextFunction)=>{
+    expect(next).toHaveBeenCalledWith();
+    expect(next).toHaveBeenCalledTimes(1);
 }

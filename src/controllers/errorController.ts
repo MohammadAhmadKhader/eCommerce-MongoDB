@@ -1,5 +1,6 @@
 import {  NextFunction,Request,Response, } from 'express';
 import AppError from '../utils/AppError';
+import Joi from 'joi';
 
 const errorController = ((error : any ,req : Request,res : Response,next : NextFunction)=>{
     error.statusCode = error.statusCode || 500;
@@ -24,6 +25,10 @@ const errorController = ((error : any ,req : Request,res : Response,next : NextF
         
         if(error.name == "JsonWebTokenError" && error.message == "invalid signature"){
             error = malformedTokenErrorHandler();
+        }
+
+        if(error.name = "ValidationError"){
+            error = validationErrorHandler(req,error);
         }
 
         productionErrors(res,error)
@@ -55,6 +60,26 @@ const tokenExpiredErrorHandler = ()=>{
 const malformedTokenErrorHandler = ()=>{
     const message ="Invalid token. Please provide a valid token.";
     return new AppError(message,401);
+}
+
+export const validationErrorHandler = (req : Request,error: Joi.ValidationError)=>{
+    const errorMessages = error.details.map((detail) => detail.message.replace(/["']/g,''));
+    let isBehaviorSuspicious = false;
+    
+    if(req.validationError){
+        req.validationError.blacklistedKeys.forEach((blacklistedKey)=>{
+            errorMessages.forEach((errorMessage)=>{
+                if(errorMessage.includes(blacklistedKey)){
+                    isBehaviorSuspicious = true;
+                } 
+            })
+        })
+    }
+    
+    if(isBehaviorSuspicious){
+        return new AppError("Something went wrong please try again later!",500);
+    }
+    return new AppError(errorMessages[0],400);
 }
 
 const productionErrors = (res : Response,error : any)=>{

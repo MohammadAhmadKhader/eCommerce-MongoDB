@@ -1,8 +1,9 @@
 
-import { validateDeleteUserReview, validateEditUserReview, validateForgotPassword, validateResetPasswordViaCode, validateUserChangePassword, validateUserRegistration, validateUserReview, validateUserSignIn } from "../../../middlewares/validationsFunctions";
-import { emailWith5Char, emailWith64Char, emailWith65Char, emailWith6Char, hexWith24Char, hexWith25Char, stringWith10Char, stringWith24Char, stringWith256Char, stringWith257Char, stringWith25Char, stringWith32Char, stringWith33Char, stringWith3Char, stringWith4Char, stringWith5Char, stringWith65Char, stringWith6Char } from "../../assets/testData/stringTestData";
-import { createResponseNext } from "../../utils/helperTestFunctions.test";
-import {Request,Response,NextFunction} from "express";
+import { validateDeleteUserReview, validateEditUserReview, validateUserReview } from "../../../middlewares/validationsFunctions";
+import { hexWith24Char, hexWith25Char,  stringWith24Char, stringWith256Char, 
+    stringWith257Char, stringWith3Char, stringWith4Char, } from "../../assets/testData/stringTestData";
+import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
+import {Request} from "express";
 
 describe("Reviews validation middlewares",()=>{
     describe("Testing user add review to product middle ware",()=>{
@@ -15,12 +16,12 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as Request;
             validateUserReview(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
-                    "rating must be one of [1, 2, 3, 4, 5]",
-                    "rating must be a number",
-                    "comment is not allowed to be empty",
-            ]});
+
+            expectValidationError(next,[
+                "rating must be one of [1, 2, 3, 4, 5]",
+                "rating must be a number",
+                "comment is not allowed to be empty",
+            ])
         })
 
         it("Should return an error with comment less than 4 characters",()=>{
@@ -32,10 +33,10 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as Request;
             validateUserReview(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "comment length must be at least 4 characters long",
-            ]});
+            ])
         })
 
         it("Should return an error with comment more than 256 characters",()=>{
@@ -47,10 +48,10 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as Request;
             validateUserReview(req,res,next);
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "comment length must be less than or equal to 256 characters long",
-            ]});
+            ])
         })
 
         it("Should not call json and not call status and test pass with comment 4 char",()=>{
@@ -61,10 +62,9 @@ describe("Reviews validation middlewares",()=>{
                     comment:stringWith4Char,
                 }
             } as Request;
-            const test = validateUserReview(req,res,next);
-            expect(test).toBe(next());
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+            validateUserReview(req,res,next);
+            
+            expectValidationPassed(next);
         })
 
         it("Should not call json and not call status and test pass with comment 256 characters",()=>{
@@ -75,10 +75,9 @@ describe("Reviews validation middlewares",()=>{
                     comment:stringWith256Char,
                 }
             } as Request;
-            const test = validateUserReview(req,res,next);
-            expect(test).toBe(next());
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled();
+            validateUserReview(req,res,next);
+            
+            expectValidationPassed(next);
         })
     })
 
@@ -94,12 +93,12 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateEditUserReview(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "rating is required",
                 "comment is required",
                 "reviewId is required",
-            ]})
+            ])
         })
 
         it("Should return an error when rating is invalid number",()=>{
@@ -115,10 +114,10 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateEditUserReview(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "rating must be one of [1, 2, 3, 4, 5]",
-            ]})
+            ])
         })
 
         it("Should return an error when rating is invalid number",()=>{
@@ -134,10 +133,10 @@ describe("Reviews validation middlewares",()=>{
             } as unknown as Request
             
             validateEditUserReview(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "reviewId must only contain hexadecimal characters",
-            ]})
+            ])
         })
 
         it("Should return an error when review length is not 24",()=>{
@@ -152,10 +151,10 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateEditUserReview(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "reviewId length must be 24 characters long",
-            ]})
+            ])
         })
 
         it("Should pass successfully when all parameters meet the conditions",()=>{
@@ -171,8 +170,8 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateEditUserReview(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            
+            expectValidationPassed(next);
         })
     })
 
@@ -185,11 +184,11 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateDeleteUserReview(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+    
+            expectValidationError(next,[
                 "productId is required",
                 "reviewId is required",
-            ]})
+            ])
         })
 
         it("Should return an error that productId and reviewId must 24 length",()=>{
@@ -201,11 +200,11 @@ describe("Reviews validation middlewares",()=>{
                 }
             } as unknown as Request;
             validateDeleteUserReview(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+
+            expectValidationError(next,[
                 "productId length must be 24 characters long",
                 "reviewId length must be 24 characters long",
-            ]})
+            ])
         })
 
         it("Should return an error that productId and reviewId must be hex type",()=>{
@@ -216,12 +215,12 @@ describe("Reviews validation middlewares",()=>{
                     productId:stringWith24Char,
                 }
             } as unknown as Request;
-            validateDeleteUserReview(req,res,next)
-            expect(res.status).toHaveBeenCalledWith(400);
-            expect(res.json).toHaveBeenCalledWith({error:[
+            validateDeleteUserReview(req,res,next);
+
+            expectValidationError(next,[
                 "productId must only contain hexadecimal characters",
                 "reviewId must only contain hexadecimal characters",
-            ]})
+            ])
         })
 
         it("Should pass successfully when all parameters meet the conditions",()=>{
@@ -232,9 +231,8 @@ describe("Reviews validation middlewares",()=>{
                     productId:hexWith24Char,
                 }
             } as unknown as Request;
-            validateDeleteUserReview(req,res,next)
-            expect(res.status).not.toHaveBeenCalled();
-            expect(res.json).not.toHaveBeenCalled()
+            validateDeleteUserReview(req,res,next);
+            expectValidationPassed(next);
         })
     })
 
