@@ -5,9 +5,10 @@ import mongoose from "mongoose";
 import DatabaseTestHandler from "../../utils/DatabaseTestHandler";
 import testData from "../assets/testData/testData.json"
 import "../../config/cloudinary"
-import { createProduct, createUserTokenAndCache, expectErrorMessage,  expectOperationalError, popProductImages } from '../utils/helperTestFunctions.test';
+import { createProduct, createUserTokenAndCache, deleteProduct, expectErrorMessage,  expectOperationalError, findOneProductById, popProductImages } from '../utils/helperTestFunctions.test';
 import { ObjectId } from 'mongoose';
-import { expectProductReview } from '../utils/productUtils.test';
+import { expectProduct, expectProductReview } from '../utils/productUtils.test';
+
 const app = createServer()
 
 describe("Products",()=>{
@@ -26,7 +27,7 @@ describe("Products",()=>{
         await DatabaseTestHandler.disconnectFromDB(mongoose);
     })
     
-    describe("get product by id controller",()=>{
+    describe("Get product by id controller",()=>{
         it("should return product with comments and average ratings", async ()=>{
             const productId = "65ecde9d50cbedf3920a2c2b"
             const {body,statusCode} = await supertest(app).get(`/api/products/${productId}`);
@@ -65,7 +66,7 @@ describe("Products",()=>{
         })
     }) 
     
-    describe("get all products route",()=>{
+    describe("Get all products route",()=>{
         it("Should return products with page = 1 & limit = 9",async()=>{
             const {body,statusCode} = await supertest(app).get("/api/products?page=1&limit=9");
             expect(statusCode).toBe(200)
@@ -278,7 +279,7 @@ describe("Products",()=>{
         it("Should append images to product",async()=>{
             isNewImagesHasUploaded = true;
 
-            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdForUpdate}`)
+            const {body,statusCode} = await supertest(app).patch(`/api/products/addImages/${productIdForUpdate}`)
             .set('Authorization', adminUserToken)
             .attach("images",imagePath)
             .attach("images",imagePath)
@@ -293,21 +294,22 @@ describe("Products",()=>{
         })
         
         it("Should return an error because product was not found with status code 400",async()=>{
-            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdNotExisting}`)
-            .set('Authorization', adminUserToken)
+            const {body,statusCode} = await supertest(app).patch(`/api/products/addImages/${productIdNotExisting}`)
+            .set('Authorization', adminUserToken).attach("images",imagePath)
             expect(statusCode).toBe(400);
+
             expectErrorMessage(body);
             expectOperationalError(body);
             expect(body.message).toBe("Product was not found.")
         });
 
-        it("Should return an error because images were not sent and return error with status code 400",async()=>{
-            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdForUpdate}`)
+        it("Should return an error because images were not sent and return error with status code 500",async()=>{
+            const {body,statusCode} = await supertest(app).patch(`/api/products/addImages/${productIdForUpdate}`)
             .set('Authorization', adminUserToken);
             
-            expect(statusCode).toBe(400);
-            expectErrorMessage(body)
-            expectOperationalError(body)
+            expect(statusCode).toBe(500);
+            expectErrorMessage(body);
+            expect(body.message).toBe("Images were not sent")
         })
 
         afterAll(async()=>{
@@ -315,6 +317,94 @@ describe("Products",()=>{
                 await popProductImages(productIdForUpdate);
                 await popProductImages(productIdForUpdate);
             }
+        })
+    })
+
+    describe("Updates product information",()=>{
+        const productIdNotExisting = "66ec2c2fdcee2c7eb42f3e2f";
+        const productName = "TestingProducts";
+        const productDescription = "test Description Product";
+        const productBrand = "Levi's";
+        const productPrice = 100;
+        let productToTest : IProduct;
+
+        beforeAll(async()=>{
+            productToTest = await createProduct(productName,productDescription,productBrand,productPrice) as IProduct;
+        })
+
+        it("Should update product successfully and return product with success message and status code 200",async()=>{
+            const {body,statusCode} = await supertest(app).patch(`/api/products/${productToTest?._id}`)
+            .set('Authorization', adminUserToken).field("name",productName).field("categoryId",categoryId).field("brand",productBrand)
+            .field("description",productDescription);
+            
+            console.log(body.message);
+            expect(statusCode).toBe(200);
+            expect(body.message).toBe("success");
+            expectProduct(body.product);
+            const resultProduct = body.product as IProduct;
+
+            expect(resultProduct.name).toBe(productName);
+            expect(resultProduct.brand).toBe(productBrand);
+            expect(resultProduct.price).toBe(productPrice);
+            expect(resultProduct.finalPrice).toBe(productPrice);
+            expect(resultProduct.offer).toBe(0);
+            expect(resultProduct.description).toBe(productDescription);
+            expect(resultProduct.categoryId).toBe(categoryId);
+        })
+        
+        it("Should return an error because product was not found with status code 400",async()=>{
+            const {body,statusCode} = await supertest(app).patch(`/api/products/${productIdNotExisting}`)
+            .set('Authorization', adminUserToken).field("name",productName).field("categoryId",categoryId).field("brand",productBrand);
+
+            expect(statusCode).toBe(400);
+            expectErrorMessage(body);
+            expectOperationalError(body);
+            expect(body.message).toBe("Product was not found.")
+        });
+
+        afterAll(async()=>{
+            await deleteProduct(productToTest?._id)
+        })
+    })
+
+    describe("Updates specific product image",()=>{
+        const productIdToUpdateSingleImage = testData.productIdToUpdateSingleImage;
+        const imageIdToUpdate = testData.imageObjIdToUpdate;
+        const randomObjectId = testData.ObjectIdDoestNotExist
+        let productToUpdateSingleImage: IProduct;
+
+        beforeAll(async()=>{
+            productToUpdateSingleImage = await findOneProductById(productIdToUpdateSingleImage) as IProduct;
+        });
+        
+        it("Should update product successfully and return product with success message and status code 200",async()=>{
+            const {body,statusCode} = await supertest(app).patch(`/api/products/image/${productToUpdateSingleImage?._id}`)
+            .set('Authorization', adminUserToken).attach("image",imagePath).field("imageId",imageIdToUpdate);
+            
+            expect(statusCode).toBe(200);
+            expect(body.message).toBe("success");
+            expectProduct(body.product);
+            const product = body.product as IProduct;
+            expect(product.images[0]._id).toBe(imageIdToUpdate);
+            // The product has only one images so we expect the link before and after update aren't equal
+            expect(product.images[0].imageUrl).not.toBe(productToUpdateSingleImage.images[0].imageUrl);
+            expect(product.images[0].thumbnailUrl).not.toBe(productToUpdateSingleImage.images[0].thumbnailUrl);
+        });
+
+        it("Should return an error with status code when product is not found",async()=>{
+            const {body,statusCode} = await supertest(app).patch(`/api/products/image/${randomObjectId}`)
+            .set('Authorization', adminUserToken).attach("image",imagePath).field("imageId",imageIdToUpdate);
+        
+            expect(statusCode).toBe(400);
+            expect(body.message).toBe("Product or image was not found.");
+        });
+
+        it("Should return an error with status code when product exist but image object id does not exist",async()=>{
+            const {body,statusCode} = await supertest(app).patch(`/api/products/image/${productToUpdateSingleImage?._id}`)
+            .set('Authorization', adminUserToken).attach("image",imagePath).field("imageId",randomObjectId);
+        
+            expect(statusCode).toBe(400);
+            expect(body.message).toBe("Product or image was not found.");
         })
     })
 

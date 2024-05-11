@@ -3,10 +3,11 @@ import { Request, Response } from "express"
 import Product from "../models/product"
 import CloudinaryUtils from "../utils/CloudinaryUtils";
 import { getThumbnailImageBuffer } from '../utils/ThumbnailUtils';
-import { isJSON } from '../utils/HelperFunctions';
+import { getImageObjById, isJSON } from '../utils/HelperFunctions';
 import { asyncHandler } from '../utils/AsyncHandler';
 import AppError from "../utils/AppError";
 import { ObjectId } from 'mongodb';
+import mongoose from 'mongoose';
 // import {setCache} from "../middlewares/cache";
 
 export const getProductById = asyncHandler( async(req,res,next)=>{
@@ -282,6 +283,92 @@ export const appendImagesToProduct = asyncHandler(async (req, res,next) =>{
     }
     
     return res.status(200).json({message:"success",newImages:uploadedImages})
+})
+
+export const updateProductInfo = asyncHandler(async (req, res, next) =>{
+    const productId = req.params.productId;
+    const { name, quantity, description, price , brand, categoryId, offer, finalPrice} = req.body;
+    const productBeforeUpdate = await Product.findOne({_id:productId});
+
+    if(!productBeforeUpdate){
+        const error = new AppError("Product was not found.",400)
+        return next(error);
+    }
+
+    const updateProduct = await Product.findOneAndUpdate({
+        _id:productId
+    },{
+        name,
+        quantity,
+        description,
+        price,
+        brand,
+        categoryId,
+        offer,
+        finalPrice,
+    },{
+        new:true,
+    });
+
+    return res.status(200).json({message:"success",product:updateProduct})
+})
+
+export const updateProductSingleImage = asyncHandler(async (req, res, next) =>{
+    const productId = req.params.productId;
+    const { imageId } : {imageId:string}= req.body;
+    const image = req.file as Express.Multer.File;
+
+    const match = {_id:productId, "images._id":new ObjectId(imageId)}
+
+    const productBeforeUpdate = await Product.findOne(match);
+    if(!productBeforeUpdate){
+        const error = new AppError("Product or image was not found.",400);
+        return next(error);
+    }
+    
+    const uploadImageApiResponse = await CloudinaryUtils.UploadOne(image.buffer,process.env.ProductsImagesFolder as string);
+    if(!uploadImageApiResponse){
+        const error = new AppError("An unexpected error occurred during uploading image",500);
+        return next(error);
+    }
+    const thumbnailBuffer = await getThumbnailImageBuffer(image.buffer);
+    const uploadThumbnailApiResponse = await CloudinaryUtils.UploadOne(thumbnailBuffer,process.env.ThumbnailsImagesFolder as string);
+    if(!uploadThumbnailApiResponse){
+        const error = new AppError("An unexpected error occurred during uploading image",500);
+        return next(error);
+    }
+    
+    const transaction = await mongoose.startSession();
+    transaction.startTransaction();
+
+    const productAfterUpdate = await Product.findOneAndUpdate(
+        match,
+        {
+            $set:{
+                "images.$[elem].imageUrl":uploadImageApiResponse.secure_url,
+                "images.$[elem].thumbnailUrl":uploadThumbnailApiResponse.secure_url,
+            }
+        },{
+            arrayFilters:[{
+                "elem._id": new ObjectId(imageId)
+            }],
+            new:true,
+            session:transaction
+        }
+    );
+
+    const {imageUrl,thumbnailUrl} = getImageObjById(productBeforeUpdate,imageId)!;
+
+    const deleteOldImage = await CloudinaryUtils.DeleteOne(imageUrl,process.env.ProductsImagesFolder as string);
+    const deleteOldThumbnail = await CloudinaryUtils.DeleteOne(thumbnailUrl,process.env.ThumbnailsImagesFolder as string);
+
+    if(!deleteOldImage || !deleteOldThumbnail){
+       await transaction.abortTransaction();
+       const error = new AppError("An unexpected error occurred during uploading image",500);
+       return next(error);
+    }
+
+    return res.status(200).json({message:"success",product:productAfterUpdate})
 })
 
 export const deleteProduct = asyncHandler(async (req, res, next) =>{

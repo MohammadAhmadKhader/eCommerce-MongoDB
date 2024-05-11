@@ -95,6 +95,7 @@ describe("Users validation middlewares",()=>{
                 "firstName length must be less than or equal to 32 characters long",
                 "lastName length must be less than or equal to 32 characters long",
                 "email must be a valid email",
+                "email length must be less than or equal to 64 characters long",
                 "password length must be less than or equal to 24 characters long",
             ])
         })

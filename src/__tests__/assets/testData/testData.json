@@ -43,6 +43,11 @@
   "userIdToCheckOrderWithUnavailableQty":"662d78312963d1b82bd23405",
   "userIdToAddToCartWithExistingItem":"662dcd5f864baca850ff4814",
   "userIdToAddSameProductTwiceOnWishlist":"662e55117004dfc34dad75d6",
+  "categoryIdNotExisting":"642e52112004dfc34daa55d6",
+  "brandIdNotExisting":"642e52112004dfc34daa55d6",
+  "productIdToUpdateSingleImage":"663fd371a74fd9cf86a10f3d",
+  "imageObjIdToUpdate":"663fd371a74fd9cf86a10f3e",
+  "ObjectIdDoestNotExist":"362fd47157dfd9af86e30f31",
   "expiredAdminToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Ik1vaGFtbWFkS2hhZGVycjE5OTlAZ21haWwuY29tIiwiaWQiOiI2NWU3ODJlZDM2OGMyMmUzNTQyMmY0YWQiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUyNjIzOTAyMn0.AOao3GNwQi3ocHZQ-tUsBBgQOx33Pj3YM4VGhOkgCJ8",
   "expiredNormalUserToken":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6IlRoYWRkZXVzLkxpbmQ1QGdtYWlsLmNvbSIsImlkIjoiNjVlZjU4OTEwODJiNmEwNjk4ZDVjZWU5IiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1MjYyMzkwMjJ9.1yEIwBz5DjdQDw6qu3FbModHU_nGEOLzjyaMVijuNBg"
 }

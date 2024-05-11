@@ -6,8 +6,14 @@ import { addToCartSchema, addToWishlistSchema, changeCartItemQuantityByOneSchema
      ordersStatusSchema, 
      appendImagesToProductSchema,
      userChangeInformationSchema,
-     createBrandSchema,} from "./validationsSchemas";
+     createBrandSchema,
+     createCategorySchema,
+     updateCategorySchema,
+     updateBrandSchema,
+     updateProductSchema,
+     updateProductSingleImageSchema,} from "./validationsSchemas";
 import Joi from "joi";
+import AppError from "../utils/AppError";
 
 export const validateUserRegistration = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = userRegistrationSchema.validate({
@@ -119,6 +125,46 @@ export const validateCreateProduct = (req:Request,res:Response,next:NextFunction
         req.validationError = {blacklistedKeys:["categoryId"]}
         return next(error);
     }
+    return next()
+}
+
+export const validateUpdateProduct = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = updateProductSchema.validate({
+        name:req.body.name,
+        description:req.body.description,
+        categoryId:req.body.categoryId,
+        offer:req.body.offer,
+        price:req.body.price,
+        finalPrice:req.body.finalPrice,
+        quantity:req.body.quantity,
+        brand:req.body.brand,
+    },{abortEarly:false})
+    
+    if(error){
+        req.validationError = {blacklistedKeys:["categoryId"]}
+        return next(error);
+    }
+
+    if (!req.body.brand && !req.body.categoryId && !req.body.description && 
+        !req.body.quantity && !req.body.name && !req.body.offer && 
+        !req.body.price && !req.body.finalPrice) {
+
+        const error= new AppError("Something went wrong during updating product, please try again later!",500)
+        return next(error);
+    }
+    return next()
+}
+
+export const validateUpdateSingleImageProduct = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = updateProductSingleImageSchema.validate({
+        imageId:req.body.imageId,
+        image:req.file,
+    },{abortEarly:false})
+    
+    if(error){
+        return next(error);
+    }
+
     return next()
 }
 
@@ -338,8 +384,45 @@ export const validateUserChangeInformation = (req:Request,res:Response,next:Next
 export const validateCreateBrand = (req:Request,res:Response,next:NextFunction)=>{
     const {error} = createBrandSchema.validate({
         brandName:req.body.brandName,
+        brandLogo:req.file
     },{abortEarly:false})
 
+    if(error){
+        return next(error)
+    }
+    return next()
+}
+
+export const validateUpdateBrand = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = updateBrandSchema.validate({
+        brandName:req.body.brandName,
+        brandLogo:req.file
+    },{abortEarly:false})
+
+    if(error){
+        return next(error)
+    }
+    return next()
+}
+
+export const validateCreateCategory = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = createCategorySchema.validate({
+        name:req.body.name,
+        image:req.file
+    },{abortEarly:false})
+    
+    if(error){
+        return next(error)
+    }
+    return next()
+}
+
+export const validateUpdateCategory = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = updateCategorySchema.validate({
+        name:req.body.name,
+        image:req.file
+    },{abortEarly:false})
+   
     if(error){
         return next(error)
     }

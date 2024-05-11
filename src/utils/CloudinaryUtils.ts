@@ -27,13 +27,12 @@ async function DeleteMany(ImagesArray : string[],Folder:string){
         { type: 'upload', resource_type: 'image' })
     return deleteAnImage
 }
-
-async function UploadOne(
-    buffer : Buffer,
-    folder : string,
-    options : {width?:number,height?:number,crop?: "fit"}
-    =
-    {width:1400,height:1400,crop:"fit" }) : Promise<UploadApiResponse | undefined>{
+interface IUploadOneOptions {
+    width?:number;
+    height?:number;
+    crop?: "fit"
+}
+async function UploadOne(buffer : Buffer,folder : string,options:IUploadOneOptions={width:1400,height:1400,crop:"fit" }) : Promise<UploadApiResponse | undefined>{
     
     const defaultOptions = {
         width:1400,

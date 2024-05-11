@@ -224,3 +224,8 @@ export interface UploadOptions {
     filesNum?: number;
     fileFilter?: (req: any, file: Express.Multer.File, callback: FileFilterCallback) => void;
 }
+
+export type CategoryDto ={
+    name:string;
+    image:Express.Multer.File
+}
