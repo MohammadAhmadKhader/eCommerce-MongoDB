@@ -1,5 +1,15 @@
 import Joi from "joi"
-import { IUserChangeInformation } from "../@types/types"
+import { CategoryDto, IProduct, IUserChangeInformation } from "../@types/types"
+import AppError from "../utils/AppError"
+
+const fileImageSchema = Joi.object({
+    fieldname: Joi.string().required(),
+    originalname: Joi.string().required(),
+    encoding: Joi.string().required(),
+    mimetype: Joi.string().required(),
+    size: Joi.number().required(),
+    buffer: Joi.binary().required()
+})
 
 export const userRegistrationSchema = Joi.object({
     firstName:Joi.string().alphanum().min(4).max(32).required(),
@@ -66,7 +76,24 @@ export const createProductSchema = Joi.object({
         price: Joi.number().valid(Joi.ref('finalPrice')).required(),
       }),
     }
-  );
+);
+
+export const updateProductSchema = Joi.object({
+    name:Joi.string().min(3).max(100),
+    description:Joi.string().min(10).max(1024),
+    categoryId:Joi.string().hex().length(24),
+    offer:Joi.number().min(0.00).max(1.00),
+    price:Joi.number().min(0).max(1000),
+    finalPrice:Joi.number().min(0).max(1000),
+    quantity:Joi.number().integer().min(0),
+    brand:Joi.string().valid("Nike","Levi's","Calvin Klein","Casio","Adidas","Biba"),
+}).when(
+    Joi.object({ offer: Joi.number().valid(0) }), {
+      then: Joi.object({
+        price: Joi.number().valid(Joi.ref('finalPrice')).required(),
+      }).required(),
+    }
+)
 
 export const sendingMessageSchema = Joi.object({
     fullName:Joi.string().min(4).max(32).required(),
@@ -145,7 +172,7 @@ export const appendImagesToProductSchema = Joi.object({
     }),
 })
 
-const atLeastOneFieldRequired = (value : IUserChangeInformation, helpers : Joi.CustomHelpers<IUserChangeInformation>) => {
+const atLeastOneFieldRequiredUserInfo = (value : IUserChangeInformation, helpers : Joi.CustomHelpers<IUserChangeInformation>) => {
     const { firstName, lastName, email, mobileNumber, birthdate } = value;
     const detailedErrorMessage = `: At least one of the following fields is required: 'firstName', 'lastName', 'email', 'mobileNumber', 'birthdate'`;
     if (!firstName && !lastName && !email && !mobileNumber && !birthdate) {
@@ -169,9 +196,48 @@ export const userChangeInformationSchema = Joi.object({
     birthdate:Joi.alternatives().try(
         Joi.date().max(new Date(Date.now() - 157680000000 /**before 5 years */)).min(new Date(Date.now() - 2522880000000/**before 80 years */)).allow("")
     ).optional(),
-}).custom(atLeastOneFieldRequired,"atLeastOneFieldRequired")
+}).custom(atLeastOneFieldRequiredUserInfo,"atLeastOneFieldRequired")
 
 export const createBrandSchema = Joi.object({
     brandName:Joi.string().min(1).max(32).required(),
+    brandLogo:fileImageSchema.required()
+})
+
+const atLeastOneFieldRequiredBrand = (value : {brandLogo:Express.Multer.File,brandName:string}) => {
+    const { brandLogo,brandName } = value;
+    if (!brandLogo && !brandName ) {
+        throw new Error()
+    }
+};
+
+export const updateBrandSchema = Joi.object({
+    brandName:Joi.string().min(1).max(32),
+    brandLogo:fileImageSchema
+})
+.required().custom(atLeastOneFieldRequiredBrand)
+.message("At least one of the following fields is required: name, image");
+
+export const createCategorySchema = Joi.object({
+    name:Joi.string().min(2).max(64).required(),
+    image:fileImageSchema.required()
+})
+
+const atLeastOneFieldRequiredCategory = (value : CategoryDto ) => {
+    const { image,name } = value;
+    if (!name && !image ) {
+        throw new Error()
+    }
+};
+
+export const updateCategorySchema = Joi.object({
+    name:Joi.string().min(2).max(64),
+    image:fileImageSchema,
+})
+.custom(atLeastOneFieldRequiredCategory,"When nothing is given to update throw error")
+.message("At least one of the following fields is required: name, image");
+
+export const updateProductSingleImageSchema = Joi.object({
+    image:fileImageSchema.required(),
+    imageId:Joi.string().hex().length(24).required(),
 })
 

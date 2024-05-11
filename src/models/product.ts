@@ -76,10 +76,10 @@ const productSchema: Schema<IProduct>= new Schema({
     brand:{
         type:String,
         required:true,
-        ref:"Brand"
+        ref:"Brand",
     },
 },{
-    timestamps:true
+    timestamps:true,
 })
 
 productSchema.index({categoryId:1});

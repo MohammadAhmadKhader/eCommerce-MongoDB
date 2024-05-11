@@ -2,7 +2,7 @@ import { NextFunction, Response } from "express";
 import SessionToken from "../../models/sessionToken";
 import { signToken } from "../../utils/HelperFunctions";
 import User from "../../models/user";
-import { ICartItem, ITokensCache } from "../../@types/types";
+import { IBrand, ICartItem, ICategory, ITokensCache } from "../../@types/types";
 import Order from "../../models/order";
 import Product from "../../models/product";
 import testData from "../assets/testData/testData.json"
@@ -10,6 +10,9 @@ import { faker } from "@faker-js/faker";
 import crypto from 'crypto';
 import ResetPassCode from "../../models/resetPassCode";
 import Joi from "joi";
+import Category from "../../models/category";
+import { Schema } from "mongoose";
+import Brand from "../../models/brand";
 
 const tokensCache : ITokensCache = {};
 
@@ -138,15 +141,15 @@ export async function resetOrderStatus(orderId:string,statusToSet : "Placed" | "
     }
 }
 
-export async function createProduct(){
+export async function createProduct(name="ProductForTesting",description="ProductForTesting",brandName="Nike",price=100){
     try{
         const imgUrl = "https://res.cloudinary.com/doxhxgz2g/image/upload/v1714071486/eCommerce-React-app/BrandsLogos/p1kuv3kgkij8fwzpcr4j.jpg"
         const product = await Product.create({
-            name:"ProductForTesting",
-            description:"ProductForTesting",
+            name:name,
+            description:description,
             categoryId:testData.categoryIdForTesting,
-            brand:"Nike",
-            price:100,
+            brand:brandName,
+            price:price,
             images:[{
                 imageUrl:imgUrl,
                 thumbnailUrl:imgUrl
@@ -154,6 +157,20 @@ export async function createProduct(){
         })
          
         return product;
+    }catch(error){
+        console.error(error)
+    }
+}
+
+export async function deleteProduct(productId:string | Schema.Types.ObjectId){
+    try{
+        const productDeletion = await Product.deleteOne({
+            _id:productId
+        })
+        
+        if(productDeletion.deletedCount != 1){
+            throw `Created brand with id : ${productId} was not deleted after creation.`
+        }
     }catch(error){
         console.error(error)
     }
@@ -343,6 +360,73 @@ export const addToWishlistAndReturnItemId = async (userId:string,productId:strin
     }catch(error){
         console.error(error);
         return ""
+    }
+}
+
+export async function deleteCategory(categoryId:string | Schema.Types.ObjectId){
+    try{
+        const deleteCategory = await Category.deleteOne({
+            _id:categoryId
+        })
+
+        if(deleteCategory.deletedCount != 1){
+            throw `Created category with id : ${categoryId} was not deleted after creation.`
+        }
+    }catch(error){
+        console.error(error);
+    }
+}
+
+export async function createCategory(): Promise<ICategory | undefined>{
+    try{
+        const testCategory = await Category.create({
+            name:"CategoryForTesting",
+            imageUrl:"Image",
+        })
+        
+        return testCategory;
+    }catch(error){
+        console.error(error);
+    }
+}
+
+export async function createBrand(): Promise<IBrand | undefined>{
+    try{
+        const testBrand = await Brand.create({
+            name:"BrandForTesting",
+            imageUrl:"Image",
+        })
+        
+        return testBrand;
+    }catch(error){
+        console.error(error);
+    }
+}
+
+export async function deleteBrand(brandId:string | Schema.Types.ObjectId){
+    try{
+        const deleteBrand = await Brand.deleteOne({
+            _id:brandId
+        })
+
+        if(deleteBrand.deletedCount != 1){
+            throw `Created brand with id : ${brandId} was not deleted after creation.`
+        }
+    }catch(error){
+        console.error(error);
+    }
+}
+
+export async function findOneProductById(productId:string | Schema.Types.ObjectId){
+    try{
+        const product = await Product.findOne({_id:productId})
+
+        if(!product){
+            throw `Created brand with id : ${productId} was not deleted after creation.`
+        }
+        return product;
+    }catch(error){
+        console.error(error);
     }
 }
 

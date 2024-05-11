@@ -1,6 +1,7 @@
 export const stringWith25Char = "2i3n8sLqAe7z0m9c6R4s2W1t8";
 export const stringWith24Char = "2i3n8sLqAe7z0m9c6R4s2W18";
-export const stringWith65Char = "7xG3o9pN2fL6eK1rI0jR4tF5kG9iJ4oP0qL2mR6hA1sV9uE3vC4bR8zX5tG6a3";
+export const stringWith65Char = "7xG3o9pN2fL6eK1rI0jR4tF5kG9iJ4oP0qL2mR6hA1sV9uE3vC4bR8zX5tG6a3ddd";
+export const stringWith64Char = "7xG3o9pN2fL6eK1rI0jR4tF5kG9iJ4oP0qL2mR6hA1sV9uE3vC4bR8zX5tG6a3dd";
 export const stringWith33Char = "9oP2qR5tF8kG1iJ4oP0qL2mR6hA1sV9uE3vC4b";
 export const emailWith5Char = "E@g.c"
 export const emailWith6Char = "a@g.us";

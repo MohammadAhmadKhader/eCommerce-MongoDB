@@ -2,7 +2,8 @@
 import jwt from "jsonwebtoken" ;
 import util from "util"
 import Stripe from "stripe";
-import { IOrder } from "../@types/types";
+import { IOrder, IProduct } from "../@types/types";
+import { Schema } from "mongoose";
 export function isJSON(brand:string){
     try{
         JSON.parse(brand)
@@ -44,3 +45,11 @@ export function collectInvoiceData(finalizingTheInvoice :  Stripe.Invoice,order:
         });
     return InvoiceData
 }
+
+export function getImageObjById(product:IProduct,imageId:string | Schema.Types.ObjectId){
+    const imageObj = product.images.filter((imgObj)=> imgObj._id == imageId);
+    if(!imageId) return null;
+     
+    const {_id,imageUrl,thumbnailUrl} = imageObj[0]
+    return {_id,imageUrl,thumbnailUrl};
+}   

@@ -16,7 +16,6 @@ export function expectProduct(product : IProduct){
     expect(product.quantity).toBeGreaterThanOrEqual(1);
     expect(typeof product.quantity).toBe("number");
     expect(typeof product.brand).toBe("string");
-    expect(typeof product.images).toHaveLength(1);
     expect(product.images.length).toBeGreaterThanOrEqual(1)
     product.images.forEach((imageObj)=>{
         expectProductImageObj(imageObj)
