@@ -1,6 +1,7 @@
 import Product from "../models/product";
 import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
+import { IReview } from "../@types/types";
 
 export const getAllReviewsByUserId = asyncHandler(async (req, res ) =>{
     const {skip,page,limit} = req.pagination;
@@ -27,6 +28,83 @@ export const getAllReviewsByUserId = asyncHandler(async (req, res ) =>{
         
     const improvedReviewsResponse = reviews.map(reviewObj => reviewObj.review);
     return res.status(200).json({count:count,limit,page,reviews:improvedReviewsResponse})
+})
+
+export const getAllReviews = asyncHandler(async(req,res)=>{
+    const {skip,page,limit} = req.pagination;
+    const {sort} = req.query;
+    
+    const sortObj : any = {
+        $sort:{
+            "reviews.createdAt":-1
+        }
+    }
+
+    if(sort && (sort === "rating_desc" || sort === "rating_asc")){
+        if(sort === "rating_desc"){
+            sortObj.$sort = { "reviews.rating":-1}
+        }
+        if(sort === "rating_asc"){
+            sortObj.$sort = { "reviews.rating":1}
+        }
+    }
+
+    const reviews = await Product.aggregate([
+        {$unwind:"$reviews"},
+        sortObj,
+        {
+            $group:{
+                _id:null,
+                count:{
+                    $sum:1
+                },
+                reviews:{
+                    $push:"$reviews"
+                }
+            }
+        },{
+            $unwind:"$reviews"
+        },{
+            $lookup:{
+                from:"users",
+                foreignField:"_id",
+                localField:"reviews.userId",
+                as:"user",
+            }
+        },
+        {
+            $addFields:{
+                "reviews.user":{ $arrayElemAt: ["$user", 0] },
+            }
+        },
+        {
+            $skip:skip,
+            
+        },{
+            $limit:limit,
+        },
+        {
+            $unset:["user","_id"],
+            
+        },{
+            $project:{
+                "reviews.user.password":0,
+                "reviews.user.cart":0,
+                "reviews.user.addresses":0,
+                "reviews.user.wishList":0,
+                "reviews.userId":0,
+                "reviews.user.createdAt":0,
+                "reviews.user.updatedAt":0,
+                "reviews.user.__v":0,
+            }
+        }
+    ]);
+    const count = reviews[0].count;
+    reviews.forEach((rev)=>{
+        delete rev["count"];
+    })
+
+    return res.status(200).json({count,page,limit,reviews}) 
 })
 
 export const addReviewToProduct = asyncHandler(async (req, res, next)=>{

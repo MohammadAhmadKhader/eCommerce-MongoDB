@@ -4,7 +4,7 @@ import SessionToken from "../models/sessionToken";
 import MailUtils from "../utils/MailUtils";
 import ResetPassCode from "../models/resetPassCode";
 import CloudinaryUtils from "../utils/CloudinaryUtils";
-import { IUser } from "../@types/types";
+import { IFilterAndSortAllUsers, ISortQuery, IUser, IUsersMatchStage } from "../@types/types";
 import { signToken } from "../utils/HelperFunctions";
 import crypto from 'crypto';
 import { asyncHandler } from "../utils/AsyncHandler";
@@ -61,6 +61,7 @@ export const signIn = asyncHandler(async (req, res ,next)=>{
 }) 
 
 export const getUserByToken = asyncHandler(async(req, res)=>{
+    // TODO 1- Authenticate token before 2- Send message when its expired to re-sign-in
     const token = req.headers.authorization;
     const sessionToken = await SessionToken.findOne({
         token:token
@@ -78,7 +79,69 @@ export const getUserByToken = asyncHandler(async(req, res)=>{
     }
 
     return res.status(200).json({user})
-})
+});
+
+
+export const getAllUsers = asyncHandler(async (req, res)=>{
+    const {limit,page,skip} = req.pagination;
+    const { sort, email, name, mobileNumber } : IFilterAndSortAllUsers = req.query;
+
+    const sortQuery :ISortQuery = {createdAt:-1};
+    if(sort){
+        if(sort["createdAt"]){
+            if(sort["createdAt"] === "asc"){
+                sortQuery.createdAt = 1
+            }
+        }
+        
+        if(sort["email"]){
+            if(sort["email"] === "desc"){
+                sortQuery.email = -1
+            }else if(sort["email"] === "asc"){
+                sortQuery.email = 1
+            }
+        }
+        if(sort["name"]){
+            if(sort["name"] === "desc"){
+                sortQuery.name = -1
+            }else if(sort["name"] === "asc"){
+                sortQuery.name = 1
+            }
+        }
+    }
+
+    const matchStage : IUsersMatchStage = {}
+    if(email){
+        matchStage.email = email;
+    }
+    if(name){
+        matchStage.name = name;
+    }
+    if(mobileNumber){
+        matchStage.mobileNumber = mobileNumber;
+    }
+    
+    const users = await User.find(matchStage,{__v:0},{
+        sort:sortQuery,
+        limit:limit,
+        skip:skip,
+    }).lean();
+    const count = await User.countDocuments(matchStage);
+
+    return res.status(200).json({count,page,limit,users})
+});
+
+export const deleteUserById = asyncHandler(async (req, res, next)=>{
+    const {userId} = req.body;
+    
+    const deleteUser = await User.deleteOne({_id:userId}).lean();
+    if(deleteUser.deletedCount !== 1){
+        const error = new AppError("User was not found.",400);
+        return next(error);
+    }
+    
+    return res.sendStatus(204);
+});
 
 export const logout = asyncHandler( async (req, res)=>{
     const userId = req.user._id;
@@ -89,7 +152,7 @@ export const logout = asyncHandler( async (req, res)=>{
     })
 
     return res.sendStatus(204);
-})
+});
 
 
 export const changePassword = asyncHandler(async (req, res, next)=>{

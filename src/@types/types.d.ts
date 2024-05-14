@@ -229,3 +229,31 @@ export type CategoryDto ={
     name:string;
     image:Express.Multer.File
 }
+
+export interface IFilterAndSortAllUsers {
+    email?:string | undefined;
+    name?:string|undefined;
+    mobileNumber?:string | undefined;
+    sort? : {
+        createdAt?:"asc" | "desc";
+        email?:"asc" | "desc";
+        name?:"asc" | "desc";
+    }
+}
+export interface ISortQuery {
+    createdAt:1|-1;
+    email?:1|-1;
+    name?:1|-1;
+}
+
+export interface IUsersMatchStage {
+    email?:string;
+    name?:string;
+    mobileNumber?:string;
+}
+
+export interface IInvoicesSortObj {
+    subTotal?: 1 | -1;
+    createdAt?: 1 | -1;
+    grandTotal?: 1 | -1;
+}

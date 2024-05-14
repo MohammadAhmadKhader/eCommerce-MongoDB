@@ -10,7 +10,7 @@ import { collectInvoiceData } from "../utils/HelperFunctions";
 import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
 
-export const getAllOrders = asyncHandler(async(req ,res )=>{
+export const getAllUserOrders = asyncHandler(async(req ,res )=>{
     const { limit,skip,page} = req.pagination;
     const userId = req.user._id;
     const status = req.query.status;
@@ -18,6 +18,94 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
     const match = {userId:userId,status:status};
     const orders = await Order.find(match).sort({createdAt:-1}).skip(skip).limit(limit)
     const count = await Order.find(match).countDocuments()
+        
+    return res.status(200).json({count,page,limit,orders})
+})
+
+export const getAllOrders = asyncHandler(async(req ,res )=>{
+    const { limit,skip,page} = req.pagination;
+    const { email,subTotal_lte,subTotal_gte,grandTotal_lte,grandTotal_gte,isPaid,sort } = req.query;
+    const match :any= {
+        $match:{
+            $and:[]
+        }
+    };
+    const sortObj : any = {
+        $sort:{
+            createdAt:-1
+        }
+    }
+    if(sort && (sort === "subTotal_desc" || sort === "subTotal_asc" || sort === "grandTotal_desc" || sort === "grandTotal_asc" )){
+        if(sort === "subTotal_desc"){
+            sortObj.$sort = {subTotal:-1}
+        }
+        if(sort === "subTotal_asc"){
+            sortObj.$sort = {subTotal:1}
+        }
+        if(sort === "grandTotal_asc"){
+            sortObj.$sort = {grandTotal:1}
+        }
+        if(sort === "grandTotal_desc"){
+            sortObj.$sort = {grandTotal:-1}
+        }
+    }
+
+    if(isPaid && (isPaid === "false" || isPaid === "true")){
+        match.$match.$and.push({isPaid : isPaid === "true" ? true : false });
+    }
+
+    if(subTotal_gte || subTotal_lte){
+        match.$match.$and.push({subTotal : { $gte:Number(subTotal_gte) || 0,$lte:Number(subTotal_lte) || 9999}});
+    }
+    if(grandTotal_gte || grandTotal_lte){
+        match.$match.$and.push({grandTotal : { $gte:Number(grandTotal_gte) || 0,$lte:Number(grandTotal_lte) || 9999}});
+    }
+    
+    if(email){
+        match.$match.$and.push({"user.email" : { $regex: new RegExp(email as string,"i") }});
+    }
+
+    const lookup :any = {
+        $lookup:{
+            localField:"userId",
+            foreignField:"_id",
+            from:"users",
+            as:"user"
+        }
+    }
+    const aggregatePipeline : any[]= [
+        lookup,
+        sortObj,
+        {
+            $skip:skip
+        },{
+            $limit:limit
+        },
+        {
+            $unset:["userId","__v"]
+        },{
+                $project:{
+                    "user.password":0,
+                    "user.cart":0,
+                    "user.addresses":0,
+                    "user.wishList":0,
+                    "userId":0,
+                    "user.createdAt":0,
+                    "user.updatedAt":0,
+                    "user.__v":0,
+                }
+        }
+    ]
+
+    if(subTotal_gte || subTotal_lte || grandTotal_gte || grandTotal_lte || email){
+        // Add after lookup so we have access to user's email
+        aggregatePipeline.splice(1,0,match);
+    }
+    
+    const orders = await Order.aggregate([
+        ...aggregatePipeline
+    ]);
+    const [{subTotal:count}] = await Order.aggregate([lookup,match]).count("subTotal");
         
     return res.status(200).json({count,page,limit,orders})
 })
