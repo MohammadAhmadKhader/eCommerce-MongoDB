@@ -241,3 +241,7 @@ export const updateProductSingleImageSchema = Joi.object({
     imageId:Joi.string().hex().length(24).required(),
 })
 
+
+export const createUserSchema = userRegistrationSchema.append({
+    role:Joi.string().valid("user","admin").required(),
+})

@@ -36,8 +36,8 @@ export const getAllInvoices = asyncHandler( async(req ,res ,next)=>{
         }
     }
 
-    const invoice = await Invoice.find({},{},{sort:sortObj,skip,limit}).lean();
+    const invoices = await Invoice.find({},{},{sort:sortObj,skip,limit}).lean();
     const count = await Invoice.find({}).countDocuments().lean();
         
-    return res.status(200).json({count,page,limit,invoice})
+    return res.status(200).json({count,page,limit,invoices})
 });

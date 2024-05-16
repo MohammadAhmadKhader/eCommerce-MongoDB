@@ -319,7 +319,7 @@ export const updateProductSingleImage = asyncHandler(async (req, res, next) =>{
     const image = req.file as Express.Multer.File;
 
     const match = {_id:productId, "images._id":new ObjectId(imageId)}
-
+    
     const productBeforeUpdate = await Product.findOne(match);
     if(!productBeforeUpdate){
         const error = new AppError("Product or image was not found.",400);
@@ -340,7 +340,7 @@ export const updateProductSingleImage = asyncHandler(async (req, res, next) =>{
     
     const transaction = await mongoose.startSession();
     transaction.startTransaction();
-
+    
     const productAfterUpdate = await Product.findOneAndUpdate(
         match,
         {
@@ -356,18 +356,21 @@ export const updateProductSingleImage = asyncHandler(async (req, res, next) =>{
             session:transaction
         }
     );
-
+    
     const {imageUrl,thumbnailUrl} = getImageObjById(productBeforeUpdate,imageId)!;
 
     const deleteOldImage = await CloudinaryUtils.DeleteOne(imageUrl,process.env.ProductsImagesFolder as string);
     const deleteOldThumbnail = await CloudinaryUtils.DeleteOne(thumbnailUrl,process.env.ThumbnailsImagesFolder as string);
-
+    
     if(!deleteOldImage || !deleteOldThumbnail){
+        
        await transaction.abortTransaction();
        const error = new AppError("An unexpected error occurred during uploading image",500);
        return next(error);
     }
 
+    await transaction.commitTransaction();
+    
     return res.status(200).json({message:"success",product:productAfterUpdate})
 })
 

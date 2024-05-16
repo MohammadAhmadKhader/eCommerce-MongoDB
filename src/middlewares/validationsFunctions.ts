@@ -11,7 +11,8 @@ import { addToCartSchema, addToWishlistSchema, changeCartItemQuantityByOneSchema
      updateCategorySchema,
      updateBrandSchema,
      updateProductSchema,
-     updateProductSingleImageSchema,} from "./validationsSchemas";
+     updateProductSingleImageSchema,
+     createUserSchema,} from "./validationsSchemas";
 import Joi from "joi";
 import AppError from "../utils/AppError";
 
@@ -425,6 +426,21 @@ export const validateUpdateCategory = (req:Request,res:Response,next:NextFunctio
    
     if(error){
         return next(error)
+    }
+    return next()
+}
+
+export const validateCreateUser = (req:Request,res:Response,next:NextFunction)=>{
+    const {error} = createUserSchema.validate({
+        firstName:req.body.firstName,
+        lastName:req.body.lastName,
+        email:req.body.email,
+        password:req.body.password,
+        role:req.body.role,
+    },{abortEarly:false})
+    
+    if(error){
+        return next(error);
     }
     return next()
 }

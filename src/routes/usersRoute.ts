@@ -15,10 +15,11 @@ router.get("/verifyResetPasswordToken/:token",usersRouter.verifyResetPasswordTok
 router.post("/signup",validateUserRegistration,usersRouter.signUp);
 router.post("/signin",validateUserSignIn,usersRouter.signIn);
 router.post("/forgotPassword",validateForgotPassword,usersRouter.forgotPassword);
+router.post("/dashboard",authenticateAdmin,upload({fileSize:MB2}).single("userImg"),validateUserRegistration,usersRouter.createUser);
 router.patch("/resetPassword/:token",validateResetPasswordViaCode,usersRouter.resetPasswordViaCode);
 router.put("/changepassword",validateUserChangePassword,authenticateUser,usersRouter.changePassword);
 router.put("/userInformation",authenticateUser,authorizeUserInfoUpdate,upload({fileSize:MB2}).single("userImg"),validateUserChangeInformation,usersRouter.changeUserInformation);
 router.delete("/logout",authenticateUser,usersRouter.logout);
-router.delete("/:userId",authenticateAdmin,usersRouter.deleteUserById);
+router.delete("/dashboard/:userId",authenticateAdmin,usersRouter.deleteUserById);
 
 export default router;
