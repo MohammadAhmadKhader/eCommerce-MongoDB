@@ -33,6 +33,30 @@ export const signUp =asyncHandler( async (req, res)=>{
     return res.status(201).json({message:"success",user,token:sessionToken.token})
 })
 
+export const createUser =asyncHandler( async (req, res)=>{
+    const { firstName,lastName,email,password,role } = req.body;
+    const hashPassword = bcrypt.hashSync(password,10);
+        
+    const user = await User.create({
+        firstName,
+        lastName,
+        email,
+        password:hashPassword,
+        role,
+    })
+    
+    const token = signToken(user._id.toString(),user.email)
+    user.$set("password",undefined);
+    user.$set("__v",undefined);
+        
+    const sessionToken = await SessionToken.create({
+        userId:user._id,
+        token:token
+    })
+    
+    return res.status(201).json({message:"success",user,token:sessionToken.token})
+})
+
 export const signIn = asyncHandler(async (req, res ,next)=>{
     const { email,password } = req.body;
     if(!email || !password){
@@ -72,7 +96,7 @@ export const getUserByToken = asyncHandler(async(req, res)=>{
         
     const user = await User.findOne({
         _id:sessionToken.userId
-    },{password:0})
+    },{password:0}).lean()
     
     if(!user){
         return res.sendStatus(401)
@@ -126,13 +150,13 @@ export const getAllUsers = asyncHandler(async (req, res)=>{
         limit:limit,
         skip:skip,
     }).lean();
-    const count = await User.countDocuments(matchStage);
+    const count = await User.countDocuments(matchStage).lean();
 
     return res.status(200).json({count,page,limit,users})
 });
 
 export const deleteUserById = asyncHandler(async (req, res, next)=>{
-    const {userId} = req.body;
+    const {userId} = req.params;
     
     const deleteUser = await User.deleteOne({_id:userId}).lean();
     if(deleteUser.deletedCount !== 1){
@@ -149,7 +173,7 @@ export const logout = asyncHandler( async (req, res)=>{
     await SessionToken.deleteOne({
         userId:userId,
         token:sessionId
-    })
+    }).lean()
 
     return res.sendStatus(204);
 });
@@ -178,7 +202,7 @@ export const changePassword = asyncHandler(async (req, res, next)=>{
     },{
         upsert:true,
         new:true
-    })
+    }).lean();
 
     return res.status(200).json({message:"success",token})
 })
@@ -200,7 +224,7 @@ export const changeUserInformation = asyncHandler(async(req, res, next)=>{
         },{
             new:true,select:"-password -__v"
         }
-    );
+    ).lean();
        
     if(deleteUserImage == "deleteImg"){
         try{
@@ -280,7 +304,7 @@ export const verifyResetPasswordToken = asyncHandler(async (req, res, next)=>{
         const error = new AppError("Invalid request. Please try again.",400);
         return next(error);
     }
-    const storedToken = await ResetPassCode.findOne({code:token});
+    const storedToken = await ResetPassCode.findOne({code:token}).lean();
     if(!storedToken){
         const error = new AppError("Invalid token. Please make sure you've entered the correct token.",400);
         return next(error);

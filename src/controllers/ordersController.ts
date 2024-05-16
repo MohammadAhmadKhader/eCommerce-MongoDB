@@ -1,8 +1,7 @@
-import { NextFunction, Request, Response } from "express";
 import Order from "../models/order";
 import User from "../models/user";
 import Product from "../models/product";
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 import Invoice from "../models/Invoice";
 import { IUser } from "../@types/types";
 import StripeUtils from "../utils/StripeUtils";
@@ -49,7 +48,7 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
             sortObj.$sort = {grandTotal:-1}
         }
     }
-
+    
     if(isPaid && (isPaid === "false" || isPaid === "true")){
         match.$match.$and.push({isPaid : isPaid === "true" ? true : false });
     }
@@ -64,7 +63,7 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
     if(email){
         match.$match.$and.push({"user.email" : { $regex: new RegExp(email as string,"i") }});
     }
-
+    
     const lookup :any = {
         $lookup:{
             localField:"userId",
@@ -73,6 +72,7 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
             as:"user"
         }
     }
+    
     const aggregatePipeline : any[]= [
         lookup,
         sortObj,
@@ -96,8 +96,9 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
                 }
         }
     ]
-
-    if(subTotal_gte || subTotal_lte || grandTotal_gte || grandTotal_lte || email){
+    const isFiltered = subTotal_gte || subTotal_lte || grandTotal_gte || grandTotal_lte || email
+    if(isFiltered){
+        console.log("first")
         // Add after lookup so we have access to user's email
         aggregatePipeline.splice(1,0,match);
     }
@@ -105,8 +106,14 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
     const orders = await Order.aggregate([
         ...aggregatePipeline
     ]);
-    const [{subTotal:count}] = await Order.aggregate([lookup,match]).count("subTotal");
-        
+    
+    const countAggregatePipeline = [lookup];
+    if(isFiltered){
+        countAggregatePipeline.push(match);
+    }
+
+    const [{subTotal:count}] = await Order.aggregate(countAggregatePipeline).count("subTotal");
+    
     return res.status(200).json({count,page,limit,orders})
 })
 
@@ -212,7 +219,8 @@ export const cancelOrder = asyncHandler(async (req, res, next) => {
     }
         
     return res.sendStatus(204)
-})
+});
+
 
 export const createPaymentIntent =asyncHandler( async(req, res, next)=>{
     const {orderId} = req.body;
@@ -318,4 +326,22 @@ export const orderCheckingOut =asyncHandler( async(req ,res ,next )=>{
         console.error(error)
         return res.status(500).json({error:error?.message})
     }
+})
+
+export const cancelOrderAdminPrivilege = asyncHandler(async (req, res, next) => {
+    const orderId = req.params.orderId;
+        
+    const order = await Order.findOneAndUpdate({
+        _id:orderId,
+    },
+    {
+        $set: {  status: "Cancelled",updatedDate: new Date().toUTCString()},
+    },{new:true});
+
+    if(!order){
+        const error = new AppError("The requested order was not found",400);
+        return next(error)
+    }
+        
+    return res.status(200).json({message:"success"})
 })

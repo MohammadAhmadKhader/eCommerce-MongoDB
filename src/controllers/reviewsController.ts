@@ -50,33 +50,37 @@ export const getAllReviews = asyncHandler(async(req,res)=>{
     }
 
     const reviews = await Product.aggregate([
+        {$addFields:{
+            "reviews.productId":"$$ROOT._id"
+        }},
         {$unwind:"$reviews"},
         sortObj,
         {
             $group:{
-                _id:null,
+                _id:"null",
                 count:{
                     $sum:1
                 },
-                reviews:{
-                    $push:"$reviews"
+                review:{
+                    $push:"$reviews",
                 }
             }
         },{
-            $unwind:"$reviews"
+            $unwind:"$review"
         },{
             $lookup:{
                 from:"users",
                 foreignField:"_id",
-                localField:"reviews.userId",
+                localField:"review.userId",
                 as:"user",
             }
         },
         {
             $addFields:{
-                "reviews.user":{ $arrayElemAt: ["$user", 0] },
+                "review.user":{ $arrayElemAt: ["$user", 0] },
             }
         },
+        
         {
             $skip:skip,
             
@@ -88,16 +92,16 @@ export const getAllReviews = asyncHandler(async(req,res)=>{
             
         },{
             $project:{
-                "reviews.user.password":0,
-                "reviews.user.cart":0,
-                "reviews.user.addresses":0,
-                "reviews.user.wishList":0,
-                "reviews.userId":0,
-                "reviews.user.createdAt":0,
-                "reviews.user.updatedAt":0,
-                "reviews.user.__v":0,
+                "review.user.password":0,
+                "review.user.cart":0,
+                "review.user.addresses":0,
+                "review.user.wishList":0,
+                "review.userId":0,
+                "review.user.createdAt":0,
+                "review.user.updatedAt":0,
+                "review.user.__v":0,
             }
-        }
+        },
     ]);
     const count = reviews[0].count;
     reviews.forEach((rev)=>{
