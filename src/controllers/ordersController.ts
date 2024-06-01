@@ -21,102 +21,6 @@ export const getAllUserOrders = asyncHandler(async(req ,res )=>{
     return res.status(200).json({count,page,limit,orders})
 })
 
-export const getAllOrders = asyncHandler(async(req ,res )=>{
-    const { limit,skip,page} = req.pagination;
-    const { email,subTotal_lte,subTotal_gte,grandTotal_lte,grandTotal_gte,isPaid,sort } = req.query;
-    const match :any= {
-        $match:{
-            $and:[]
-        }
-    };
-    const sortObj : any = {
-        $sort:{
-            createdAt:-1
-        }
-    }
-    if(sort && (sort === "subTotal_desc" || sort === "subTotal_asc" || sort === "grandTotal_desc" || sort === "grandTotal_asc" )){
-        if(sort === "subTotal_desc"){
-            sortObj.$sort = {subTotal:-1}
-        }
-        if(sort === "subTotal_asc"){
-            sortObj.$sort = {subTotal:1}
-        }
-        if(sort === "grandTotal_asc"){
-            sortObj.$sort = {grandTotal:1}
-        }
-        if(sort === "grandTotal_desc"){
-            sortObj.$sort = {grandTotal:-1}
-        }
-    }
-    
-    if(isPaid && (isPaid === "false" || isPaid === "true")){
-        match.$match.$and.push({isPaid : isPaid === "true" ? true : false });
-    }
-
-    if(subTotal_gte || subTotal_lte){
-        match.$match.$and.push({subTotal : { $gte:Number(subTotal_gte) || 0,$lte:Number(subTotal_lte) || 9999}});
-    }
-    if(grandTotal_gte || grandTotal_lte){
-        match.$match.$and.push({grandTotal : { $gte:Number(grandTotal_gte) || 0,$lte:Number(grandTotal_lte) || 9999}});
-    }
-    
-    if(email){
-        match.$match.$and.push({"user.email" : { $regex: new RegExp(email as string,"i") }});
-    }
-    
-    const lookup :any = {
-        $lookup:{
-            localField:"userId",
-            foreignField:"_id",
-            from:"users",
-            as:"user"
-        }
-    }
-    
-    const aggregatePipeline : any[]= [
-        lookup,
-        sortObj,
-        {
-            $skip:skip
-        },{
-            $limit:limit
-        },
-        {
-            $unset:["userId","__v"]
-        },{
-                $project:{
-                    "user.password":0,
-                    "user.cart":0,
-                    "user.addresses":0,
-                    "user.wishList":0,
-                    "userId":0,
-                    "user.createdAt":0,
-                    "user.updatedAt":0,
-                    "user.__v":0,
-                }
-        }
-    ]
-    const isFiltered = subTotal_gte || subTotal_lte || grandTotal_gte || grandTotal_lte || email
-    if(isFiltered){
-        console.log("first")
-        // Add after lookup so we have access to user's email
-        aggregatePipeline.splice(1,0,match);
-    }
-    
-    const orders = await Order.aggregate([
-        ...aggregatePipeline
-    ]);
-    
-    const countAggregatePipeline = [lookup];
-    if(isFiltered){
-        countAggregatePipeline.push(match);
-    }
-
-    const [{subTotal:count}] = await Order.aggregate(countAggregatePipeline).count("subTotal");
-    
-    return res.status(200).json({count,page,limit,orders})
-})
-
 export const getSingleOrderById =asyncHandler( async(req ,res ,next)=>{
     const {orderId} = req.params;
     const order = await Order.findOne({_id:orderId});
@@ -220,7 +124,6 @@ export const cancelOrder = asyncHandler(async (req, res, next) => {
         
     return res.sendStatus(204)
 });
-
 
 export const createPaymentIntent =asyncHandler( async(req, res, next)=>{
     const {orderId} = req.body;
@@ -326,22 +229,4 @@ export const orderCheckingOut =asyncHandler( async(req ,res ,next )=>{
         console.error(error)
         return res.status(500).json({error:error?.message})
     }
-})
-
-export const cancelOrderAdminPrivilege = asyncHandler(async (req, res, next) => {
-    const orderId = req.params.orderId;
-        
-    const order = await Order.findOneAndUpdate({
-        _id:orderId,
-    },
-    {
-        $set: {  status: "Cancelled",updatedDate: new Date().toUTCString()},
-    },{new:true});
-
-    if(!order){
-        const error = new AppError("The requested order was not found",400);
-        return next(error)
-    }
-        
-    return res.status(200).json({message:"success"})
 })

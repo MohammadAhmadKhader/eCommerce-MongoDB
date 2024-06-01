@@ -1,7 +1,7 @@
 import mongoose,{Schema} from "mongoose";
 import { ISessionToken } from "../@types/types";
 
-const sessionTokensSchema : Schema<ISessionToken>= new Schema({
+const sessionTokensSchema = new Schema<ISessionToken>({
     userId:{
         type:Schema.Types.ObjectId,
         required:true,
@@ -18,5 +18,5 @@ const sessionTokensSchema : Schema<ISessionToken>= new Schema({
 
 sessionTokensSchema.index({userId:1,token:1})
 
-const SessionToken = mongoose.model("SessionToken",sessionTokensSchema);
+const SessionToken = mongoose.model<ISessionToken>("SessionToken",sessionTokensSchema);
 export default SessionToken;

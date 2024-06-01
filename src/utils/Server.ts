@@ -10,6 +10,7 @@ import categoriesRoute from "../routes/categoriesRoute"
 import brandsRoute from "../routes/brandsRoute"
 import contactUsRoute from "../routes/contactUsRoute"
 import invoicesRoute from "../routes/invoicesRoute"
+import dashboardRoute from "../routes/dashboardRoute"
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
@@ -51,6 +52,7 @@ function createServer(){
     app.use("/api/brands",brandsRoute);
     app.use("/api/contactUs",contactUsRoute);
     app.use("/api/invoices",invoicesRoute);
+    app.use("/api/dashboard",dashboardRoute);
 
     app.use("/api/*",(req:Request,res:Response)=>{
         return res.sendStatus(404);

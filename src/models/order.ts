@@ -1,7 +1,7 @@
 import mongoose,{ Schema } from "mongoose";
 import { IOrder } from "../@types/types";
 
-const orderSchema : Schema<IOrder> = new Schema({
+const orderSchema = new Schema<IOrder>({
     subTotal:{
         type:Number,
         required:true
@@ -60,5 +60,5 @@ const orderSchema : Schema<IOrder> = new Schema({
 
 orderSchema.index({_id:1,userId:1,status:1})
 
-const Order = mongoose.model("Order",orderSchema)
+const Order = mongoose.model<IOrder>("Order",orderSchema)
 export default Order;

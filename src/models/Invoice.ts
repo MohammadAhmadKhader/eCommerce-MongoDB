@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb";
 import mongoose,{Schema} from "mongoose";
 import { IInvoice } from "../@types/types";
 
-const invoiceSchema : Schema<IInvoice>= new Schema ({
+const invoiceSchema= new Schema<IInvoice> ({
     hostedLink:{
         type:String,
         required:true
@@ -22,12 +22,12 @@ const invoiceSchema : Schema<IInvoice>= new Schema ({
     userId:{
         type:ObjectId,
         required:true,
-        ref:"User"
+        ref:"User",
     },
     orderId:{
         type:ObjectId,
         required:true,
-        ref:"Order"
+        ref:"Order",
     },
     invoiceItems:[{
         quantity:{
@@ -47,5 +47,5 @@ const invoiceSchema : Schema<IInvoice>= new Schema ({
     timestamps:true
 })
 invoiceSchema.index({orderId:1})
-const Invoice = mongoose.model("Invoice",invoiceSchema)
+const Invoice = mongoose.model<IInvoice>("Invoice",invoiceSchema)
 export default Invoice;

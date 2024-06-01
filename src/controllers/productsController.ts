@@ -1,19 +1,20 @@
-import { image } from '../@types/types';
+import { IProduct, ISingleProduct, image } from '../@types/types';
+import type{MongooseMatchStage, allowedFields} from "../@types/types";
 import { Request, Response } from "express"
 import Product from "../models/product"
 import CloudinaryUtils from "../utils/CloudinaryUtils";
 import { getThumbnailImageBuffer } from '../utils/ThumbnailUtils';
-import { getImageObjById, isJSON } from '../utils/HelperFunctions';
+import { Filter, SortFieldsOptions, convertBrandArrayStringToArray, createFilter, createSortQuery, getImageObjById } from '../utils/HelperFunctions';
 import { asyncHandler } from '../utils/AsyncHandler';
 import AppError from "../utils/AppError";
-import { ObjectId } from 'mongodb';
+import {ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
 // import {setCache} from "../middlewares/cache";
 
 export const getProductById = asyncHandler( async(req,res,next)=>{
     const {page, limit,skip} = req.pagination;
     const productId = req.params.productId;
-    
+
     const product = await Product.aggregate([
         {$match:{_id:new ObjectId(productId)}},
         {$unwind:{path:"$reviews",preserveNullAndEmptyArrays:true}},
@@ -106,85 +107,62 @@ export const getProductById = asyncHandler( async(req,res,next)=>{
     return res.status(200).json({count,page,limit,product:product[0]})
 })
 
+interface ExpectedSearchQuery{
+    brand:string | undefined;
+    price_lte:string | undefined;
+    price_gte:string | undefined;
+    category:string;
+    available:string | undefined;
+    sort:string | undefined;
+    offer:string | undefined;
+    search:string | undefined
+}
+
+const allowedProductFields : allowedFields<IProduct> | {}= {
+    price_lte:{},
+    price_gte:{},
+    brand:{},
+    category:{},
+    quantity:{
+        fixedCheck:"gte",
+        fixedValue:1
+    },
+    offer:{
+        fixedCheck:"gt",
+        fixedValue:0
+    },
+    description:{},
+    name:{},
+    search:{}
+}
+const sortFields : SortFieldsOptions<ISingleProduct>[] = [
+    {fieldInQuery:"price",fieldInDb:"finalPrice"},
+    {fieldInQuery:"newArrivals",fieldInDb:"createdAt"},
+    {fieldInQuery:"ratings",fieldInDb:"avgRating"},
+    {fieldInQuery:"ratingNumbers",fieldInDb:"ratingNumbers"}
+] 
+
 export const getAllProducts = asyncHandler(async (req : Request, res: Response) =>{
     const { limit , skip , page } = req.pagination;
-    const searchText = req.query.search as string;
-    const minPrice = req.query.price_gte as string;
-    const maxPrice = req.query.price_lte as string;
-    const brand = req.query.brand as string;
-    const category = req.query.category as string;
-    const available = req.query.available as string;
-    const sort = req.query.sort as string;
-    const offer = req.query.offer as string;
-    let fieldToSort = "createdAt";
-    let sortDirection = -1;
-    const matchStage :  any = {}
-    const orArray = []
-    if(minPrice || maxPrice){
-        matchStage.finalPrice = {}
-        if(minPrice){
-            matchStage.finalPrice.$gte= parseInt(minPrice);
-        }
-        if(maxPrice){
-            matchStage.finalPrice.$lte  = parseInt(maxPrice);
-            
-        }
-    }
-    if(searchText){
-        orArray.push({name: { $regex : `.*${searchText}.*`,$options:"i" } });
-        orArray.push({description : { $regex : `.*${searchText}.*`,$options:"i" } });
-        matchStage.$or = orArray;
-    }
-    
-    if(brand && isJSON(brand)){
-        matchStage.brand = {};
-        const brandArray = JSON.parse(brand)
-        matchStage.brand = 
-        { $regex :brandArray.map((item : string)=>`.*${item}.*`).join("|")  
-         , $options : "i" };
-         
-    }
-    if(category){
-        const categoryId = new ObjectId(category)
-        matchStage.categoryId = categoryId;
-    }
+    const {brand,price_lte,price_gte,category,available,offer,sort,search} = req.query as unknown as ExpectedSearchQuery;
+    const matchStage : MongooseMatchStage<IProduct | keyof IProduct>= {};
 
-    if(sort){
-        const sortQueries = sort.split("_")
-        if(sortQueries[0] == "price" || sortQueries[0] == "ratings" || sortQueries[0] == "ratingNumbers" ||  sortQueries[0] == "newArrivals"){
-            if(sortQueries[0] == "price"){
-                fieldToSort = "finalPrice";
-            }else if(sortQueries[0] == "newArrivals"){
-                fieldToSort = "createdAt";
-            }else if( sortQueries[0] == "ratings"){
-                fieldToSort = "avgRating";
-            }else{
-                fieldToSort = sortQueries[0];
-            }
-            
-            if(sortQueries[1] && sortQueries[1] == "desc"){
-                sortDirection = -1
-            }else{
-                sortDirection = 1
-            }
-        }
-    }
-    const sortStage : any = {
-        [fieldToSort]:sortDirection
-    }
-
-    const andArray = []
-    if(available == "true"){
-        andArray.push({quantity : {$gte : 1}})
-        matchStage.$and = andArray;
-    }
-    if(offer && offer == "true"){
-        andArray.push({offer: {$gt:0}})
-        matchStage.$and = andArray;
-    }
+    const ArrayFilter : Filter<IProduct>[] = [
+        {fieldNameInDB:"finalPrice",fieldNameInQuery:"price_lte",type:"Number",checks:["lte"],value:price_lte},
+        {fieldNameInDB:"finalPrice",fieldNameInQuery:"price_gte",type:"Number",checks:["gte"],value:price_gte},
+        {fieldNameInDB:"brand",fieldNameInQuery:"brand",type:"Array",value:convertBrandArrayStringToArray(brand)},
+        {fieldNameInDB:"categoryId",fieldNameInQuery:"category",type:"ObjectId",value:category},
+        {fieldNameInDB:"offer",fieldNameInQuery:"offer",checks:['gt'],value:offer},
+        {fieldNameInDB:"quantity",fieldNameInQuery:"quantity",checks:['gte'],value:available},
+        {fieldNameInDB:"name",fieldNameInQuery:"name",type:"SearchType",value:search},
+        {fieldNameInDB:"description",fieldNameInQuery:"description",type:"SearchType",value:search},
+    ]
+   
+    const filter = createFilter<IProduct>(ArrayFilter,allowedProductFields);
+    const sortStage = createSortQuery<ISingleProduct>(sort,sortFields);
 
     const products = await Product.aggregate([
-        { $match : matchStage },
+        { $match : filter },
         { 
             $addFields: {
                 avgRating: {
@@ -198,6 +176,7 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
         { $limit : limit},
         { $project : { __v:0 , reviews:0,description:0 } },
     ])
+
     const count = await Product.countDocuments( matchStage )
     // if(!req.url.includes("price")){
     //     setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
@@ -414,3 +393,4 @@ export const searchForProducts = asyncHandler(async (req: Request, res: Response
     }).select({score: {$meta:"textScore"},reviews:0,__v:0,updatedAt:0,createdAt:0}).sort({score:{$meta:"textScore"}})
     return res.status(200).json({count:products.length,products})
 })
+

@@ -46,8 +46,8 @@ export const removeFromWishList = asyncHandler(async (req ,res, next)=>{
     const wishlistItemId = req.params.wishlistItemId as string;
     const user = req.user;
 
-    const isAddressNotExisting = user.wishList.findIndex(wishlistItem => wishlistItem._id.toString() == wishlistItemId);
-    if(isAddressNotExisting){
+    const isAddressExisting = user.wishList.findIndex(wishlistItem => wishlistItem._id.toString() == wishlistItemId);
+    if(!isAddressExisting){
         const error = new AppError("Product was not found in wishlist.",400);
         return next(error);
     }

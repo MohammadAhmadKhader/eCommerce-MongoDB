@@ -1,10 +1,14 @@
 import mongoose,{Schema} from "mongoose";
 import { ICategory } from "../@types/types";
 
-const categorySchema: Schema<ICategory> = new Schema ({
+const categorySchema = new Schema<ICategory> ({
     name:{
         type:String,
-        required:true
+        required:true,
+        trim:true,
+        minlength:[2,"category name cant be less than 2 characters"],
+        maxlength:[64,"category name cant be more than 64 character"],
+        unique:true
     },
     imageUrl:{
         type:String,
@@ -14,5 +18,5 @@ const categorySchema: Schema<ICategory> = new Schema ({
     timestamps:false
 })
 
-const Category = mongoose.model("Category",categorySchema)
+const Category = mongoose.model<ICategory>("Category",categorySchema)
 export default Category;

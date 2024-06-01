@@ -1,11 +1,14 @@
-import mongoose,{Schema} from "mongoose";
+import mongoose,{PipelineStage, Schema} from "mongoose";
 import { IBrand } from "../@types/types";
 
-const brandSchema : Schema<IBrand>= new Schema ({
+const brandSchema= new Schema<IBrand> ({
     name:{
         type:String,
         required:true,
-        unique:true
+        unique:true,
+        trim:true,
+        minlength:[1,"brand name cant be empty"],
+        maxlength:[32,"brand name cant be more than 32 character"]
     },
     imageUrl:{
         type:String,
@@ -15,5 +18,5 @@ const brandSchema : Schema<IBrand>= new Schema ({
     timestamps:false
 })
 
-const Brand = mongoose.model("Brand",brandSchema)
+const Brand = mongoose.model<IBrand>("Brand",brandSchema)
 export default Brand;

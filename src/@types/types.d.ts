@@ -1,12 +1,14 @@
 import { ObjectId,Schema } from 'mongoose';
 import multer,{FileFilterCallback} from "multer"
+import { ObjectId,FilterOperations } from 'mongodb';
+import type {QuerySelector, RootQuerySelector}from "mongoose";
 
 export interface ICategory {
     _id:Schema.Types.ObjectId;
     name:String,
     imageUrl:String,
 }
-export interface IProduct {
+export interface IProduct{
     _id:Schema.Types.ObjectId;
     name: string;
     description: string;
@@ -29,16 +31,16 @@ export interface IProduct {
         thumbnailUrl: string;
     }[];
     brand: string;
+    createdAt:string;
+    updatedAt:string;
 }
-
-export interface IReview {
-    _id:Schema.Types.ObjectId;
-    comment: string;
-    userId: Schema.Types.ObjectId;
-    rating: number;
-    createdAt: Date;
-    updatedAt: Date;
+export type ISingleProduct = Omit<IProduct, "reviews"> & {
+    avgRating:number;
+    ratingNumbers: number;
 }
+export type IReview = IProduct["reviews"][number];
+export type IProductImage = IProduct["images"][number];
+export type image = Omit<IProduct["images"][number] ,"_id">
 
 export interface IUser {
     _id:Schema.Types.ObjectId;
@@ -157,17 +159,6 @@ export interface IOrderItem {
     brand:string;
 }
 
-export interface IProductImage {
-    _id:Schema.Types.ObjectId;
-    imageUrl:string;
-    thumbnailUrl:string;
-}
-
-export type image = {
-    imageUrl:string,
-    thumbnailUrl:string,
-}
-
 export interface ITokensCache {
     [key:string] : string
 }
@@ -219,6 +210,7 @@ export interface IBrand {
     imageUrl:string;
 }
 
+
 export interface UploadOptions {
     fileSize?: number;
     filesNum?: number;
@@ -257,3 +249,24 @@ export interface IInvoicesSortObj {
     createdAt?: 1 | -1;
     grandTotal?: 1 | -1;
 }
+
+type RootQuerySelectors<K>= {
+    [Selector in keyof RootQuerySelector<K>]: any;
+};
+
+export type MongooseMatchStage<T> = FilterOperations<T> & RootQuerySelectors<T>;
+
+export type allowedFields<Schema> ={
+    [Field in keyof Schema]?: {fixedValue?:any,fixedCheck?:any};
+}
+
+type test<T> = T extends object ? {name:string} : number
+type Route<T extends string> = T extends `/${string}` ? T : never;
+
+// Valid routes
+const validRoute1: Route<"/home"> = "/home";
+const validRoute2: Route<"/products"> = "/products";
+
+// Invalid routes - TypeScript will raise an error
+const invalidRoute1: Route<"home"> = "home";        // Error: Type '"home"' is not assignable to type 'never'.
+const invalidRoute2: Route<"/user/profile"> = "/user/profile";

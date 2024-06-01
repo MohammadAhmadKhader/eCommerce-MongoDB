@@ -1,6 +1,5 @@
 import Joi from "joi"
-import { CategoryDto, IProduct, IUserChangeInformation } from "../@types/types"
-import AppError from "../utils/AppError"
+import { CategoryDto, IUserChangeInformation } from "../@types/types"
 
 const fileImageSchema = Joi.object({
     fieldname: Joi.string().required(),
@@ -12,9 +11,9 @@ const fileImageSchema = Joi.object({
 })
 
 export const userRegistrationSchema = Joi.object({
-    firstName:Joi.string().alphanum().min(4).max(32).required(),
-    lastName:Joi.string().alphanum().min(4).max(32).required(),
-    email:Joi.string().email().min(6).max(64).required(),
+    firstName:Joi.string().trim().alphanum().min(4).max(32).required(),
+    lastName:Joi.string().trim().alphanum().min(4).max(32).required(),
+    email:Joi.string().trim().email().lowercase().min(6).max(64).required(),
     password:Joi.string().min(6).max(24).required()
 })
 
@@ -26,44 +25,44 @@ export const userChangePasswordSchema = Joi.object({
 
 export const reviewSchema = Joi.object({
     rating:Joi.number().valid(1,2,3,4,5).required(),
-    comment:Joi.string().min(4).max(256).required()
+    comment:Joi.string().trim().min(4).max(256).required()
 })
 
 export const creatingAddressSchema = Joi.object({
-    fullName:Joi.string().min(4).max(32).required(),
-    streetAddress:Joi.string().min(4).max(62).required(),
-    city:Joi.string().min(3).max(32).required(),
-    state:Joi.string().min(4).max(32).required(),
-    mobileNumber:Joi.string().min(6).max(15).required(),
+    fullName:Joi.string().trim().min(4).max(32).required(),
+    streetAddress:Joi.string().trim().min(4).max(62).required(),
+    city:Joi.string().trim().min(3).max(32).required(),
+    state:Joi.string().trim().min(4).max(32).required(),
+    mobileNumber:Joi.string().trim().min(6).max(15).required(),
     pinCode:Joi.alternatives().try(
-        Joi.string().min(3).max(12),
+        Joi.string().trim().min(3).max(12),
     ).optional(),
 })
 
 export const updatingAddressSchema = Joi.object({
     fullName:Joi.alternatives().try(
-        Joi.string().min(4).max(32),
+        Joi.string().trim().min(4).max(32),
     ).optional(),
     streetAddress:Joi.alternatives().try(
-        Joi.string().min(4).max(62),
+        Joi.string().trim().min(4).max(62),
     ).optional(),
     city:Joi.alternatives().try(
-        Joi.string().min(3).max(32),
+        Joi.string().trim().min(3).max(32),
     ).optional(),
     state:Joi.alternatives().try(
-        Joi.string().min(4).max(32),
+        Joi.string().trim().min(4).max(32),
     ).optional(),
     mobileNumber:Joi.alternatives().try(
-        Joi.string().min(6).max(15),
+        Joi.string().trim().min(6).max(15),
     ).optional(),
     pinCode:Joi.alternatives().try(
-        Joi.string().min(3).max(12),
+        Joi.string().trim().min(3).max(12),
     ).optional()
 })
 
 export const createProductSchema = Joi.object({
-    name:Joi.string().min(3).max(100).required(),
-    description:Joi.string().min(10).max(1024).required(),
+    name:Joi.string().trim().min(3).max(100).required(),
+    description:Joi.string().trim().min(10).max(1024).required(),
     categoryId:Joi.string().hex().length(24).required(),
     offer:Joi.number().min(0.00).max(1.00),
     price:Joi.number().min(0).max(1000).required(),
@@ -79,8 +78,8 @@ export const createProductSchema = Joi.object({
 );
 
 export const updateProductSchema = Joi.object({
-    name:Joi.string().min(3).max(100),
-    description:Joi.string().min(10).max(1024),
+    name:Joi.string().trim().min(3).max(100),
+    description:Joi.string().trim().min(10).max(1024),
     categoryId:Joi.string().hex().length(24),
     offer:Joi.number().min(0.00).max(1.00),
     price:Joi.number().min(0).max(1000),
@@ -96,14 +95,14 @@ export const updateProductSchema = Joi.object({
 )
 
 export const sendingMessageSchema = Joi.object({
-    fullName:Joi.string().min(4).max(32).required(),
-    email:Joi.string().email().min(6).max(64).required(),
-    subject: Joi.string().min(4).max(32),
-    message: Joi.string().min(4).max(256),
+    fullName:Joi.string().trim().min(4).max(32).required(),
+    email:Joi.string().trim().email().lowercase().min(6).max(64).required(),
+    subject: Joi.string().trim().min(4).max(32),
+    message: Joi.string().trim().min(4).max(256),
 })
 
 export const userSignInSchema = Joi.object({
-    email:Joi.string().email().min(6).max(64).required(),
+    email:Joi.string().trim().email().lowercase().min(6).max(64).required(),
     password:Joi.string().min(6).max(24).required()
 })
 
@@ -128,7 +127,7 @@ export const resetPasswordViaCodeSchema = Joi.object({
 })
 
 export const forgotPasswordSchema = Joi.object({
-    email:Joi.string().email().min(6).max(64).required(),
+    email:Joi.string().trim().email().lowercase().min(6).max(64).required(),
 })
 
 export const addToWishlistSchema = Joi.object({
@@ -141,7 +140,7 @@ export const removeFromWishlistSchema = Joi.object({
 
 export const editUserReviewSchema = Joi.object({
     rating:Joi.number().valid(1,2,3,4,5).required(),
-    comment:Joi.string().min(4).max(256).required(),
+    comment:Joi.string().trim().min(4).max(256).required(),
     reviewId:Joi.string().hex().length(24).required(),
 })
 
@@ -182,16 +181,16 @@ const atLeastOneFieldRequiredUserInfo = (value : IUserChangeInformation, helpers
 
 export const userChangeInformationSchema = Joi.object({
     firstName:Joi.alternatives().try(
-        Joi.string().alphanum().min(4).max(32).required(),
+        Joi.string().trim().alphanum().min(4).max(32).required(),
     ).optional(), 
     lastName:Joi.alternatives().try(
-        Joi.string().alphanum().min(4).max(32).required(),
+        Joi.string().trim().alphanum().min(4).max(32).required(),
     ).optional(),
     email:Joi.alternatives().try(
-        Joi.string().email().min(6).max(64).required(),
+        Joi.string().trim().email().lowercase().min(6).max(64).required(),
     ).optional(),
     mobileNumber:Joi.alternatives().try(
-        Joi.string().min(6).max(15),
+        Joi.string().trim().min(6).max(15),
     ).optional(),
     birthdate:Joi.alternatives().try(
         Joi.date().max(new Date(Date.now() - 157680000000 /**before 5 years */)).min(new Date(Date.now() - 2522880000000/**before 80 years */)).allow("")
@@ -199,7 +198,7 @@ export const userChangeInformationSchema = Joi.object({
 }).custom(atLeastOneFieldRequiredUserInfo,"atLeastOneFieldRequired")
 
 export const createBrandSchema = Joi.object({
-    brandName:Joi.string().min(1).max(32).required(),
+    brandName:Joi.string().trim().min(1).max(32).required(),
     brandLogo:fileImageSchema.required()
 })
 
@@ -211,14 +210,14 @@ const atLeastOneFieldRequiredBrand = (value : {brandLogo:Express.Multer.File,bra
 };
 
 export const updateBrandSchema = Joi.object({
-    brandName:Joi.string().min(1).max(32),
+    brandName:Joi.string().trim().min(1).max(32),
     brandLogo:fileImageSchema
 })
 .required().custom(atLeastOneFieldRequiredBrand)
 .message("At least one of the following fields is required: name, image");
 
 export const createCategorySchema = Joi.object({
-    name:Joi.string().min(2).max(64).required(),
+    name:Joi.string().trim().min(2).max(64).required(),
     image:fileImageSchema.required()
 })
 
@@ -230,7 +229,7 @@ const atLeastOneFieldRequiredCategory = (value : CategoryDto ) => {
 };
 
 export const updateCategorySchema = Joi.object({
-    name:Joi.string().min(2).max(64),
+    name:Joi.string().trim().min(2).max(64),
     image:fileImageSchema,
 })
 .custom(atLeastOneFieldRequiredCategory,"When nothing is given to update throw error")
