@@ -5,10 +5,10 @@ import Joi from 'joi';
 const errorController = ((error : any ,req : Request,res : Response,next : NextFunction)=>{
     error.statusCode = error.statusCode || 500;
 
-    if((process.env.NODE_ENV as string).trim() == "development"){
+    if((process.env.NODE_ENV as string).trim() === "development"){
         developmentErrors(res,error)
-    }else if((process.env.NODE_ENV as string).trim() == "production"){
-        
+    }else if((process.env.NODE_ENV as string).trim() === "production"){
+
         if(error.name === "CastError"){
             error = castingErrorHandler(error);
         }
@@ -19,15 +19,15 @@ const errorController = ((error : any ,req : Request,res : Response,next : NextF
             error = duplicateKeyErrorHandler(error);
         }
         
-        if(error.name == "TokenExpiredError"){
+        if(error.name === "TokenExpiredError"){
             error = tokenExpiredErrorHandler();
         }
         
-        if(error.name == "JsonWebTokenError" && error.message == "invalid signature"){
+        if(error.name === "JsonWebTokenError" && error.message === "invalid signature"){
             error = malformedTokenErrorHandler();
         }
-
-        if(error.name = "ValidationError"){
+        
+        if(error.name === "ValidationError"){
             error = validationErrorHandler(req,error);
         }
 

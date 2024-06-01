@@ -69,7 +69,7 @@ describe("Users",()=>{
     })
 
     describe("User sign in controller",()=>{  
-        const userTestEmail = "Elaina_OKon_40879312705945643@yahoo.com";
+        const userTestEmail = "elaina_okon_40879312705945643@yahoo.com";
         const userTestPassword = process.env.USER_TEST_PASSWORD as string;
         const wrongEmail = "WrongEmail@gmal.com";
         const wrongPassword = "wrongPassword";
@@ -375,8 +375,8 @@ describe("Users",()=>{
     })
 
     describe("User forgotPassword",()=>{
-        const correctEmail = "Ila_Tillman@gmail.com";
-        const incorrectEmail = "incorrectEmail@example.com";
+        const correctEmail = "ila_tillman@gmail.com";
+        const incorrectEmail = "incorrectemail@example.com";
         it("Should return success message with status code 200",async()=>{
             const testSendMessageToEmail = jest.spyOn(MailUtils,"SendToResetPassword");
             try{

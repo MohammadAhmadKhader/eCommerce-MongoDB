@@ -164,9 +164,10 @@ describe("Products",()=>{
         })
 
         it("Should return products sorted by price (final price) ascending",async()=>{
-            const {body,statusCode} = await supertest(app).get(`/api/products?sort=price_asc`);
+            const {body,statusCode} = await supertest(app).get(`/api/products?page=1&limit=9&sort=price_asc`);
             expect(statusCode).toBe(200);
             expect(body.products.length).toBeGreaterThan(0);
+            
             for(let i = 0 ; i < body.products.length ; i++){
                 if(i != 0){
                     expect((body.products[i] as IProduct).finalPrice).toBeGreaterThanOrEqual((body.products[i - 1] as IProduct).finalPrice as number)
@@ -230,7 +231,7 @@ describe("Products",()=>{
         })
 
         it("Should return products sorted by createdAt descending",async()=>{
-            const {body,statusCode} = await supertest(app).get("/api/products?sort=newArrivals=desc");
+            const {body,statusCode} = await supertest(app).get("/api/products?sort=newArrivals_desc");
             expect(statusCode).toBe(200);
             expect(body.products.length).toBeGreaterThan(0);
             for(let i = 0 ; i < body.products.length ; i++){

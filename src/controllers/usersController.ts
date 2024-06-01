@@ -4,7 +4,7 @@ import SessionToken from "../models/sessionToken";
 import MailUtils from "../utils/MailUtils";
 import ResetPassCode from "../models/resetPassCode";
 import CloudinaryUtils from "../utils/CloudinaryUtils";
-import { IFilterAndSortAllUsers, ISortQuery, IUser, IUsersMatchStage } from "../@types/types";
+import { IUser} from "../@types/types";
 import { signToken } from "../utils/HelperFunctions";
 import crypto from 'crypto';
 import { asyncHandler } from "../utils/AsyncHandler";
@@ -33,38 +33,10 @@ export const signUp =asyncHandler( async (req, res)=>{
     return res.status(201).json({message:"success",user,token:sessionToken.token})
 })
 
-export const createUser =asyncHandler( async (req, res)=>{
-    const { firstName,lastName,email,password,role } = req.body;
-    const hashPassword = bcrypt.hashSync(password,10);
-        
-    const user = await User.create({
-        firstName,
-        lastName,
-        email,
-        password:hashPassword,
-        role,
-    })
-    
-    const token = signToken(user._id.toString(),user.email)
-    user.$set("password",undefined);
-    user.$set("__v",undefined);
-        
-    const sessionToken = await SessionToken.create({
-        userId:user._id,
-        token:token
-    })
-    
-    return res.status(201).json({message:"success",user,token:sessionToken.token})
-})
-
 export const signIn = asyncHandler(async (req, res ,next)=>{
     const { email,password } = req.body;
-    if(!email || !password){
-        return res.sendStatus(401)
-    }
-        
     const user = await User.findOne({email:email},{},{select:"+password"})
-         
+    
     if(!user || !(await bcrypt.compare(password,user.password))){
         const error = new AppError("Invalid email or password",401)
         return next(error);
@@ -77,7 +49,7 @@ export const signIn = asyncHandler(async (req, res ,next)=>{
     },{
         userId:user._id,
         token:token
-    },{upsert:true,new:true})
+    },{upsert:true,new:true}).lean();
         
     user.$set("password",undefined)
 
@@ -105,68 +77,6 @@ export const getUserByToken = asyncHandler(async(req, res)=>{
     return res.status(200).json({user})
 });
 
-
-export const getAllUsers = asyncHandler(async (req, res)=>{
-    const {limit,page,skip} = req.pagination;
-    const { sort, email, name, mobileNumber } : IFilterAndSortAllUsers = req.query;
-
-    const sortQuery :ISortQuery = {createdAt:-1};
-    if(sort){
-        if(sort["createdAt"]){
-            if(sort["createdAt"] === "asc"){
-                sortQuery.createdAt = 1
-            }
-        }
-        
-        if(sort["email"]){
-            if(sort["email"] === "desc"){
-                sortQuery.email = -1
-            }else if(sort["email"] === "asc"){
-                sortQuery.email = 1
-            }
-        }
-        if(sort["name"]){
-            if(sort["name"] === "desc"){
-                sortQuery.name = -1
-            }else if(sort["name"] === "asc"){
-                sortQuery.name = 1
-            }
-        }
-    }
-
-    const matchStage : IUsersMatchStage = {}
-    if(email){
-        matchStage.email = email;
-    }
-    if(name){
-        matchStage.name = name;
-    }
-    if(mobileNumber){
-        matchStage.mobileNumber = mobileNumber;
-    }
-    
-    const users = await User.find(matchStage,{__v:0},{
-        sort:sortQuery,
-        limit:limit,
-        skip:skip,
-    }).lean();
-    const count = await User.countDocuments(matchStage).lean();
-
-    return res.status(200).json({count,page,limit,users})
-});
-
-export const deleteUserById = asyncHandler(async (req, res, next)=>{
-    const {userId} = req.params;
-    
-    const deleteUser = await User.deleteOne({_id:userId}).lean();
-    if(deleteUser.deletedCount !== 1){
-        const error = new AppError("User was not found.",400);
-        return next(error);
-    }
-    
-    return res.sendStatus(204);
-});
-
 export const logout = asyncHandler( async (req, res)=>{
     const userId = req.user._id;
     const sessionId = req.headers.authorization;
@@ -178,11 +88,10 @@ export const logout = asyncHandler( async (req, res)=>{
     return res.sendStatus(204);
 });
 
-
 export const changePassword = asyncHandler(async (req, res, next)=>{
     const { oldPassword, newPassword } = req.body;
     const userId = req.user._id;
-    const user : IUser = await User.findOne({_id:userId}).select("+password");
+    const user = await User.findOne({_id:userId}).select("+password") as IUser;
         
     if(!await bcrypt.compare(oldPassword,user.password)){
         const error = new AppError("Invalid password",401);
@@ -232,7 +141,7 @@ export const changeUserInformation = asyncHandler(async(req, res, next)=>{
         }catch(err){
             const error = new AppError(`Something went wrong during image update user image`,400);
             return next(error);
-        }   
+        }
     }
         
     return res.status(200).json({message:"success",user})
