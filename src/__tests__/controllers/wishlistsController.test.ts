@@ -113,7 +113,8 @@ describe("Wishlists",()=>{
             });
 
             it("Should remove wishlist item (product) from user wishlist",async()=>{
-                const {body,statusCode} = await supertest(app).delete(`/api/wishlists/${wishlistItemId}`).set("Authorization",userTokenNotEmptyWishlist);
+                const {body,statusCode} = await supertest(app).delete(`/api/wishlists/${wishlistItemId}`)
+                .set("Authorization",userTokenNotEmptyWishlist);
                 
                 expect(statusCode).toBe(202);
                 expect(body.message).toBe("success");
@@ -128,10 +129,11 @@ describe("Wishlists",()=>{
             })
         })
 
-        it("Should remove wishlist item (product) from user wishlist",async()=>{
+        it("Should return an error that wishlist item does not exist",async()=>{
             const wishlistItemIdNotExisting = "642d5c2fa1e1e547ca532d1c"
-            const {body,statusCode} = await supertest(app).delete(`/api/wishlists/${wishlistItemIdNotExisting}`).set("Authorization",userTokenNotEmptyWishlist);
-
+            const {body,statusCode} = await supertest(app).delete(`/api/wishlists/${wishlistItemIdNotExisting}`)
+            .set("Authorization",userTokenNotEmptyWishlist);
+            
             expect(statusCode).toBe(400);
             expect(body.message).toBe("Product was not found in wishlist.");
             expectErrorMessage(body);

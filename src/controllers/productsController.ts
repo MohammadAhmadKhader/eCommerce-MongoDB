@@ -9,6 +9,8 @@ import { asyncHandler } from '../utils/AsyncHandler';
 import AppError from "../utils/AppError";
 import {ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
+import Brand from '../models/brand';
+import Category from '../models/category';
 // import {setCache} from "../middlewares/cache";
 
 export const getProductById = asyncHandler( async(req,res,next)=>{
@@ -160,7 +162,7 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
 
     const filter = createFilter<IProduct>(ArrayFilter,allowedProductFields);
     const sortStage = createSortQuery<ISingleProduct>(sort,sortFields);
-    console.log(filter)
+    
     const products = await Product.aggregate([
         { $match : filter },
         { 
@@ -192,6 +194,13 @@ export const postNewProduct = asyncHandler(async (req, res, next)=>{
     
     if(!req.file){
         const error = new AppError("Image does not exist",400)
+        return next(error);
+    }
+
+    const isBrandExist = await Brand.findOne({name:brand}).lean();
+    const isCategoryExist = await Category.findOne({_id:new ObjectId(categoryId as string)}).lean();
+    if(!isBrandExist || !isCategoryExist){
+        const error = new AppError("Something went wrong, Please try again later",400)
         return next(error);
     }
     const originalImageUploadResponse = await CloudinaryUtils.UploadOne(image.buffer,process.env.ProductsImagesFolder as string)
@@ -231,7 +240,7 @@ export const appendImagesToProduct = asyncHandler(async (req, res,next) =>{
     const productId = req.params.productId;
     const images = req.files as Express.Multer.File[]; 
 
-    const isProductExist = await Product.findOne({_id:productId});
+    const isProductExist = await Product.findOne({_id:productId}).lean();
     if(!isProductExist){
         const error = new AppError("Product was not found.",400)
         return next(error);
@@ -255,7 +264,7 @@ export const appendImagesToProduct = asyncHandler(async (req, res,next) =>{
 
     const product = await Product.updateOne({_id:productId},{
         $push:{images:uploadedImages},
-    })
+    }).lean();
 
     if(product.modifiedCount != 1 || product.matchedCount == 0){
         const error = new AppError("Images were not uploaded successfully",400)
@@ -275,6 +284,21 @@ export const updateProductInfo = asyncHandler(async (req, res, next) =>{
         return next(error);
     }
 
+    if(brand){
+        const isBrandExist = await Brand.findOne({name:brand}).lean();
+        if(!isBrandExist){
+            const error = new AppError("Something went wrong, Please try again later",400)
+            return next(error);
+        }
+    }
+    if(categoryId){
+        const isCategoryExist = await Category.findOne({_id:categoryId}).lean();
+        if(!isCategoryExist){
+            const error = new AppError("Something went wrong, Please try again later",400)
+            return next(error);
+        }
+    }
+
     const updateProduct = await Product.findOneAndUpdate({
         _id:productId
     },{
@@ -288,7 +312,7 @@ export const updateProductInfo = asyncHandler(async (req, res, next) =>{
         finalPrice,
     },{
         new:true,
-    });
+    }).lean();
 
     return res.status(200).json({message:"success",product:updateProduct})
 })
@@ -335,7 +359,7 @@ export const updateProductSingleImage = asyncHandler(async (req, res, next) =>{
             new:true,
             session:transaction
         }
-    );
+    ).lean();
     
     const {imageUrl,thumbnailUrl} = getImageObjById(productBeforeUpdate,imageId)!;
 
@@ -376,7 +400,8 @@ export const deleteProduct = asyncHandler(async (req, res, next) =>{
 
     const deletingProduct = await Product.deleteOne({
         _id:productId
-    });
+    }).lean();
+
     if(deletingProduct.deletedCount == 0){
         const error = new AppError("Something Went Wrong",400)
         return next(error);
@@ -391,7 +416,7 @@ export const searchForProducts = asyncHandler(async (req: Request, res: Response
         $text:{
             $search:text
         }
-    }).select({score: {$meta:"textScore"},reviews:0,__v:0,updatedAt:0,createdAt:0}).sort({score:{$meta:"textScore"}})
+    }).select({score: {$meta:"textScore"},reviews:0,__v:0,updatedAt:0,createdAt:0}).sort({score:{$meta:"textScore"}}).lean();
     return res.status(200).json({count:products.length,products})
 })
 

@@ -1,5 +1,5 @@
 
-import { validateDeleteUserReview, validateEditUserReview, validateUserReview } from "../../../middlewares/validationsFunctions";
+import { validateDeleteUserReview, validateEditUserReview, validateUserReview } from "../../../middlewares/validationFunctions/reviewsValidationFunctions";
 import { hexWith24Char, hexWith25Char,  stringWith24Char, stringWith256Char, 
     stringWith257Char, stringWith3Char, stringWith4Char, } from "../../assets/testData/stringTestData";
 import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";

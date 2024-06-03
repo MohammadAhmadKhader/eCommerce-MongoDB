@@ -2,7 +2,7 @@ import * as categoriesRouter from "../controllers/categoriesController"
 import express from "express"
 import { getServerCache } from "../middlewares/serverCache";
 import { authenticateAdmin } from "../middlewares/authenticate";
-import { validateCreateCategory, validateUpdateCategory } from "../middlewares/validationsFunctions";
+import { validateCreateCategory, validateUpdateCategory } from "../middlewares/validationFunctions/categoriesValidationFunctions";
 import upload from "../utils/Multer";
 const MB2 = 2000;
 const router = express.Router();

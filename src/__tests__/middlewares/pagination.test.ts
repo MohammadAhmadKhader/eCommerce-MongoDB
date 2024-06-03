@@ -62,4 +62,13 @@ describe("Pagination Middleware",()=>{
         expect(body.page).toBe(1);
         expect(body.limit).toBe(9);
     })
+
+    it("Should set page and limit to the required values when they are correct",async()=>{
+        const page = 3;
+        const limit = 15;
+        const {body,statusCode} = await supertest(app).get(`/api/products?page=${page}&limit=${limit}`);
+        expect(statusCode).toBe(200)
+        expect(body.page).toBe(page);
+        expect(body.limit).toBe(limit);
+    })
 })

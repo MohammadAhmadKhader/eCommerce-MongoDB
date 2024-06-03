@@ -1,6 +1,6 @@
 import { emptyImageObj, wrongDataTypesImage, correctImageObj } from './../../assets/testData/fileTestData';
 import { faker, } from "@faker-js/faker";
-import { validateCreateCategory, validateUpdateCategory } from "../../../middlewares/validationsFunctions";
+import { validateCreateCategory, validateUpdateCategory } from "../../../middlewares/validationFunctions/categoriesValidationFunctions";
 import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
 import { stringWith64Char, stringWith65Char } from "../../assets/testData/stringTestData";
 import {Request,} from "express";

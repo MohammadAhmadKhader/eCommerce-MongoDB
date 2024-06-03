@@ -2,7 +2,7 @@ import * as brandsRouter from "../controllers/brandsController"
 import express from "express";
 import { authenticateAdmin } from "../middlewares/authenticate";
 import {getServerCache}from "../middlewares/serverCache"
-import { validateCreateBrand, validateUpdateBrand } from "../middlewares/validationsFunctions";
+import { validateCreateBrand, validateUpdateBrand } from "../middlewares/validationFunctions/brandsValidationFunctions";
 import upload from "../utils/Multer";
 const MB2 = 2000;
 const router = express.Router()

@@ -13,6 +13,7 @@ const app = createServer()
 
 describe("Carts",()=>{
     const adminUserId = testData.adminUserId;
+    const userIdToChangeQuantity = "65ef5891082b6a0698d5ced4";
     let adminUserToken :string;
     const productIdToAddToCartHighQuantity = testData.productIdToAddToCartHighQuantity;
     const productIdToAddToCart0Quantity = testData.productIdToAddToCart0Quantity;
@@ -20,10 +21,12 @@ describe("Carts",()=>{
     const productId_2 = "65ecc427fe69fb23c47e51b5";
     const userId = adminUserId;
     const userIdWithEmptyCart = testData.userIdWithEmptyCart;
+    let testUserChangeCartItemsQuantityToken: string;
     beforeAll(async()=>{
         const DB_URL_TEST = process.env.DB_URL_TEST as string;
         await DatabaseTestHandler.connectToDB(mongoose,DB_URL_TEST);
         adminUserToken = await createUserTokenAndCache(adminUserId) as string;
+        testUserChangeCartItemsQuantityToken = await createUserTokenAndCache(userIdToChangeQuantity) as string;
     })
 
     afterAll(async()=>{
@@ -144,7 +147,7 @@ describe("Carts",()=>{
         const cartItemId_1 = "662408a30276411e706e6c70"
         const cartItemId_2 = "662408ce0276411e706e6c72"
         const cartItemId_3 = "6624090a0276411e706e6c73"
-        const testUserChangeCartItemsQuantityToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZWY1ODkxMDgyYjZhMDY5OGQ1Y2VkNCIsImVtYWlsIjoiQnJlbmRvbi5SZW1wZWwzOUBnbWFpbC5jb20iLCJpYXQiOjE3MTM2MjA3MDUsImV4cCI6MTcxNjIxMjcwNX0.-R5C3zThhWIZNP_H_aefie_1Cuzs7EESwP7J9ystYDg"
+        //const testUserChangeCartItemsQuantityToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY1ZWY1ODkxMDgyYjZhMDY5OGQ1Y2VkNCIsImVtYWlsIjoiQnJlbmRvbi5SZW1wZWwzOUBnbWFpbC5jb20iLCJpYXQiOjE3MTM2MjA3MDUsImV4cCI6MTcxNjIxMjcwNX0.-R5C3zThhWIZNP_H_aefie_1Cuzs7EESwP7J9ystYDg"
         
         it("Should increase cart Item by 1 when operation set to +1",async()=>{
             const testUserFindByIdAndUpdate = jest.spyOn(User,"findByIdAndUpdate");

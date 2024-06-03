@@ -45,13 +45,14 @@ export const addToWishList = asyncHandler(async (req, res, next)=>{
 export const removeFromWishList = asyncHandler(async (req ,res, next)=>{
     const wishlistItemId = req.params.wishlistItemId as string;
     const user = req.user;
-
+    
     const isAddressExisting = user.wishList.findIndex(wishlistItem => wishlistItem._id.toString() == wishlistItemId);
-    if(!isAddressExisting){
+    
+    if(isAddressExisting === -1){
         const error = new AppError("Product was not found in wishlist.",400);
         return next(error);
     }
-
+    
     const userAfterChanges = await User.findOneAndUpdate({_id:user._id},{
         $pull : { wishList : { _id :wishlistItemId} },
     },{new:true,select:"-password -__v"})

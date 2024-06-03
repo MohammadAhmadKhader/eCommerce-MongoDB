@@ -1,8 +1,8 @@
-import { pagination } from './../middlewares/pagination';
 import * as usersRouter from "../controllers/usersController"
 import express from "express"
-import { validateForgotPassword, validateResetPasswordViaCode, validateUserChangeInformation, validateUserChangePassword, validateUserRegistration, validateUserSignIn } from "../middlewares/validationsFunctions";
-import { authenticateAdmin, authenticateUser } from "../middlewares/authenticate";
+import { validateForgotPassword, validateResetPasswordViaCode, validateUserChangeInformation,
+     validateUserChangePassword, validateUserRegistration, validateUserSignIn } from "../middlewares/validationFunctions/usersValidationFunctions";
+import { authenticateUser } from "../middlewares/authenticate";
 import upload from "../utils/Multer";
 import { authorizeUserInfoUpdate } from "../middlewares/authorize";
 const MB2 = 2000;

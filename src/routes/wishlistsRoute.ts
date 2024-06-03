@@ -1,7 +1,8 @@
 import { authenticateUser } from '../middlewares/authenticate';
 import * as wishListsRouter from "../controllers/wishlistsController" 
 import express from "express"
-import { validateAddToWishList, validateRemoveFromWishlist } from '../middlewares/validationsFunctions';
+import { validateAddToWishList, 
+    validateRemoveFromWishlist } from '../middlewares/validationFunctions/wishlistsValidationFunctions';
 const router = express.Router()
 
 router.get("/:userId",authenticateUser,wishListsRouter.getWishList)

@@ -1,5 +1,6 @@
 import mongoose,{ Schema } from "mongoose";
 import { IProduct } from "../@types/types";
+import Brand from "./brand";
 
 const productSchema= new Schema<IProduct>({
     name:{
@@ -87,11 +88,22 @@ const productSchema= new Schema<IProduct>({
         imageUrl:String,
         thumbnailUrl:String,
     }],
-    brand:{
+     brand:{
         type:String,
-        required:true,
         ref:"Brand",
-    },
+        required:true,
+        validate:{
+            validator: async function(brandName: string){
+                const brand = await Brand.findOne({name:brandName});
+                if(!brand){
+                    console.log("error")
+                    throw new Error("Brand Not Found");
+                }
+                return true;
+            },
+            message: 'Brand does not exist.'
+        }
+     },
 },{
     timestamps:true,
 })

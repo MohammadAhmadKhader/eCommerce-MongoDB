@@ -1,4 +1,4 @@
-import { validateSendingMessage } from "../../../middlewares/validationsFunctions";
+import { validateSendingMessage } from "../../../middlewares/validationFunctions/contactUsValidationFunctions";
 import { emailWith5Char, emailWith64Char, emailWith65Char, emailWith6Char, stringWith256Char, stringWith257Char, stringWith32Char, 
     stringWith33Char, stringWith3Char, stringWith4Char } from "../../assets/testData/stringTestData";
 import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
