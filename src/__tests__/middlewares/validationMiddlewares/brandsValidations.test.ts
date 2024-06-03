@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { validateCreateBrand, validateUpdateBrand } from "../../../middlewares/validationsFunctions";
+import { validateCreateBrand, validateUpdateBrand } from "../../../middlewares/validationFunctions/brandsValidationFunctions";
 import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
 import { stringWith32Char, stringWith33Char } from "../../assets/testData/stringTestData";
 import { wrongDataTypesImage, correctImageObj ,emptyImageObj} from "../../assets/testData/fileTestData";

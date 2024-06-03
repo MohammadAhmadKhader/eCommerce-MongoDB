@@ -1,6 +1,6 @@
 
 import { validateForgotPassword, validateResetPasswordViaCode, validateUserChangeInformation, validateUserChangePassword, 
-    validateUserRegistration, validateUserSignIn } from "../../../middlewares/validationsFunctions";
+    validateUserRegistration, validateUserSignIn } from "../../../middlewares/validationFunctions/usersValidationFunctions";
 import { emailWith5Char, emailWith64Char, emailWith65Char, emailWith6Char, stringWith10Char, 
     stringWith15Char, stringWith16Char, stringWith24Char, stringWith25Char, stringWith32Char,
      stringWith33Char, stringWith3Char, stringWith4Char, stringWith5Char, stringWith65Char, stringWith6Char } 

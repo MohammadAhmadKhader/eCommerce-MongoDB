@@ -1,4 +1,4 @@
-import { validateAddToWishList, validateRemoveFromWishlist } from "../../../middlewares/validationsFunctions";
+import { validateAddToWishList, validateRemoveFromWishlist } from "../../../middlewares/validationFunctions/wishlistsValidationFunctions";
 import { hexWith24Char, hexWith25Char, stringWith24Char } from "../../assets/testData/stringTestData";
 import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
 import { Request } from "express";

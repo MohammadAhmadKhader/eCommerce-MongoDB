@@ -1,5 +1,5 @@
 
-import { validateAddingToCart, validateChangeCartItemQuantityByOne, validateDeletingFromCart,} from "../../../middlewares/validationsFunctions";
+import { validateAddingToCart, validateChangeCartItemQuantityByOne, validateDeletingFromCart,} from "../../../middlewares/validationFunctions/cartsValidationFunctions";
 import { hexWith24Char, hexWith25Char} from "../../assets/testData/stringTestData";
 import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";
 import {Request} from "express";

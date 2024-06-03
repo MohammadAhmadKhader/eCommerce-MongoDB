@@ -37,7 +37,7 @@ describe("Brands",()=>{
     })
 
     describe("Create new brand",()=>{
-        
+        let createdBrand : null | IBrand = null;
         it("Should return an error that brandLogo does not exist",async()=>{
             const brandName = faker.commerce.department()
             const {body,statusCode} = await supertest(app).post(`/api/brands`)
@@ -63,7 +63,14 @@ describe("Brands",()=>{
             expect(body.message).toBe("success");
             expect(body.brand.name).toBe(uniqueString.substring(0,15));
             expectBrand(body.brand);
+            createdBrand = body.brand;
         })
+        afterAll(async ()=>{
+            if(createdBrand){
+                await deleteBrand(createdBrand._id)
+            }
+        })
+        
     })
 
     describe("Update brand",()=>{

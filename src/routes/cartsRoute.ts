@@ -1,7 +1,8 @@
 import { authenticateUser } from './../middlewares/authenticate';
 import * as cartsRouter from "../controllers/cartsController";
 import express from "express";
-import { validateAddingToCart, validateChangeCartItemQuantityByOne, validateDeletingFromCart } from '../middlewares/validationsFunctions';
+import { validateAddingToCart, validateChangeCartItemQuantityByOne, 
+    validateDeletingFromCart } from '../middlewares/validationFunctions/cartsValidationFunctions';
 const router = express.Router();
 
 router.get("/:userId",authenticateUser,cartsRouter.getAllCartItems)

@@ -1,5 +1,5 @@
 
-import { validateCreatingAddress,validateUpdatingAddress, } from "../../../middlewares/validationsFunctions";
+import { validateCreatingAddress,validateUpdatingAddress, } from "../../../middlewares/validationFunctions/addressesValidationFunctions";
 import { stringWith12Char, stringWith13Char, stringWith15Char, stringWith16Char, stringWith2Char, stringWith32Char,
      stringWith33Char, stringWith3Char, stringWith4Char, stringWith5Char, stringWith62Char, stringWith63Char, stringWith6Char } from "../../assets/testData/stringTestData";
 import { createResponseNext, expectValidationError, expectValidationPassed } from "../../utils/helperTestFunctions.test";

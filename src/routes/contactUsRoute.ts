@@ -1,4 +1,4 @@
-import { validateSendingMessage } from './../middlewares/validationsFunctions';
+import { validateSendingMessage } from './../middlewares/validationFunctions/contactUsValidationFunctions';
 import * as contactUsController from "../controllers/contactUsController"
 import express from "express";
 const router = express.Router()

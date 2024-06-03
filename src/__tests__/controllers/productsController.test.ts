@@ -254,7 +254,7 @@ describe("Products",()=>{
             .field("price",200).field("description",productDescription)
             .attach("image",imagePath)
             .set('Authorization', adminUserToken);
-            
+          
 
             expect(statusCode).toBe(201);
             expect(body.message).toBe("success");

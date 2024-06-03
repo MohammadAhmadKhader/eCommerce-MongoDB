@@ -1,6 +1,3 @@
-import { ObjectId } from 'mongodb';
-import Category from '../models/category';
-import { userRegistrationSchema } from './../middlewares/validationsSchemas';
 import { faker } from '@faker-js/faker';
 import User from '../models/user';
 import Product from '../models/product';
