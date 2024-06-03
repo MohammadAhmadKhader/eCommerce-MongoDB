@@ -152,7 +152,7 @@ export function createFilter<TSchemaType>(ArrayOfFilters:Filter<TSchemaType>[],a
                     matchStage[fieldNameInDB] = {};
                 }
                 const usedCheck = fixedCheck ? fixedCheck : check;
-                matchStage[fieldNameInDB][`$${usedCheck}`] = (fixedValue || fixedValue == 0) ? fixedValue : value;
+                matchStage[fieldNameInDB][`$${usedCheck}`] = (fixedValue || fixedValue == 0) ? fixedValue : (type === "Number" ? Number(value) : value);
             })
         }
         

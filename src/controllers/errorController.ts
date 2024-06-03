@@ -1,6 +1,7 @@
 import {  NextFunction,Request,Response, } from 'express';
 import AppError from '../utils/AppError';
 import Joi from 'joi';
+import {Error as mongooseError} from 'mongoose';
 
 const errorController = ((error : any ,req : Request,res : Response,next : NextFunction)=>{
     error.statusCode = error.statusCode || 500;
@@ -27,6 +28,10 @@ const errorController = ((error : any ,req : Request,res : Response,next : NextF
             error = malformedTokenErrorHandler();
         }
         
+        if(error instanceof mongooseError && error.name == "ValidationError"){
+            error = mongooseValidationErrorHandler(error)
+        }
+
         if(error.name === "ValidationError"){
             error = validationErrorHandler(req,error);
         }
@@ -51,6 +56,13 @@ const duplicateKeyErrorHandler = (error : any)=>{
     const message = `This ${keyName} ${email} already exist, please try another one!`
     return new AppError(message,400);
 }
+
+const mongooseValidationErrorHandler = (error : mongooseError)=>{
+    const message = error.message.split(":")[2].replace(" ","");
+    console.log(message)
+    return new AppError(message,400);
+}
+
 
 const tokenExpiredErrorHandler = ()=>{
     const message = 'Your session has expired. Please log in again.'
