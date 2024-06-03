@@ -157,10 +157,10 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
         {fieldNameInDB:"name",fieldNameInQuery:"name",type:"SearchType",value:search},
         {fieldNameInDB:"description",fieldNameInQuery:"description",type:"SearchType",value:search},
     ]
-   
+
     const filter = createFilter<IProduct>(ArrayFilter,allowedProductFields);
     const sortStage = createSortQuery<ISingleProduct>(sort,sortFields);
-
+    console.log(filter)
     const products = await Product.aggregate([
         { $match : filter },
         { 
@@ -176,8 +176,9 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
         { $limit : limit},
         { $project : { __v:0 , reviews:0,description:0 } },
     ])
-
-    const count = await Product.countDocuments( matchStage )
+    
+    const count = await Product.countDocuments( matchStage ).lean();
+    
     // if(!req.url.includes("price")){
     //     setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
     // }

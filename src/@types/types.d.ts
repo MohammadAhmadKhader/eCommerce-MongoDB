@@ -210,7 +210,6 @@ export interface IBrand {
     imageUrl:string;
 }
 
-
 export interface UploadOptions {
     fileSize?: number;
     filesNum?: number;
@@ -254,19 +253,8 @@ type RootQuerySelectors<K>= {
     [Selector in keyof RootQuerySelector<K>]: any;
 };
 
-export type MongooseMatchStage<T> = FilterOperations<T> & RootQuerySelectors<T>;
+export type MongooseMatchStage<Schema> = FilterOperations<Schema> & RootQuerySelectors<Schema>;
 
 export type allowedFields<Schema> ={
     [Field in keyof Schema]?: {fixedValue?:any,fixedCheck?:any};
 }
-
-type test<T> = T extends object ? {name:string} : number
-type Route<T extends string> = T extends `/${string}` ? T : never;
-
-// Valid routes
-const validRoute1: Route<"/home"> = "/home";
-const validRoute2: Route<"/products"> = "/products";
-
-// Invalid routes - TypeScript will raise an error
-const invalidRoute1: Route<"home"> = "home";        // Error: Type '"home"' is not assignable to type 'never'.
-const invalidRoute2: Route<"/user/profile"> = "/user/profile";
