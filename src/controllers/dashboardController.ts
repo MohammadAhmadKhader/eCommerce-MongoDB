@@ -1,94 +1,72 @@
 import bcrypt from 'bcrypt';
-import { IFilterAndSortAllUsers, IInvoicesSortObj, ISortQuery, IUsersMatchStage } from "../@types/types";
+import { IFilterAndSortAllUsers, IInvoice, IOrder, IReview, IUser, allowedFields } from "../@types/types";
 import Invoice from "../models/Invoice";
 import Order from "../models/order";
 import User from "../models/user";
 import AppError from "../utils/AppError";
 import { asyncHandler } from "../utils/AsyncHandler";
-import { signToken } from "../utils/HelperFunctions";
+import { createFilter, createSortQuery,  signToken } from "../utils/HelperFunctions";
 import SessionToken from '../models/sessionToken';
 import Product from '../models/product';
+import { PipelineStage} from 'mongoose';
+import { allowedValuesForAdminInvoices, allowedValuesForAdminOrders, allowedValuesForAdminReviews, allowedValuesForAdminUsers, sortFieldsAdminInvoices } from '../utils/FilterationAndSort';
 
 export const getAllInvoices = asyncHandler( async(req ,res ,next)=>{
     const {skip,limit,page} = req.pagination;
-    const {sort} = req.query;
+    const {sort,subTotal_lte,subTotal_gte,grandTotal_lte,grandTotal_gte} = req.query;
 
-    let sortObj : IInvoicesSortObj = {createdAt:-1};
-    if(sort && (sort === "subTotal_asc" || sort === "subTotal_desc" || sort === "grandTotal_asc" || sort === "grandTotal_desc" )){
-        if(sort === "subTotal_asc"){
-            sortObj = {subTotal:1};
-        }
-        if(sort === "subTotal_desc"){
-            sortObj = {subTotal:-1};
-        }
-        if(sort === "grandTotal_desc"){
-            sortObj = {grandTotal:-1};
-        }
-        if(sort === "grandTotal_asc"){
-            sortObj = {grandTotal:1};
-        }
-    }
+    const sortObj = createSortQuery<IInvoice>(sort,sortFieldsAdminInvoices)
+    const filter = createFilter<IInvoice>([
+        {fieldNameInDB:"subTotal",fieldNameInQuery:"subTotal_lte",type:"Number",checks:["lte"],value:subTotal_lte},
+        {fieldNameInDB:"subTotal",fieldNameInQuery:"subTotal_gte",type:"Number",checks:["gte"],value:subTotal_gte},
+        {fieldNameInDB:"grandTotal",fieldNameInQuery:"grandTotal_lte",type:"Number",checks:["lte"],value:grandTotal_lte},
+        {fieldNameInDB:"grandTotal",fieldNameInQuery:"grandTotal_gte",type:"Number",checks:["gte"],value:grandTotal_gte},
+    ],allowedValuesForAdminInvoices);
 
-    const invoices = await Invoice.find({},{},{sort:sortObj,skip,limit}).lean();
+    const invoices = await Invoice.find(filter,{},{sort:sortObj,skip,limit}).lean();
     const count = await Invoice.find({}).countDocuments().lean();
-        
+      
     return res.status(200).json({count,page,limit,invoices})
 });
 
 export const getAllOrders = asyncHandler(async(req ,res )=>{
     const { limit,skip,page} = req.pagination;
     const { email,subTotal_lte,subTotal_gte,grandTotal_lte,grandTotal_gte,isPaid,sort } = req.query;
-    const match :any= {
-        $match:{
-            $and:[]
-        }
-    };
-    const sortObj : any = {
-        $sort:{
-            createdAt:-1
-        }
-    }
-    if(sort && (sort === "subTotal_desc" || sort === "subTotal_asc" || sort === "grandTotal_desc" || sort === "grandTotal_asc" )){
-        if(sort === "subTotal_desc"){
-            sortObj.$sort = {subTotal:-1}
-        }
-        if(sort === "subTotal_asc"){
-            sortObj.$sort = {subTotal:1}
-        }
-        if(sort === "grandTotal_asc"){
-            sortObj.$sort = {grandTotal:1}
-        }
-        if(sort === "grandTotal_desc"){
-            sortObj.$sort = {grandTotal:-1}
-        }
+    
+    const sortQuery = createSortQuery<IOrder>(sort,[
+        {fieldInDb:"subTotal",fieldInQuery:"subTotal",allowedDir:"both"},
+        {fieldInDb:"grandTotal",fieldInQuery:"grandTotal",allowedDir:"both"},
+    ])
+    
+    const sortObj : PipelineStage = {
+        $sort:sortQuery
     }
     
-    if(isPaid && (isPaid === "false" || isPaid === "true")){
-        match.$match.$and.push({isPaid : isPaid === "true" ? true : false });
+    const filter = createFilter<IOrder>([
+        {fieldNameInDB:"isPaid",fieldNameInQuery:"isPaid",type:"Boolean",value:isPaid},
+        {fieldNameInDB:"subTotal",fieldNameInQuery:"subTotal_lte",type:"Number",checks:["lte"],value:subTotal_lte},
+        {fieldNameInDB:"subTotal",fieldNameInQuery:"subTotal_gte",type:"Number",checks:["gte"],value:subTotal_gte},
+        {fieldNameInDB:"grandTotal",fieldNameInQuery:"grandTotal_lte",type:"Number",checks:["lte"],value:grandTotal_lte},
+        {fieldNameInDB:"grandTotal",fieldNameInQuery:"grandTotal_gte",type:"Number",checks:["gte"],value:grandTotal_gte},
+        {fieldNameInDB:"user.email",fieldNameInQuery:"email",search:["user.email"],type:"SearchType",checks:["eq"],value:email},
+    ],allowedValuesForAdminOrders);
+
+    const matchObj : PipelineStage = {
+        $match: filter
     }
 
-    if(subTotal_gte || subTotal_lte){
-        match.$match.$and.push({subTotal : { $gte:Number(subTotal_gte) || 0,$lte:Number(subTotal_lte) || 9999}});
-    }
-    if(grandTotal_gte || grandTotal_lte){
-        match.$match.$and.push({grandTotal : { $gte:Number(grandTotal_gte) || 0,$lte:Number(grandTotal_lte) || 9999}});
-    }
-    
-    if(email){
-        match.$match.$and.push({"user.email" : { $regex: new RegExp(email as string,"i") }});
-    }
-    
-    const lookup :any = {
+    const lookup : PipelineStage = {
         $lookup:{
             localField:"userId",
             foreignField:"_id",
             from:"users",
             as:"user"
-        }
+        },
     }
-    
-    const aggregatePipeline : any[]= [
+  
+    const aggregatePipeline : PipelineStage[]= [
         lookup,
+        matchObj,
         sortObj,
         {
             $skip:skip
@@ -110,23 +88,13 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
                 }
         }
     ]
-    const isFiltered = subTotal_gte || subTotal_lte || grandTotal_gte || grandTotal_lte || email
-    if(isFiltered){
-        console.log("first")
-        // Add after lookup so we have access to user's email
-        aggregatePipeline.splice(1,0,match);
-    }
     
-    const orders = await Order.aggregate([
-        ...aggregatePipeline
-    ]);
-    
-    const countAggregatePipeline = [lookup];
-    if(isFiltered){
-        countAggregatePipeline.push(match);
+    const orders = await Order.aggregate(aggregatePipeline).allowDiskUse(true);
+    let count = 0;
+    if(orders.length){
+        const [{subTotal:ordersCount}] = await Order.aggregate(aggregatePipeline).count("subTotal").allowDiskUse(true);
+        count = ordersCount;
     }
-
-    const [{subTotal:count}] = await Order.aggregate(countAggregatePipeline).count("subTotal");
     
     return res.status(200).json({count,page,limit,orders})
 })
@@ -134,69 +102,48 @@ export const getAllOrders = asyncHandler(async(req ,res )=>{
 export const getAllUsers = asyncHandler(async (req, res)=>{
     const {limit,page,skip} = req.pagination;
     const { sort, email, name, mobileNumber } : IFilterAndSortAllUsers = req.query;
-
-    const sortQuery :ISortQuery = {createdAt:-1};
-    if(sort){
-        if(sort["createdAt"]){
-            if(sort["createdAt"] === "asc"){
-                sortQuery.createdAt = 1
-            }
-        }
-        
-        if(sort["email"]){
-            if(sort["email"] === "desc"){
-                sortQuery.email = -1
-            }else if(sort["email"] === "asc"){
-                sortQuery.email = 1
-            }
-        }
-        if(sort["name"]){
-            if(sort["name"] === "desc"){
-                sortQuery.name = -1
-            }else if(sort["name"] === "asc"){
-                sortQuery.name = 1
-            }
-        }
-    }
-
-    const matchStage : IUsersMatchStage = {}
-    if(email){
-        matchStage.email = email;
-    }
-    if(name){
-        matchStage.name = name;
-    }
-    if(mobileNumber){
-        matchStage.mobileNumber = mobileNumber;
-    }
     
-    const users = await User.find(matchStage,{__v:0},{
-        sort:sortQuery,
+    const sortObj = createSortQuery<IUser>(sort,[
+        {fieldInDb:"createdAt",fieldInQuery:"createdAt",allowedDir:"both"},
+        {fieldInDb:"updatedAt",fieldInQuery:"updatedAt",allowedDir:"both"},
+        {fieldInDb:"email",fieldInQuery:"email",allowedDir:"both"},
+        {fieldInDb:"firstName",fieldInQuery:"firstName",allowedDir:"both"},
+    ])
+    const filter = createFilter<IUser>([
+        {fieldNameInDB:"email",fieldNameInQuery:"email",search:["email"],type:"SearchType",value:email},
+        {fieldNameInDB:"firstName",fieldNameInQuery:"name",search:["firstName"],type:"SearchType",value:name},
+        {fieldNameInDB:"lastName",fieldNameInQuery:"name",search:["lastName"],type:"SearchType",value:name},
+        {fieldNameInDB:"mobileNumber",fieldNameInQuery:"mobileNumber",search:["mobileNumber"],type:"SearchType",value:mobileNumber},
+    ],allowedValuesForAdminUsers);
+    
+    const users = await User.find(filter,{__v:0},{
+        sort:sortObj,
         limit:limit,
         skip:skip,
     }).lean();
-    const count = await User.countDocuments(matchStage).lean();
+    const count = await User.countDocuments(filter).lean();
 
     return res.status(200).json({count,page,limit,users})
 });
 
 export const getAllReviews = asyncHandler(async(req,res)=>{
     const {skip,page,limit} = req.pagination;
-    const {sort} = req.query;
+    const {sort,comment,email} :
+    {sort?:string,comment?:string,email?:string} = req.query;
     
-    const sortObj : any = {
-        $sort:{
-            "reviews.createdAt":-1
-        }
-    }
+    const sortObj_test = createSortQuery<IReview>(sort,[
+        {fieldInDb:"reviews.rating",fieldInQuery:"rating",allowedDir:"both"},
+        {fieldInDb:"reviews.createdAt",fieldInQuery:"createdAt",allowedDir:"both"},
+        {fieldInDb:"reviews.updatedAt",fieldInQuery:"updatedAt",allowedDir:"both"},
+    ])
 
-    if(sort && (sort === "rating_desc" || sort === "rating_asc")){
-        if(sort === "rating_desc"){
-            sortObj.$sort = { "reviews.rating":-1}
-        }
-        if(sort === "rating_asc"){
-            sortObj.$sort = { "reviews.rating":1}
-        }
+    const filter = createFilter<IReview & {user : IUser}>([
+        {fieldNameInDB:"comment",fieldNameInQuery:"comment",type:"SearchType",value:comment,search:["review.comment"]},
+        {fieldNameInDB:"user.email",fieldNameInQuery:"email",type:"SearchType",value:email,search:["user.email"]},
+    ],allowedValuesForAdminReviews);
+    
+    const sortObj : PipelineStage = {
+        $sort:sortObj_test
     }
 
     const reviews = await Product.aggregate([
@@ -230,7 +177,9 @@ export const getAllReviews = asyncHandler(async(req,res)=>{
                 "review.user":{ $arrayElemAt: ["$user", 0] },
             }
         },
-        
+        {
+            $match:filter
+        },
         {
             $skip:skip,
             
@@ -240,7 +189,8 @@ export const getAllReviews = asyncHandler(async(req,res)=>{
         {
             $unset:["user","_id"],
             
-        },{
+        },
+        {
             $project:{
                 "review.user.password":0,
                 "review.user.cart":0,
@@ -252,8 +202,9 @@ export const getAllReviews = asyncHandler(async(req,res)=>{
                 "review.user.__v":0,
             }
         },
-    ]);
-    const count = reviews[0].count;
+    ]).allowDiskUse(true);
+    
+    const count = reviews[0]?.count || 0;
     reviews.forEach((rev)=>{
         delete rev["count"];
     })

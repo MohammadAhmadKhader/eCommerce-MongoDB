@@ -1,16 +1,17 @@
 import { IProduct, ISingleProduct, image } from '../@types/types';
-import type{MongooseMatchStage, allowedFields} from "../@types/types";
+import type{MongooseMatchStage} from "../@types/types";
 import { Request, Response } from "express"
 import Product from "../models/product"
 import CloudinaryUtils from "../utils/CloudinaryUtils";
 import { getThumbnailImageBuffer } from '../utils/ThumbnailUtils';
-import { Filter, SortFieldsOptions, convertBrandArrayStringToArray, createFilter, createSortQuery, getImageObjById } from '../utils/HelperFunctions';
+import { Filter, convertBrandArrayStringToArray, createFilter, createSortQuery, getImageObjById } from '../utils/HelperFunctions';
 import { asyncHandler } from '../utils/AsyncHandler';
 import AppError from "../utils/AppError";
 import {ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
 import Brand from '../models/brand';
 import Category from '../models/category';
+import { allowedUserProductsFields, sortFieldsUserProducts } from '../utils/FilterationAndSort';
 // import {setCache} from "../middlewares/cache";
 
 export const getProductById = asyncHandler( async(req,res,next)=>{
@@ -109,44 +110,9 @@ export const getProductById = asyncHandler( async(req,res,next)=>{
     return res.status(200).json({count,page,limit,product:product[0]})
 })
 
-interface ExpectedSearchQuery{
-    brand:string | undefined;
-    price_lte:string | undefined;
-    price_gte:string | undefined;
-    category:string;
-    available:string | undefined;
-    sort:string | undefined;
-    offer:string | undefined;
-    search:string | undefined
-}
-
-const allowedProductFields : allowedFields<IProduct> | {}= {
-    price_lte:{},
-    price_gte:{},
-    brand:{},
-    category:{},
-    quantity:{
-        fixedCheck:"gte",
-        fixedValue:1
-    },
-    offer:{
-        fixedCheck:"gt",
-        fixedValue:0
-    },
-    description:{},
-    name:{},
-    search:{}
-}
-const sortFields : SortFieldsOptions<ISingleProduct>[] = [
-    {fieldInQuery:"price",fieldInDb:"finalPrice"},
-    {fieldInQuery:"newArrivals",fieldInDb:"createdAt"},
-    {fieldInQuery:"ratings",fieldInDb:"avgRating"},
-    {fieldInQuery:"ratingNumbers",fieldInDb:"ratingNumbers"}
-] 
-
 export const getAllProducts = asyncHandler(async (req : Request, res: Response) =>{
     const { limit , skip , page } = req.pagination;
-    const {brand,price_lte,price_gte,category,available,offer,sort,search} = req.query as unknown as ExpectedSearchQuery;
+    const {brand,price_lte,price_gte,category,available,offer,sort,search} = req.query;
     const matchStage : MongooseMatchStage<IProduct | keyof IProduct>= {};
 
     const ArrayFilter : Filter<IProduct>[] = [
@@ -160,8 +126,8 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
         {fieldNameInDB:"description",fieldNameInQuery:"description",type:"SearchType",value:search},
     ]
 
-    const filter = createFilter<IProduct>(ArrayFilter,allowedProductFields);
-    const sortStage = createSortQuery<ISingleProduct>(sort,sortFields);
+    const filter = createFilter<IProduct>(ArrayFilter,allowedUserProductsFields);
+    const sortStage = createSortQuery<ISingleProduct>(sort,sortFieldsUserProducts);
     
     const products = await Product.aggregate([
         { $match : filter },
@@ -177,9 +143,9 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
         { $skip : skip},
         { $limit : limit},
         { $project : { __v:0 , reviews:0,description:0 } },
-    ])
+    ]).allowDiskUse(true)
     
-    const count = await Product.countDocuments( matchStage ).lean();
+    const count = await Product.countDocuments( matchStage ).allowDiskUse(true).lean();
     
     // if(!req.url.includes("price")){
     //     setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
