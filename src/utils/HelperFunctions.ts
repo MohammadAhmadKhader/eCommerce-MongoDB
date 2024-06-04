@@ -61,7 +61,7 @@ export function getImageObjById(product:IProduct,imageId:string | Schema.Types.O
 
 export interface SortFieldsOptions<T> {
     fieldInQuery:keyof T | (string & {});
-    fieldInDb:keyof T | undefined;
+    fieldInDb:keyof T | {};
     allowedDir?: "asc" | "desc" | "both"
 }
 
@@ -115,15 +115,15 @@ function getSortFieldName(sortQuery : string,defaultFieldName:string="createdAt"
 }
 
 
-type checks = "gte" | "lte" | "gt" | "lt";
+type checks = "gte" | "lte" | "gt" | "lt" | "eq";
 
 export type Filter<TSchema> = {
     fieldNameInQuery:any;
-    fieldNameInDB:keyof TSchema;
+    fieldNameInDB:keyof TSchema | {};
     value:any;
-    type?:"Array" | "ObjectId" | "Number" |"SearchType";
+    type?:"Array" | "ObjectId" | "Number" |"SearchType" | "Boolean";
     checks?:checks[];
-    search?:SearchParams<TSchema>[]
+    search?:(keyof TSchema)[] | {}
 };
 export type SearchParams<TSchema> = {
     [Field in keyof TSchema]?:TSchema[Field]
@@ -139,37 +139,50 @@ function isStringOrNumber(numberOrString:any){
 export function createFilter<TSchemaType>(ArrayOfFilters:Filter<TSchemaType>[],allowedFields?:allowedFields<TSchemaType | any>){
     const matchStage = {} as any;
 
-    ArrayOfFilters.forEach((filter)=>{
-        const {fieldNameInDB,fieldNameInQuery,value,checks,type} = filter;
+    ArrayOfFilters.map((filter)=>{
+        const {fieldNameInDB,fieldNameInQuery,value,checks,type,search} = filter;
 
         const isAllowedValue = allowedFields?.[fieldNameInQuery] || false;
         const fixedValue = allowedFields?.[fieldNameInQuery]?.fixedValue;
         const fixedCheck= allowedFields?.[fieldNameInQuery]?.fixedCheck;
+
+        if(isAllowedValue && type === "SearchType" && typeof value === "string"){
+            matchStage.$or =[]
+            const applyRegexSearch = (search as string[])?.forEach((path)=>{
+                matchStage.$or.push({[path] : { $regex : `.*${value}.*`,$options:"i" } });
+            })
+            return;
+        }
 
         if(checks?.length && isAllowedValue && isStringOrNumber(value)){
             checks?.forEach((check : string)=>{
                 if(!matchStage[fieldNameInDB]){
                     matchStage[fieldNameInDB] = {};
                 }
+                
                 const usedCheck = fixedCheck ? fixedCheck : check;
-                matchStage[fieldNameInDB][`$${usedCheck}`] = (fixedValue || fixedValue == 0) ? fixedValue : (type === "Number" ? Number(value) : value);
+                matchStage[fieldNameInDB][`$${usedCheck}`] = (fixedValue || fixedValue == 0) ? fixedValue : (type === "Number" ? (Number(value) ? Number(value) : Number(value) === 0 ? 0 :delete matchStage[fieldNameInDB]) : value);
             })
+            
+            return;
         }
         
         if(isAllowedValue && type === "Array" && Array.isArray(value)){
             matchStage[fieldNameInDB] = {};
             matchStage[fieldNameInDB] = { $in :value };
+            return;
         }
 
         if(isAllowedValue && type === "ObjectId"){
             if(isHex24String(value)){
                 matchStage[fieldNameInDB] = new ObjectId(value as string);
-            }   
+            }
+            return;
         }
-        if(isAllowedValue && type === "SearchType" && typeof value === "string"){
-            matchStage.$or =[]
-            matchStage.$or.push({name: { $regex : `.*${value}.*`,$options:"i" } });
-            matchStage.$or.push({description : { $regex : `.*${value}.*`,$options:"i" } });
+
+        if(isAllowedValue && type === "Boolean"){
+            matchStage[fieldNameInDB] = value === "true" ? true : false;
+            return;
         }
     })
     
@@ -194,3 +207,44 @@ export function convertBrandArrayStringToArray(brand : any) : Pick<IProduct,"bra
         return undefined
     }
 }
+
+export function filterDate(matchObj:any={},
+    createdAt_lte:string | undefined,
+    createdAt_gte:string | undefined,
+    updatedAt_lte:string | undefined,
+    updatedAt_gte:string | undefined,
+    value:any) {
+    
+    if(createdAt_lte){
+        matchObj.createdAt = {}
+        matchObj.createdAt = {
+            $lte:value
+        }
+        return matchObj;
+    }
+    if(createdAt_gte){
+        matchObj.createdAt = {}
+        matchObj.createdAt = {
+            $gte:value
+        }
+        return matchObj;
+    }
+    
+    if(updatedAt_gte){
+        matchObj.updatedAt = {}
+        matchObj.updatedAt = {
+            $gte:value
+        }
+        return matchObj;
+    }
+    if(updatedAt_lte){
+        matchObj.updatedAt = {}
+        matchObj.updatedAt = {
+            $lte:value
+        }
+        return matchObj;
+    }      
+
+    return null;
+}
+
