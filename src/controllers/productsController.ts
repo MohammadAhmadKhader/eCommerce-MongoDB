@@ -102,7 +102,8 @@ export const getProductById = asyncHandler( async(req,res,next)=>{
         return next(error);
     }
     if(product[0].reviews[0] && !product[0].reviews[0].comment){
-        product[0].reviews = []
+        product[0].reviews = [];
+        product[0].ratingNumbers = 0;
     }
     const count = product[0].ratingNumbers;
     //setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))
@@ -113,7 +114,6 @@ export const getProductById = asyncHandler( async(req,res,next)=>{
 export const getAllProducts = asyncHandler(async (req : Request, res: Response) =>{
     const { limit , skip , page } = req.pagination;
     const {brand,price_lte,price_gte,category,available,offer,sort,search} = req.query;
-    const matchStage : MongooseMatchStage<IProduct | keyof IProduct>= {};
 
     const ArrayFilter : Filter<IProduct>[] = [
         {fieldNameInDB:"finalPrice",fieldNameInQuery:"price_lte",type:"Number",checks:["lte"],value:price_lte},
@@ -145,7 +145,7 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
         { $project : { __v:0 , reviews:0,description:0 } },
     ]).allowDiskUse(true)
     
-    const count = await Product.countDocuments( matchStage ).allowDiskUse(true).lean();
+    const count = await Product.countDocuments( filter ).allowDiskUse(true).lean();
     
     // if(!req.url.includes("price")){
     //     setCache(req.url,JSON.stringify({count,page,limit,product:product[0]}))

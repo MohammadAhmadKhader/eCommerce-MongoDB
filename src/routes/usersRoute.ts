@@ -5,12 +5,14 @@ import { validateForgotPassword, validateResetPasswordViaCode, validateUserChang
 import { authenticateUser } from "../middlewares/authenticate";
 import upload from "../utils/Multer";
 import { authorizeUserInfoUpdate } from "../middlewares/authorize";
+import { validateOAuthTokenId } from "../middlewares/validationFunctions/oauthValidationFunctions";
 const MB2 = 2000;
 
 const router = express.Router()
 
 router.get("/",usersRouter.getUserByToken);
 router.get("/verifyResetPasswordToken/:token",usersRouter.verifyResetPasswordToken);
+router.get("/oauth/google/signin",validateOAuthTokenId,usersRouter.signInUsingOAuthGoogle);
 router.post("/signup",validateUserRegistration,usersRouter.signUp);
 router.post("/signin",validateUserSignIn,usersRouter.signIn);
 router.post("/forgotPassword",validateForgotPassword,usersRouter.forgotPassword);
