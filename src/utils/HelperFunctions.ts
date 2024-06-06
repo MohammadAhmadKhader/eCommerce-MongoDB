@@ -5,6 +5,8 @@ import Stripe from "stripe";
 import { IOrder, IProduct, MongooseMatchStage, allowedFields } from "../@types/types";
 import { Schema } from "mongoose";
 import { ObjectId } from "mongodb";
+import { OAuth2Client } from "google-auth-library";
+
 export function isJSON(brand:string){
     try{
         JSON.parse(brand);
@@ -248,3 +250,20 @@ export function filterDate(matchObj:any={},
     return null;
 }
 
+export async function getOAuthGoogleUserData(tokenId:string){
+    const googleOAuthClientID = process.env.OAUTH_GOOGLE_CLIENT_ID;
+    const googleOAuthSecret = process.env.OAUTH_GOOGLE_CLIENT_SECRET;
+    
+    const OAuthClient = new OAuth2Client(
+        googleOAuthClientID,
+        googleOAuthSecret,
+    )
+    
+    const ticket = await OAuthClient.verifyIdToken({
+        idToken: tokenId,
+        audience: googleOAuthClientID, 
+    })
+    
+    const payload = ticket.getPayload() || null;
+    return { payload };
+}

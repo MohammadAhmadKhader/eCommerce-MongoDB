@@ -38,6 +38,7 @@
     "express": "^4.18.2",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^7.2.0",
+    "google-auth-library": "^9.10.0",
     "helmet": "^7.1.0",
     "image-thumbnail": "^1.0.15",
     "joi": "^17.12.2",

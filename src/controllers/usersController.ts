@@ -5,7 +5,7 @@ import MailUtils from "../utils/MailUtils";
 import ResetPassCode from "../models/resetPassCode";
 import CloudinaryUtils from "../utils/CloudinaryUtils";
 import { IUser} from "../@types/types";
-import { signToken } from "../utils/HelperFunctions";
+import { getOAuthGoogleUserData, signToken } from "../utils/HelperFunctions";
 import crypto from 'crypto';
 import { asyncHandler } from "../utils/AsyncHandler";
 import AppError from "../utils/AppError";
@@ -220,4 +220,29 @@ export const verifyResetPasswordToken = asyncHandler(async (req, res, next)=>{
     }
 
     return res.status(200).json({message:"success"})
+})
+
+export const signInUsingOAuthGoogle = asyncHandler(async (req,res,next)=>{
+    // TODO 1 - Validate tokenId, 2 - handle error in case payload is undefined
+    const tokenId = req.headers.authorization as string;
+    const {payload} = await getOAuthGoogleUserData(tokenId);
+    if(!payload){
+        const error = new AppError("Something went wrong please try again later!",400);
+        return next(error);
+    }
+
+    const user = await User.findOne({email:payload?.email}).lean();
+    if(!user){
+        return res.status(200).json({message:"User not found. Please sign up to create a new account."})
+    }
+
+    const token = signToken(user._id.toString(),user.email);
+    const sessionToken = await SessionToken.findOneAndUpdate({
+        userId:user._id,
+    },{
+        userId:user._id,
+        token
+    },{upsert:true,new:true}).lean();
+    
+    return res.status(200).json({message:"success",user,token:sessionToken.token})
 })
