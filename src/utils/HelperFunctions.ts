@@ -2,7 +2,7 @@
 import jwt from "jsonwebtoken" ;
 import util from "util"
 import Stripe from "stripe";
-import { IOrder, IProduct, MongooseMatchStage, allowedFields } from "../@types/types";
+import { IOrder, IProduct, MongooseMatchStage, OAuthGithubResponse, allowedFields } from "../@types/types";
 import { Schema } from "mongoose";
 import { ObjectId } from "mongodb";
 import { OAuth2Client } from "google-auth-library";
@@ -266,4 +266,41 @@ export async function getOAuthGoogleUserData(tokenId:string){
     
     const payload = ticket.getPayload() || null;
     return { payload };
+}
+
+export function handleUserNameGoogleSignUp(name:string | undefined,email:string){
+    let firstName:string;
+    let lastName:string | undefined;
+    if(name){
+       const splittedName = name.split(" ");
+       firstName = splittedName[0];
+       lastName = splittedName[1]; // user name might be just firstName so this might be undefined
+    }else{
+        const emailName = email.split("@")[0];
+        firstName = emailName;
+    }
+
+    return {firstName,lastName};
+}
+
+// TODO Add OAuth with github
+export function extractGithubUserData(userData:OAuthGithubResponse) {
+    let userEmail : null | string= null;
+    let isUserVerified = false;
+    if(!Array.isArray(userData)){
+        return { userEmail ,isUserVerified};
+    }
+
+    for(let i = 0; i< userData.length ; i++){
+        
+        if(userData[0].primary === true){
+            userEmail = userData[0].email;
+        }
+        if(!userData[0].verified){
+            isUserVerified = false;
+            break;
+        }
+    }
+
+    return { userEmail ,isUserVerified}
 }
