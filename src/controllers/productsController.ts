@@ -169,10 +169,9 @@ export const postNewProduct = asyncHandler(async (req, res, next)=>{
         const error = new AppError("Something went wrong, Please try again later",400)
         return next(error);
     }
-    console.log(image)
+
     const originalImageUploadResponse = await CloudinaryUtils.UploadOne(image.buffer,process.env.ProductsImagesFolder as string)
     if(!originalImageUploadResponse){
-        console.log(4)
         const error = new AppError("Failed To Upload Image",400)
         return next(error);
     }
@@ -180,11 +179,10 @@ export const postNewProduct = asyncHandler(async (req, res, next)=>{
     const thumbnailBuffer = await getThumbnailImageBuffer(image.buffer);
     const thumbnailUploadResponse = await CloudinaryUtils.UploadOne(thumbnailBuffer,process.env.ThumbnailsImagesFolder as string);
     if(!thumbnailUploadResponse){
-        console.log(7)
         const error = new AppError("Failed To Upload Image",400)
         return next(error);
     }
-        console.log(8)
+
     const newProduct = await Product.create({
         name,
         quantity,
