@@ -258,3 +258,10 @@ export type MongooseMatchStage<Schema> = FilterOperations<Schema> & RootQuerySel
 export type allowedFields<Schema> ={
     [Field in keyof Schema]?: {fixedValue?:any,fixedCheck?:any};
 }
+
+export type OAuthGithubResponse = {
+    email:string;
+    primary:boolean;
+    verified:boolean;
+    visibility:null | "public" | "private";
+}[]

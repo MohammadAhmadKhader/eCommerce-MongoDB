@@ -157,7 +157,7 @@ export const getAllProducts = asyncHandler(async (req : Request, res: Response) 
 export const postNewProduct = asyncHandler(async (req, res, next)=>{
     const { name, quantity, description, price , brand, categoryId,offer,finalPrice} = req.body;
     const image = req.file as Express.Multer.File
-    
+
     if(!req.file){
         const error = new AppError("Image does not exist",400)
         return next(error);
@@ -169,21 +169,20 @@ export const postNewProduct = asyncHandler(async (req, res, next)=>{
         const error = new AppError("Something went wrong, Please try again later",400)
         return next(error);
     }
+
     const originalImageUploadResponse = await CloudinaryUtils.UploadOne(image.buffer,process.env.ProductsImagesFolder as string)
-    
     if(!originalImageUploadResponse){
         const error = new AppError("Failed To Upload Image",400)
         return next(error);
     }
-    
+
     const thumbnailBuffer = await getThumbnailImageBuffer(image.buffer);
     const thumbnailUploadResponse = await CloudinaryUtils.UploadOne(thumbnailBuffer,process.env.ThumbnailsImagesFolder as string);
-    
     if(!thumbnailUploadResponse){
         const error = new AppError("Failed To Upload Image",400)
         return next(error);
     }
-        
+
     const newProduct = await Product.create({
         name,
         quantity,
